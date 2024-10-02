@@ -7,17 +7,16 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CompareTwoDevices extends StatefulWidget {
+class CompareDevices extends StatefulWidget {
   final String userId;
-  final Map<String, dynamic> compareAppliance;
-  const CompareTwoDevices(
-      {super.key, required this.userId, required this.compareAppliance});
+  // final Map<String, dynamic> compareAppliance;
+  const CompareDevices({super.key, required this.userId});
 
   @override
-  State<CompareTwoDevices> createState() => _CompareTwoDevicesState();
+  State<CompareDevices> createState() => _CompareDevicesState();
 }
 
-class _CompareTwoDevicesState extends State<CompareTwoDevices> {
+class _CompareDevicesState extends State<CompareDevices> {
   List<dynamic> appliances = [];
   String? compareAppliances;
 
@@ -140,6 +139,18 @@ Widget content1(BuildContext context, String appliance1,
           children: [
             Text(
               compareAppliance['compareApplianceName'] ?? 'Unknown',
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              "Cost per Hour: ₱${compareAppliance['costPerHour'] ?? 'N/A'}",
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              "Monthly Cost: ₱${compareAppliance['monthlyCost'] ?? 'N/A'}",
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              "Carbon Emission: ${compareAppliance['carbonEmission'] ?? 'N/A'} kg",
               textAlign: TextAlign.center,
             ),
           ],

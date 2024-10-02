@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_project/EnergyPage/MyEnergyDiary/my_energy_diary_page.dart';
-import 'package:supabase_project/SignUP/sign_up_page.dart';
-import 'package:supabase_project/login/login_page.dart';
+import 'package:supabase_project/EnergyPage/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
+import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
+import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';

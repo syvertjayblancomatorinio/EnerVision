@@ -110,18 +110,18 @@ class AddApplianceDialog extends StatelessWidget {
                         controller: addmonthlyPatternController,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          labelText: 'Days used per month',
+                          labelText: 'Days used per Week',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
                         ),
                         onChanged: (value) {
                           final doubleValue = double.tryParse(value);
-                          if (doubleValue != null && doubleValue > 31) {
-                            addmonthlyPatternController.text = '31';
+                          if (doubleValue != null && doubleValue > 7) {
+                            addmonthlyPatternController.text = '7';
                             addmonthlyPatternController.selection =
                                 TextSelection.fromPosition(
-                              const TextPosition(offset: '24'.length),
+                              const TextPosition(offset: '7'.length),
                             );
                           }
                         },

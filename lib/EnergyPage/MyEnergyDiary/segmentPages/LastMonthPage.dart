@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_project/CommonWidgets/appliance-today-widgets.dart';
 import 'package:supabase_project/EnergyPage/MyEnergyDiary/common-widgets.dart';
 
 class LastMonthPage extends StatelessWidget {
@@ -15,14 +14,18 @@ class LastMonthPage extends StatelessWidget {
       children: <Widget>[
         DatePickerWidget(
             initialDate: DateTime.now(), onDateSelected: (date) {}),
-        Row(
-          children: [
-            CostKilowatt(calculateDailyCost, 'cost'),
-            CostKilowatt(dailyConsumption, 'kw'),
-          ],
-        ),
+        const SizedBox(height: 20),
+        // Center(
+        //   child: Row(
+        //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        //     children: [
+        //       CostKilowatt(calculateDailyCost, 'cost'),
+        //       CostKilowatt(dailyConsumption, 'kw'),
+        //     ],
+        //   ),
+        // ),
         const HomeUsage(),
-        const SizedBox(height: 70),
+        const SizedBox(height: 40),
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [

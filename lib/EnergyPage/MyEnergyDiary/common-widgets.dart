@@ -4,59 +4,10 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import '../../CommonWidgets/box-decoration-with-shadow.dart';
+import '../../CommonWidgets/box_decorations.dart';
 import '../../ConstantTexts/Theme.dart';
 
-class EnergyDiaryButtons extends StatefulWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onSegmentTapped;
 
-  EnergyDiaryButtons({
-    required this.selectedIndex,
-    required this.onSegmentTapped,
-  });
-
-  @override
-  _EnergyDiaryButtonsState createState() => _EnergyDiaryButtonsState();
-}
-
-class _EnergyDiaryButtonsState extends State<EnergyDiaryButtons> {
-  final List<String> _segments = ["Last Month", "Today", "This Month"];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 41,
-      decoration: reusableBoxDecoration(),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(_segments.length, (index) {
-          bool isSelected = widget.selectedIndex == index;
-          return GestureDetector(
-            onTap: () {
-              widget.onSegmentTapped(index);
-            },
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              child: Text(
-                _segments[index],
-                style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
 
 class HomeUsage extends StatelessWidget {
   const HomeUsage({super.key});
@@ -64,14 +15,14 @@ class HomeUsage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 188,
-      width: 182,
+      height: 208,
+      width: 202,
       decoration: greyBoxDecoration(),
       child: const Column(
         children: [
           Icon(
-            Icons.home_max_outlined,
-            size: 100,
+            Icons.house_siding_rounded,
+            size: 150,
           ),
           Text(
             '13.34 kwh',
@@ -130,7 +81,6 @@ class NumberOfAppliances extends StatelessWidget {
     );
   }
 }
-// date_picker_widget.dart
 
 class DatePickerWidget extends StatefulWidget {
   final DateTime initialDate;
@@ -149,52 +99,122 @@ class DatePickerWidget extends StatefulWidget {
 class _DatePickerWidgetState extends State<DatePickerWidget> {
   late DateTime selectedDate;
   late String formattedDate;
+  List<String> months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
+  List<int> years = List.generate(
+      101, (index) => 2023 + index); // For years from 2023 onwards
+  late String selectedMonth;
+  late int selectedYear;
 
   @override
   void initState() {
     super.initState();
     selectedDate = widget.initialDate;
+    selectedMonth = DateFormat('MMMM').format(selectedDate);
+    selectedYear = selectedDate.year;
     formattedDate = DateFormat('MMMM yyyy').format(selectedDate);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 40.0, bottom: 10),
-      child: GestureDetector(
-        onTap: () async {
-          final DateTime? dateTime = await showDatePicker(
-            context: context,
-            initialDate: selectedDate,
-            firstDate: DateTime(2000),
-            lastDate: DateTime(3000),
-          );
-          if (dateTime != null) {
-            setState(() {
-              selectedDate = dateTime;
-              formattedDate = DateFormat('MMMM yyyy').format(selectedDate);
-            });
-            widget.onDateSelected(dateTime);
-          }
-        },
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(top: 5.0),
-              child: Text(
-                formattedDate,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                ),
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'SELECT MONTH',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: 5),
-            const Icon(
-              Icons.calendar_month,
-              size: 30,
-              color: Color(0xFF02A676),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                DropdownButton<String>(
+                  value: selectedMonth,
+                  onChanged: (String? newMonth) {
+                    setState(() {
+                      selectedMonth = newMonth!;
+                      selectedDate = DateTime(
+                        selectedYear,
+                        months.indexOf(selectedMonth) + 1,
+                      );
+                    });
+                  },
+                  items: months.map((String month) {
+                    return DropdownMenuItem<String>(
+                      value: month,
+                      child: Text(month),
+                    );
+                  }).toList(),
+                ),
+                DropdownButton<int>(
+                  value: selectedYear,
+                  onChanged: (int? newYear) {
+                    setState(() {
+                      selectedYear = newYear!;
+                      selectedDate = DateTime(
+                        selectedYear,
+                        months.indexOf(selectedMonth) + 1,
+                      );
+                    });
+                  },
+                  items: years.map((int year) {
+                    return DropdownMenuItem<int>(
+                      value: year,
+                      child: Text(year.toString()),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.grey),
+                  ),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    widget.onDateSelected(selectedDate);
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                  ),
+                  child: const Text('Save'),
+                ),
+              ],
             ),
           ],
         ),
@@ -203,9 +223,193 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
   }
 }
 
+// class DatePickerWidget extends StatefulWidget {
+//   final DateTime initialDate;
+//   final ValueChanged<DateTime> onDateSelected;
+//
+//   const DatePickerWidget({
+//     super.key,
+//     required this.initialDate,
+//     required this.onDateSelected,
+//   });
+//
+//   @override
+//   _DatePickerWidgetState createState() => _DatePickerWidgetState();
+// }
+//
+// class _DatePickerWidgetState extends State<DatePickerWidget> {
+//   late DateTime selectedDate;
+//   late String formattedDate;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     selectedDate = widget.initialDate;
+//     formattedDate = DateFormat('MMMM yyyy').format(selectedDate);
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Padding(
+//       padding: const EdgeInsets.only(top: 40.0, bottom: 10),
+//       child: GestureDetector(
+//         onTap: () async {
+//           final DateTime? dateTime = await showDatePicker(
+//             context: context,
+//             initialDate: selectedDate,
+//             firstDate: DateTime(2000),
+//             lastDate: DateTime(3000),
+//           );
+//           if (dateTime != null) {
+//             setState(() {
+//               selectedDate = dateTime;
+//               formattedDate = DateFormat('MMMM yyyy').format(selectedDate);
+//             });
+//             widget.onDateSelected(dateTime);
+//           }
+//         },
+//         child: Row(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: <Widget>[
+//             Padding(
+//               padding: const EdgeInsets.only(top: 5.0),
+//               child: Text(
+//                 formattedDate,
+//                 style: const TextStyle(
+//                   fontWeight: FontWeight.w700,
+//                   fontSize: 18,
+//                 ),
+//               ),
+//             ),
+//             const SizedBox(width: 5),
+//             const Icon(
+//               Icons.calendar_month,
+//               size: 30,
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 //
 // Widget lastDescription(
-//     BuildContext context, String imagePath, String text1, String text2) {
+//     BuildContext context, String imagePath, String class _DatePickerWidgetState extends State<DatePickerWidget> {
+//   late DateTime selectedDate;
+//   late String formattedDate;
+//   List<String> months = [
+//     'January', 'February', 'March', 'April', 'May', 'June',
+//     'July', 'August', 'September', 'October', 'November', 'December'
+//   ];
+//   List<int> years = List.generate(101, (index) => 2023 - index); // For years from 2023 back to 1923
+//   late String selectedMonth;
+//   late int selectedYear;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     selectedDate = widget.initialDate;
+//     selectedMonth = DateFormat('MMMM').format(selectedDate);
+//     selectedYear = selectedDate.year;
+//     formattedDate = DateFormat('MMMM yyyy').format(selectedDate);
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Dialog(
+//       shape: RoundedRectangleBorder(
+//         borderRadius: BorderRadius.circular(10),
+//       ),
+//       child: Padding(
+//         padding: const EdgeInsets.all(16.0),
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             const Text(
+//               'SELECT MONTH',
+//               style: TextStyle(
+//                 fontSize: 18,
+//                 fontWeight: FontWeight.bold,
+//               ),
+//             ),
+//             const SizedBox(height: 10),
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 DropdownButton<String>(
+//                   value: selectedMonth,
+//                   onChanged: (String? newMonth) {
+//                     setState(() {
+//                       selectedMonth = newMonth!;
+//                       selectedDate = DateTime(
+//                         selectedYear,
+//                         months.indexOf(selectedMonth) + 1,
+//                       );
+//                     });
+//                   },
+//                   items: months.map((String month) {
+//                     return DropdownMenuItem<String>(
+//                       value: month,
+//                       child: Text(month),
+//                     );
+//                   }).toList(),
+//                 ),
+//                 DropdownButton<int>(
+//                   value: selectedYear,
+//                   onChanged: (int? newYear) {
+//                     setState(() {
+//                       selectedYear = newYear!;
+//                       selectedDate = DateTime(
+//                         selectedYear,
+//                         months.indexOf(selectedMonth) + 1,
+//                       );
+//                     });
+//                   },
+//                   items: years.map((int year) {
+//                     return DropdownMenuItem<int>(
+//                       value: year,
+//                       child: Text(year.toString()),
+//                     );
+//                   }).toList(),
+//                 ),
+//               ],
+//             ),
+//             const SizedBox(height: 20),
+//             Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceAround,
+//               children: [
+//                 ElevatedButton(
+//                   onPressed: () {
+//                     Navigator.pop(context);
+//                   },
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: Colors.white,
+//                     side: const BorderSide(color: Colors.grey),
+//                   ),
+//                   child: const Text(
+//                     'Cancel',
+//                     style: TextStyle(color: Colors.black),
+//                   ),
+//                 ),
+//                 ElevatedButton(
+//                   onPressed: () {
+//                     widget.onDateSelected(selectedDate);
+//                     Navigator.pop(context);
+//                   },
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: Colors.teal,
+//                   ),
+//                   child: const Text('Save'),
+//                 ),
+//               ],
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }text1, String text2) {
 //   return Container(
 //     margin: const EdgeInsets.all(20),
 //     child: Row(

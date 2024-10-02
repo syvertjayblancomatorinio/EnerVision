@@ -1,12 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:supabase_project/Login/setup_profile.dart';
+import 'package:supabase_project/StaticPages/aircon.dart';
+import 'package:supabase_project/EnergyPage/YourEnergyCalculator&Compare/compare_device.dart';
+import 'package:supabase_project/MainFolder/secondary_compare.dart';
 
-import '../EnergyPage/MyEnergyDiary/my_energy_diary_page.dart';
+import '../EnergyPage/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
 
 Future<void> main() async {
-  runApp(MyApp());
+  runApp(const CompareDevices(
+    userId: '66e6c1304dc050b5675ce9b0',
+    // compareAppliance: {},
+  ));
 }
 
 class MyApp extends StatelessWidget {

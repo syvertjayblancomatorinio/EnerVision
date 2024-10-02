@@ -2,16 +2,33 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
-import 'package:supabase_project/CommonWidgets/box-decoration-with-shadow.dart';
+import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/ConstantTexts/final_texts.dart';
-import 'package:supabase_project/EnergyPage/YourEnergyCalculator&Compare/AppliancesBrands/aircon.dart';
-import 'package:supabase_project/EnergyPage/YourEnergyCalculator&Compare/show_all_your_device.dart';
-import 'package:supabase_project/EnergyPage/energy_efficiency_tab/your_energy.dart';
+import 'package:supabase_project/StaticPages/aircon.dart';
+import 'package:supabase_project/zNotUsedFiles/show_all_your_device.dart';
+import 'package:supabase_project/SignUpLogin&LandingPage/home_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class CompareDevice extends StatelessWidget {
+class CompareDevice extends StatefulWidget {
   const CompareDevice({super.key});
+
+  @override
+  State<CompareDevice> createState() => _CompareDeviceState();
+}
+
+class _CompareDeviceState extends State<CompareDevice> {
+  String? userId;
+  String? applianceId;
+
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userId = prefs.getString('userId');
+      applianceId = prefs.getString('applianceId');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +36,13 @@ class CompareDevice extends StatelessWidget {
       theme: AppTheme.getAppTheme(),
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        // appBar: customAppBar1(title: 'Compare Device', showProfile: false),
+        appBar: customAppBar1(
+          title: 'Compare Device',
+          showProfile: false,
+          onBackPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         bottomNavigationBar: const BottomNavigation(selectedIndex: 1),
         body: SafeArea(child: content(context)),
       ),
@@ -41,32 +64,10 @@ class CompareDevice extends StatelessWidget {
 }
 
 Widget topSection(BuildContext context) {
-  return Container(
-    padding: const EdgeInsets.all(20),
-    decoration: const BoxDecoration(
-      color: AppColors.primaryColor,
-      borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
-    ),
+  return Padding(
+    padding: const EdgeInsets.all(20.0),
     child: Column(
       children: [
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
-                  size: 35,
-                  color: Colors.white,
-                ),
-                onPressed: () {},
-              ),
-            ),
-            const Spacer(),
-            Image.asset('assets/profile (2).png'),
-          ],
-        ),
         TextField(
           decoration: InputDecoration(
             hintText: 'Search Appliances',
@@ -102,7 +103,6 @@ Widget compareDeviceWidget(BuildContext context, String name, String image) {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Column to position text at the top-left
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyPage/MyEnergyDiary/my_energy_diary_page.dart';
-import 'package:supabase_project/EnergyPage/YourEnergyCalculator&Compare/show_all_your_device.dart';
-import 'package:supabase_project/EnergyPage/energy_efficiency_tab/Electric-Vehicles-Transportation.dart';
-import 'package:supabase_project/EnergyPage/energy_efficiency_tab/energy-storage-systems.dart';
-import 'package:supabase_project/EnergyPage/energy_efficiency_tab/fossil-fuels.dart';
+import 'package:supabase_project/EnergyPage/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
+import 'package:supabase_project/EnergyPage/EnergyTracker/energy_tracker.dart';
+import 'package:supabase_project/SignUpLogin&LandingPage/EnergyEfficiency/energy_effieciency_page.dart';
+import 'package:supabase_project/zNotUsedFiles/show_all_your_device.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../EnergyPage/MyEnergyDiary/all_devices_page.dart';
+import '../StaticPages/energy_efficiency_tab/Electric-Vehicles-Transportation.dart';
+import '../StaticPages/energy_efficiency_tab/energy-storage-systems.dart';
 
 class BottomNavigation extends StatefulWidget {
   final int selectedIndex;
@@ -16,6 +19,21 @@ class BottomNavigation extends StatefulWidget {
 
 class _BottomNavigationState extends State<BottomNavigation> {
   int _selectedIndex = -1;
+  String? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId(); // Load the userId when the widget initializes
+  }
+
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userId = prefs
+          .getString('userId'); // Retrieve the userId from SharedPreferences
+    });
+  }
 
   void _handleTap(int index) {
     setState(() {
@@ -25,7 +43,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const MyEnergyDiary(selectedIndex: 0),
+            builder: (context) => const EnergyEffieciencyPage(selectedIndex: 0),
             // builder: (context) => const YourEnergyPage(),
           ),
         );
@@ -33,7 +51,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const ShowAllDevice(
+            builder: (context) => const MyEnergyDiary(
               selectedIndex: 1,
             ),
           ),
@@ -42,14 +60,14 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => FossilFuelsWidget(selectedIndex: index),
+            builder: (context) => AllDevicesPage(userId: userId!),
           ),
         );
       } else if (index == 3) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ElectricVehicles(selectedIndex: index),
+            builder: (context) => const EnergyTracker(),
           ),
         );
       } else if (index == 4) {
@@ -100,11 +118,5 @@ class _BottomNavigationState extends State<BottomNavigation> {
         ),
       ],
     );
-  }
-
-  Color _getTileColor(int index) {
-    return _selectedIndex == index
-        ? Colors.green.withOpacity(0.2)
-        : Colors.white;
   }
 }
