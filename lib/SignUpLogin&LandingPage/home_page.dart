@@ -1,16 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:supabase_project/Buttons/energy_efficiency_buttons.dart';
-import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
-import 'package:supabase_project/ConstantTexts/Theme.dart';
-import 'package:supabase_project/EnergyPage/MyEnergyDiary/all_devices_page.dart';
-import 'package:supabase_project/zNotUsedFiles/show_all_your_device.dart';
 
-import '../EnergyPage/EnergyTracker/energy_tracker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 
 import '../StaticPages/energy_efficiency_tab/Electric-Vehicles-Transportation.dart';
 import '../StaticPages/energy_efficiency_tab/energy-effieciency-widget.dart';

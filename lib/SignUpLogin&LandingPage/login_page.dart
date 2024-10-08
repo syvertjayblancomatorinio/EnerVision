@@ -1,13 +1,14 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/user.dart';
 import 'package:supabase_project/buttons/sign_up_button.dart';
 import 'package:supabase_project/CommonWidgets/textfield.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -28,6 +29,14 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   User user = User('', '', '', 0.0);
+  Future<void> _showErrorDialog(BuildContext context) async {
+    await showCustomDialog(
+      context: context,
+      title: 'Login Failed',
+      message: "Email or Password \nis incorrect",
+      buttonText: 'OK',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,14 +157,26 @@ class _LoginPageState extends State<LoginPage> {
                   SignUpButton(
                     onPressed: () async {
                       if (_formKey.currentState?.validate() ?? false) {
-                        AuthService(
-                          context: context,
-                          emailController: _emailController,
-                          passwordController: _passwordController,
-                        ).signIn();
+                        try {
+                          final response = await AuthService(
+                            context: context,
+                            emailController: _emailController,
+                            passwordController: _passwordController,
+                          ).signIn();
+
+                          if (response != null) {
+                            if (response.statusCode == 401) {
+                              await _showErrorDialog(context);
+                            }
+                          }
+                        } catch (e) {
+                          _showSnackBar('Failed to Sign In: ${e.toString()}');
+                          print(e.toString());
+                        }
                       } else {
-                        _showSnackBar('Password incorrect');
-                        print('not okay');
+                        _showSnackBar(
+                            'Form validation failed. Please check your input.');
+                        print('Form validation not okay');
                       }
                     },
                     text: 'Sign In',

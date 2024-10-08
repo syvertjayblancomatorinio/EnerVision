@@ -8,9 +8,10 @@ import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/ConstantTexts/final_texts.dart';
-import 'package:supabase_project/EnergyPage/YourEnergyCalculator&Compare/compare_two_device.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+
+import '../YourEnergyCalculator&Compare/compare_two_device.dart';
 
 class AirConditioner extends StatefulWidget {
   const AirConditioner({super.key});

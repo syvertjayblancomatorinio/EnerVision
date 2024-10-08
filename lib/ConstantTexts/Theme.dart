@@ -8,12 +8,12 @@ class AppTheme {
     fontSize: 24,
     fontWeight: FontWeight.bold,
     color: AppColors.primaryColor,
-    fontFamily: 'WorkSans',
+    fontFamily: 'Montserrat',
   );
 
   static ThemeData getAppTheme() {
     return ThemeData(
-      fontFamily: 'WorkSans',
+      fontFamily: 'Montserrat',
 
       // Primary and Secondary Colors
       primaryColor: AppColors.primaryColor,
@@ -26,7 +26,7 @@ class AppTheme {
         elevation: 0,
         iconTheme: IconThemeData(color: AppColors.primaryColor),
         titleTextStyle: TextStyle(
-          fontFamily: 'WorkSans', // Explicitly define font for app bar title
+          fontFamily: 'Montserrat', // Explicitly define font for app bar title
           color: Colors.white,
           fontSize: 20,
           fontWeight: FontWeight.bold,
@@ -36,18 +36,18 @@ class AppTheme {
       // Text Theme
       textTheme: const TextTheme(
         titleLarge: TextStyle(
-          fontFamily: 'WorkSans', // Default font for headline6
+          fontFamily: 'Montserrat', // Default font for headline6
           color: Colors.black,
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
         bodyLarge: TextStyle(
-          fontFamily: 'WorkSans', // Default font for body text
+          fontFamily: 'Montserrat', // Default font for body text
           color: Colors.black,
           fontSize: 16,
         ),
         bodyMedium: TextStyle(
-          fontFamily: 'WorkSans',
+          fontFamily: 'Montserrat',
           color: Colors.black,
           fontSize: 14,
         ),
@@ -68,7 +68,7 @@ class AppTheme {
           ),
           textStyle: MaterialStateProperty.all<TextStyle>(
             const TextStyle(
-              fontFamily: 'WorkSans', // Default font for elevated buttons
+              fontFamily: 'Montserrat', // Default font for elevated buttons
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
@@ -92,7 +92,7 @@ class AppTheme {
           ),
           textStyle: MaterialStateProperty.all<TextStyle>(
             const TextStyle(
-              fontFamily: 'WorkSans', // Default font for outlined buttons
+              fontFamily: 'Montserrat', // Default font for outlined buttons
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -120,12 +120,12 @@ class AppTheme {
         labelColor: AppColors.primaryColor,
         unselectedLabelColor: Colors.grey,
         labelStyle: TextStyle(
-          fontFamily: 'WorkSans', // Default font for tab labels
+          fontFamily: 'Montserrat', // Default font for tab labels
           fontSize: 16,
           fontWeight: FontWeight.bold,
         ),
         unselectedLabelStyle: TextStyle(
-          fontFamily: 'WorkSans', // Default font for unselected tab labels
+          fontFamily: 'Montserrat', // Default font for unselected tab labels
           fontSize: 16,
         ),
       ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_project/EnergyPage/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
 import 'dart:io';

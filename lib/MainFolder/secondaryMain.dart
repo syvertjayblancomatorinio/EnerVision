@@ -1,18 +1,37 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:supabase_project/EnergyEfficiency/community_tab.dart';
+import 'package:supabase_project/EnergyEfficiency/create_post.dart';
+import 'package:supabase_project/EnergyEfficiency/energy_effieciency_page.dart';
+import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:supabase_project/StaticPages/aircon.dart';
-import 'package:supabase_project/EnergyPage/YourEnergyCalculator&Compare/compare_device.dart';
 import 'package:supabase_project/MainFolder/secondary_compare.dart';
-
-import '../EnergyPage/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
+import 'dart:async';
 
 Future<void> main() async {
-  runApp(const CompareDevices(
-    userId: '66e6c1304dc050b5675ce9b0',
-    // compareAppliance: {},
-  ));
+  runApp(
+    const MaterialApp(
+      home: CommunityTab(),
+    ),
+  );
 }
+
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Home Screen"),
+      ),
+      body: const Center(
+        child: Text("Welcome to Enervision!"),
+      ),
+    );
+  }
+}
+
+// Example home screen after splash screen
 
 class MyApp extends StatelessWidget {
   @override

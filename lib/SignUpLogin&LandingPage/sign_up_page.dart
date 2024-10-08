@@ -61,10 +61,8 @@ class _SignUpPageState extends State<SignUpPage> {
     await showCustomDialog(
       context: context,
       title: 'Registration Error',
-      messages: [
-        "The email is already registered.",
-        'Please use a different email.'
-      ],
+      message:
+          "The email is already registered.\nPlease use a different email.",
       buttonText: 'OK',
     );
   }

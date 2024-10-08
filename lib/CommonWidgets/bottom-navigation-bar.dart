@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyPage/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
+import 'package:supabase_project/EnergyEfficiency/energy_effieciency_page.dart';
 import 'package:supabase_project/EnergyPage/EnergyTracker/energy_tracker.dart';
-import 'package:supabase_project/SignUpLogin&LandingPage/EnergyEfficiency/energy_effieciency_page.dart';
-import 'package:supabase_project/zNotUsedFiles/show_all_your_device.dart';
+import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
+import 'package:supabase_project/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
+import 'package:supabase_project/Settings/app-settings-widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../EnergyPage/MyEnergyDiary/all_devices_page.dart';
-import '../StaticPages/energy_efficiency_tab/Electric-Vehicles-Transportation.dart';
-import '../StaticPages/energy_efficiency_tab/energy-storage-systems.dart';
 
 class BottomNavigation extends StatefulWidget {
   final int selectedIndex;
@@ -43,7 +41,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const EnergyEffieciencyPage(selectedIndex: 0),
+            builder: (context) => const EnergyEfficiencyPage(selectedIndex: 0),
             // builder: (context) => const YourEnergyPage(),
           ),
         );
@@ -74,7 +72,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => EnergyStorage(selectedIndex: index),
+            builder: (context) => const AppSettings(),
           ),
         );
       }

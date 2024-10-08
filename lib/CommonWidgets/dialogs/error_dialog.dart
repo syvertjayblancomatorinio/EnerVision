@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
+import 'package:flutter/material.dart';
+import 'package:supabase_project/ConstantTexts/colors.dart';
+
 Future<void> showCustomDialog({
   required BuildContext context,
   required String title,
-  required List<String> messages,
+  required String message,
   required String buttonText,
+  IconData? icon = Icons.error_outline,
+  Color? iconColor = AppColors.secondaryColor,
 }) async {
   return showDialog<void>(
     context: context,
@@ -22,28 +27,30 @@ Future<void> showCustomDialog({
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: AppColors.secondaryColor,
+              Icon(
+                icon,
+                color: iconColor,
                 size: 50,
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Appliance Already Exists',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                    fontFamily: 'Montserrat'),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  fontFamily: 'Montserrat',
+                ),
               ),
               const SizedBox(height: 10),
               Text(
-                'Oops! The appliance is already in your list. Please try again by adding a different appliance.',
+                message,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                    fontFamily: 'Montserrat'),
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                  fontFamily: 'Montserrat',
+                ),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
@@ -58,12 +65,13 @@ Future<void> showCustomDialog({
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
-                child: const Text(
-                  'Okay, Got it!',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontFamily: 'Montserrat'),
+                child: Text(
+                  buttonText,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                    fontFamily: 'Montserrat',
+                  ),
                 ),
               ),
             ],

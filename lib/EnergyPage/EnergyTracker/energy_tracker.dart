@@ -9,9 +9,8 @@ import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/ConstantTexts/final_texts.dart';
-import 'package:supabase_project/EnergyPage/MyEnergyDiary/appliances_container.dart';
-import 'package:supabase_project/EnergyPage/MyEnergyDiary/all_devices_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 
 import '../../Buttons/sign_up_button.dart';
 import '../../zNotUsedFiles/show_all_your_device.dart';

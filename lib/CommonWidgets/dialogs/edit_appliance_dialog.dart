@@ -9,6 +9,7 @@ class EditApplianceDialog extends StatelessWidget {
   final Map<String, dynamic> appliance;
   final Future<void> Function(String, Map<String, dynamic>) updateAppliance;
   final VoidCallback fetchAppliances;
+  final VoidCallback fetchDailyCosts;
 
   const EditApplianceDialog({
     Key? key,
@@ -20,6 +21,7 @@ class EditApplianceDialog extends StatelessWidget {
     required this.appliance,
     required this.updateAppliance,
     required this.fetchAppliances,
+    required this.fetchDailyCosts,
   }) : super(key: key);
 
   void _showSnackBar(BuildContext context, String message) {
@@ -128,6 +130,8 @@ class EditApplianceDialog extends StatelessWidget {
                           updateAppliance(appliance['_id'], updatedAppliance)
                               .then((_) {
                             fetchAppliances();
+                            fetchDailyCosts();
+
                             Navigator.of(context).pop();
                             _showSnackBar(
                                 context, 'Appliance updated successfully!');
