@@ -56,7 +56,7 @@ class ApplianceService {
       body: jsonEncode(
           <String, dynamic>{'userId': userId, 'applianceData': applianceData}),
     );
-
+.
     if (response.statusCode == 201) {
       print('Appliance added successfully');
     } else {
