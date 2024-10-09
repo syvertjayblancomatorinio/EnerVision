@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';

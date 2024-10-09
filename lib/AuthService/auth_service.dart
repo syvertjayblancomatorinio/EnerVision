@@ -5,8 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
-import 'package:supabase_project/SignUpLogin&LandingPage/setup_profile.dart';
 import 'package:flutter/foundation.dart';
+
+import '../SignUpLogin&LandingPage/setup_profile.dart';
 
 class AuthService {
   final BuildContext context;
