@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_project/AuthService/auth_profile.dart';
+import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/EnergyEfficiency/create_post.dart';
