@@ -5,45 +5,17 @@ const Appliance = require('../models/appliances.model');
 const router = express.Router();
 const MonthlyConsumption = require('../models/monthly_consumption.model');
 
-//router.post('/addApplianceToUser', asyncHandler(async (req, res) => {
-//    const { userId, applianceData } = req.body;
-//    const { applianceName } = applianceData;
-//
-//    // Trim the applianceName and check if it's empty
-//    if (!applianceName || applianceName.trim() === "") {
-//        return res.status(400).json({ message: 'Appliance name cannot be empty or just whitespace.' });
-//    }
-//
-//    const existingAppliance = await Appliance.findOne({ applianceName: applianceName.trim(), userId });
-//    if (existingAppliance) {
-//        return res.status(400).json({ message: 'Appliance already exists for this user.' });
-//    }
-//
-//    const newAppliance = new Appliance({ ...applianceData, applianceName: applianceName.trim(), userId });
-//    await newAppliance.save();
-//
-//    const user = await User.findById(userId);
-//    if (!user) return res.status(404).json({ message: 'User not found' });
-//
-//    user.appliances.push(newAppliance._id);
-//    await user.save({ validateBeforeSave: false });
-//
-//    res.status(201).json({ message: 'Appliance added to user', appliance: newAppliance });
-//}));
+
 router.post('/addApplianceToUser', asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
-    const { applianceName, applianceCategory, wattage, usagePatternPerDay, usagePatternPerWeek, createdAt } = applianceData;
+    const { applianceName, applianceCategory, wattage, usagePatternPerDay, usagePatternPerWeek } = applianceData;
 
     // Trim the applianceName and check if it's empty
     if (!applianceName || applianceName.trim() === "") {
         return res.status(400).json({ message: 'Appliance name cannot be empty or just whitespace.' });
     }
 
-    // Validate other required fields
-    if (!wattage || !usagePatternPerDay || !usagePatternPerWeek || !createdAt) {
-        return res.status(400).json({ message: 'Wattage, daily usage pattern, weekly usage pattern, and creation date are required.' });
-    }
-
+    // Check if appliance already exists for this user
     const existingAppliance = await Appliance.findOne({ applianceName: applianceName.trim(), userId });
     if (existingAppliance) {
         return res.status(400).json({ message: 'Appliance already exists for this user.' });
@@ -55,8 +27,10 @@ router.post('/addApplianceToUser', asyncHandler(async (req, res) => {
 
     const kwhRate = user.kwhRate; // Assume the user has a kWh rate
 
-    // Parse the createdAt date
-    const createdDate = new Date(createdAt);
+    // Automatically set the createdAt date to the current time
+    const createdDate = new Date();
+
+    // Use current date to calculate the remaining days in the month
     const currentYear = createdDate.getFullYear();
     const currentMonth = createdDate.getMonth(); // 0-indexed, so January is 0
     const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); // Get total days in the month
@@ -79,15 +53,15 @@ router.post('/addApplianceToUser', asyncHandler(async (req, res) => {
     // Calculate Total Cost
     const monthlyCost = energyKwh * kwhRate; // Total cost based on energy consumed
 
-    // Create new appliance with calculated monthly cost
+    // Create new appliance with calculated monthly cost and automatically set createdAt to current time
     const newAppliance = new Appliance({
         applianceName: applianceName.trim(),
         applianceCategory,
         wattage,
         usagePatternPerDay,
         usagePatternPerWeek,
-        createdAt: createdAt,
-        monthlyCost, // Assign the calculated monthly cost
+        createdAt: createdDate,
+        monthlyCost,
         userId
     });
 
