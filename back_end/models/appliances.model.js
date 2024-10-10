@@ -20,8 +20,10 @@ const applianceSchema = new Schema({
         ],
         default: 'Personal Devices',
     },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
     deletedAt: { type: Date, default: null },
-}, { timestamps: true });
+});
 
 applianceSchema.index({ userId: 1 });
 
