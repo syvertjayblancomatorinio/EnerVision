@@ -6,6 +6,7 @@ const router = express.Router();
 const MonthlyConsumption = require('../models/monthly_consumption.model');
 
 
+
 router.post('/addApplianceToUser', asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
     const { applianceName, applianceCategory, wattage, usagePatternPerDay, usagePatternPerWeek, createdAt } = applianceData;
@@ -49,7 +50,7 @@ router.post('/addApplianceToUser', asyncHandler(async (req, res) => {
 
     // Calculate energy consumption (in kWh) and monthly cost
     const energyKwh = (wattage * totalHoursUsed) / 1000; // Convert wattage to kWh
-   const monthlyCost = calculateCost(createdDate, new Date(currentYear, currentMonth + 1, 0), wattage, { usagePatternPerDay, usagePatternPerWeek }, kwhRate);
+    const monthlyCost = calculateCost(createdDate, new Date(currentYear, currentMonth + 1, 0), wattage, { usagePatternPerDay, usagePatternPerWeek }, kwhRate);
 
     // Create a new appliance entry
     const newAppliance = new Appliance({
@@ -136,21 +137,22 @@ router.patch('/updateAppliance/:applianceId', asyncHandler(async (req, res) => {
 }));
 
 // Function to calculate the cost based on start and end dates
+// Function to calculate the cost based on start and end dates without rounding
 function calculateCost(startDate, endDate, wattage, usagePattern, kwhRate) {
-    const totalDays = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24)); // Get the number of days
+    // Calculate the exact number of days between the start and end dates
+    const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24); // Get exact number of days
     const fullWeeks = Math.floor(totalDays / 7); // Full weeks within the period
     const extraDays = totalDays % 7; // Remaining days after full weeks
 
     // Calculate usage based on the weekly pattern
     const totalDaysOfUsage = (fullWeeks * usagePattern.usagePatternPerWeek) + Math.min(extraDays, usagePattern.usagePatternPerWeek);
 
-    // Calculate total energy consumed (kWh)
+    // Calculate total energy consumed (kWh) without rounding
     const energyConsumed = (wattage * usagePattern.usagePatternPerDay * totalDaysOfUsage) / 1000; // Convert to kWh
 
     // Calculate total cost
     return energyConsumed * kwhRate;
 }
-
 
 
 
