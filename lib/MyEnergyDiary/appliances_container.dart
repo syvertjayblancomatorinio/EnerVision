@@ -27,6 +27,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   TextEditingController editApplianceNameController = TextEditingController();
   TextEditingController editWattageController = TextEditingController();
   TextEditingController editUsagePatternController = TextEditingController();
+  TextEditingController editWeeklyPatternController = TextEditingController();
 
   TextEditingController addApplianceNameController = TextEditingController();
   TextEditingController addWattageController = TextEditingController();
@@ -52,6 +53,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     editApplianceNameController.dispose();
     editWattageController.dispose();
     editUsagePatternController.dispose();
+
     addApplianceNameController.dispose();
     addWattageController.dispose();
     addUsagePatternController.dispose();
@@ -439,7 +441,8 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     editWattageController.text = appliance['wattage']?.toString() ?? '';
     editUsagePatternController.text =
         appliance['usagePatternPerDay']?.toString() ?? '';
-
+    editWeeklyPatternController.text =
+        appliance['usagePatternPerWeek']?.toString() ?? '';
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -447,6 +450,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           editApplianceNameController: editApplianceNameController,
           editWattageController: editWattageController,
           editUsagePatternController: editUsagePatternController,
+          editWeeklyPatternController: editWeeklyPatternController,
           formKey: formKey,
           editAppliance: () {},
           appliance: appliance,
@@ -487,18 +491,14 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
             children: [
               TotalCostDisplay(
                 cost: dailyCost['totalDailyConsumptionCost'] != null
-                    ? double.parse(
-                            dailyCost['totalDailyConsumptionCost'].toString())
-                        .toStringAsFixed(2)
+                    ? '₱ ${double.parse(dailyCost['totalDailyConsumptionCost'].toString()).toStringAsFixed(2)}'
                     : 'N/A',
               ),
               const SizedBox(width: 20),
               TotalCostDisplay(
                 cost: dailyCost['totalDailyKwhConsumption'] != null
-                    ? double.parse(
-                            dailyCost['totalDailyKwhConsumption'].toString())
-                        .toStringAsFixed(2)
-                    : 'N/A',
+                    ? '${double.parse(dailyCost['totalDailyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
+                    : 'KWH',
               ),
             ],
           ),
@@ -547,7 +547,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                         appliance['imagePath'] ?? 'assets/deviceImage.png'),
                     title: Text(appliance['applianceName'] ?? 'Unknown'),
                     subtitle: Text(
-                        'Wattage: ${appliance['wattage'] ?? 'N/A'}\nUsage Pattern: ${appliance['usagePatternPerDay'] ?? 'N/A'}'),
+                        'Wattage: ${appliance['wattage'] ?? 'N/A'}\nUsage Pattern: ${appliance['usagePatternPerDay'] ?? 'N/A'}\nWeekly Usage: ${appliance['usagePatternPerWeek'] ?? 'N/A'}\n'),
                     trailing: CupertinoButton(
                       padding: EdgeInsets.zero,
                       onPressed: () => _showActionSheet(context, index),

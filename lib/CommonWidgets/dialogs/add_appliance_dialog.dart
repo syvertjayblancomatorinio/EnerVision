@@ -51,6 +51,16 @@ class AddApplianceDialog extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
+                        onChanged: (value) {
+                          if (value.length > 16) {
+                            addApplianceNameController.text =
+                                value.substring(0, 16);
+                            addApplianceNameController.selection =
+                                TextSelection.fromPosition(TextPosition(
+                                    offset: addApplianceNameController
+                                        .text.length));
+                          }
+                        },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter an appliance name';
@@ -68,6 +78,14 @@ class AddApplianceDialog extends StatelessWidget {
                             borderRadius: BorderRadius.circular(15),
                           ),
                         ),
+                        onChanged: (value) {
+                          if (value.length > 6) {
+                            addWattageController.text = value.substring(0, 6);
+                            addWattageController.selection =
+                                TextSelection.fromPosition(TextPosition(
+                                    offset: addWattageController.text.length));
+                          }
+                        },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter the wattage';

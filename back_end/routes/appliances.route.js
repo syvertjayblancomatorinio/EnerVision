@@ -5,7 +5,44 @@ const Appliance = require('../models/appliances.model');
 const router = express.Router();
 const MonthlyConsumption = require('../models/monthly_consumption.model');
 
+// In your appliances.route.js
+// In your routes file (e.g., monthly_consumption.route.js)
 
+// In your routes file (e.g., monthly_consumption.route.js)
+
+router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
+    const { userId, month, year } = req.body;
+
+    // Validate month and year
+    if (!month || !year) {
+        return res.status(400).json({ message: 'Month and year are required.' });
+    }
+
+    // Fetch user
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Fetch appliances for the user
+    const appliances = await Appliance.find({ userId });
+    const totalMonthlyCost = appliances.reduce((total, appliance) => {
+        return total + (appliance.monthlyCost || 0);
+    }, 0);
+
+    // Create a new MonthlyConsumption record
+    const monthlyConsumption = new MonthlyConsumption({
+        userId: user._id,
+        month: parseInt(month, 10), // Convert to integer
+        year: parseInt(year, 10),   // Convert to integer
+        totalMonthlyConsumption: totalMonthlyCost
+    });
+
+    // Save to database
+    await monthlyConsumption.save();
+
+    res.status(200).json({ message: 'Monthly consumption saved successfully.' });
+}));
 
 router.post('/addApplianceToUser', asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
@@ -136,7 +173,6 @@ router.patch('/updateAppliance/:applianceId', asyncHandler(async (req, res) => {
     res.json({ message: 'Appliance updated successfully', appliance: updatedAppliance });
 }));
 
-// Function to calculate the cost based on start and end dates
 // Function to calculate the cost based on start and end dates without rounding
 function calculateCost(startDate, endDate, wattage, usagePattern, kwhRate) {
     // Calculate the exact number of days between the start and end dates
@@ -167,14 +203,22 @@ router.get('/totalMonthlyCostOfUserAppliances/:userId', asyncHandler(async (req,
 
     // Find all appliances for the user and sum their monthlyCost
     const appliances = await Appliance.find({ userId });
+    const emissionFactor = 0.7;
+    let totalMonthlyKwhConsumption = 0;
+    let totalMonthlyCO2Emissions = 0;
 
-    // Calculate the total monthly cost
     const totalMonthlyCost = appliances.reduce((total, appliance) => {
-        return total + (appliance.monthlyCost || 0); // Ensure to add only defined monthlyCost values
+        return total + (appliance.monthlyCost || 0);
     }, 0);
+    // Calculate the monthly kWh consumption
+     totalMonthlyKwhConsumption = totalMonthlyCost / user.kwhRate;
+
+    const monthlyCO2Emission = totalMonthlyKwhConsumption * emissionFactor;
+
+    totalMonthlyCO2Emissions += monthlyCO2Emission;
 
     // Send the response with the total monthly cost
-    res.status(200).json({ userId, totalMonthlyCost, appliances });
+    res.status(200).json({ userId, totalMonthlyCost, totalMonthlyKwhConsumption,totalMonthlyCO2Emissions ,appliances });
 }));
 
 
@@ -202,7 +246,15 @@ router.get('/totalDailyData/:userId', async (req, res) => {
 
         const appliances = await Appliance.find({ userId });
         if (!appliances || appliances.length === 0) {
-            return res.status(404).json({ message: 'No appliances found for this user' });
+            return res.status(200).json({
+                message: 'No appliances found for this user',
+                totalDailyConsumptionCost: (0).toFixed(2),
+                totalDailyKwhConsumption: (0).toFixed(2),
+                totalMonthlyConsumption: (0).toFixed(2),
+                totalMonthlyKwhConsumption: (0).toFixed(2),
+                totalDailyCO2Emissions: (0).toFixed(2),
+                totalMonthlyCO2Emissions: (0).toFixed(2)
+            });
         }
 
         const user = await User.findById(userId);
@@ -213,6 +265,7 @@ router.get('/totalDailyData/:userId', async (req, res) => {
         const kwhRate = user.kwhRate;
         const emissionFactor = 0.7; // kg CO2/kWh for Cebu or the Philippines
 
+        // Initialize totals to 0, ensuring we don't get undefined values
         let totalDailyConsumptionCost = 0;
         let totalDailyKwhConsumption = 0;
         let totalMonthlyConsumption = 0;
@@ -221,8 +274,12 @@ router.get('/totalDailyData/:userId', async (req, res) => {
         let totalMonthlyCO2Emissions = 0;
 
         for (const appliance of appliances) {
-            const kwh = appliance.wattage / 1000;
-            const totalDailyKwh = kwh * appliance.usagePatternPerDay;
+            const wattage = appliance.wattage || 0; // Default to 0 if no wattage
+            const usagePatternPerDay = appliance.usagePatternPerDay || 0; // Default to 0 if undefined
+            const usagePatternPerWeek = appliance.usagePatternPerWeek || 0; // Default to 0 if undefined
+            const kwh = wattage / 1000;
+
+            const totalDailyKwh = kwh * usagePatternPerDay;
 
             // Calculate daily consumption cost
             totalDailyKwhConsumption += totalDailyKwh;
@@ -233,7 +290,7 @@ router.get('/totalDailyData/:userId', async (req, res) => {
             totalDailyCO2Emissions += dailyCO2Emission;
 
             // Calculate weekly consumption
-            const hoursUsedPerWeek = appliance.usagePatternPerDay * appliance.usagePatternPerWeek;
+            const hoursUsedPerWeek = usagePatternPerDay * usagePatternPerWeek;
             const kwhUsedPerWeek = hoursUsedPerWeek * kwh;
             const costPerWeek = kwhUsedPerWeek * kwhRate;
 
@@ -248,14 +305,15 @@ router.get('/totalDailyData/:userId', async (req, res) => {
             totalMonthlyCO2Emissions += monthlyCO2Emission;
         }
 
+        // Convert all totals to two decimal places using toFixed(2)
         res.json({
             message: 'Total daily and monthly data for all appliances',
-            totalDailyConsumptionCost,
-            totalDailyKwhConsumption,
-            totalMonthlyConsumption,
-            totalMonthlyKwhConsumption,
-            totalDailyCO2Emissions,
-            totalMonthlyCO2Emissions
+            totalDailyConsumptionCost: totalDailyConsumptionCost.toFixed(2),
+            totalDailyKwhConsumption: totalDailyKwhConsumption.toFixed(2),
+            totalMonthlyConsumption: totalMonthlyConsumption.toFixed(2),
+            totalMonthlyKwhConsumption: totalMonthlyKwhConsumption.toFixed(2),
+            totalDailyCO2Emissions: totalDailyCO2Emissions.toFixed(2),
+            totalMonthlyCO2Emissions: totalMonthlyCO2Emissions.toFixed(2)
         });
 
     } catch (err) {
@@ -280,7 +338,7 @@ router.get('/getUsersCount/:userId/appliances', asyncHandler(async (req, res) =>
     });
   } catch (error) {
     console.error(error); // Log the error to the console
-    return res.status(500).json({ message: 'Server error' }); // Send server error response
+    return res.status(500).json({ message: 'Server error' });
   }
 }));
 
@@ -289,7 +347,7 @@ router.get('/monthlyData/:userId', async (req, res) => {
       try {
           const userId = req.params.userId;
           const monthlyData = await MonthlyConsumption.find({ userId })
-              .sort({ year: -1, month: -1 }); // Sort by year and month descending
+              .sort({ year: -1, month: -1 });
 
         if (!monthlyData || monthlyData.length === 0) {
             return res.status(404).json({ message: 'No monthly data found for this user' });

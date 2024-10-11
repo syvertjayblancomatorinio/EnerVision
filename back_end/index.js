@@ -5,8 +5,46 @@ const port = process.env.PORT || 8080;
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const MonthlyConsumption = require('./models/monthly_consumption.model'); // Import model
 const cron = require('node-cron');
 const winston = require('winston');
+
+const User = require('./models/user.model'); // Adjust the path as needed
+const Appliance = require('./models/appliances.model');
+
+// Cron job to save monthly consumption on the last day of each month
+cron.schedule('0 0 1 * *', async () => {
+    const users = await User.find(); // Get all users
+    for (const user of users) {
+        const appliances = await Appliance.find({ userId: user._id });
+
+        // Debugging: Log the appliances and their monthly costs
+        console.log('Appliances for user:', user._id, appliances);
+
+        const totalMonthlyCost = appliances.reduce((total, appliance) => {
+            return total + (appliance.monthlyCost || 0);
+        }, 0);
+
+        // Debugging: Log the total monthly cost
+        console.log('Total Monthly Cost for user:', user._id, totalMonthlyCost);
+
+        const month = new Date().getMonth() + 1; // Get the current month (1-12)
+        const year = new Date().getFullYear(); // Get the current year
+
+        const monthlyConsumption = new MonthlyConsumption({
+            userId: user._id,
+            month,
+            year,
+            totalMonthlyConsumption: totalMonthlyCost
+        });
+
+        // Debugging: Log before saving to the database
+        console.log('Saving Monthly Consumption:', monthlyConsumption);
+
+        await monthlyConsumption.save(); // Save to database
+    }
+});
+
 
 
 // Connect to MongoDB with error handling

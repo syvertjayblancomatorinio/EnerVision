@@ -44,48 +44,16 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       final data = jsonDecode(response.body);
       setState(() {
         monthlyData['totalMonthlyCost'] = data['totalMonthlyCost'];
+        monthlyData['totalMonthlyKwhConsumption'] =
+            data['totalMonthlyKwhConsumption'];
+        monthlyData['totalMonthlyCO2Emissions'] =
+            data['totalMonthlyCO2Emissions'];
       });
       print('Fetched total monthly cost: ${monthlyData['totalMonthlyCost']}');
     } else {
       print('Failed to fetch total monthly cost: ${response.statusCode}');
     }
   }
-
-  // Future<void> getMonthly() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final userId = prefs.getString('userId');
-  //
-  //   if (userId == null) {
-  //     print("User ID is null. Cannot fetch monthly consumption.");
-  //     return;
-  //   }
-  //
-  //   final url = Uri.parse("http://10.0.2.2:8080/totalDailyData/$userId");
-  //
-  //   final response = await http.get(
-  //     url,
-  //     headers: <String, String>{
-  //       'Content-Type': 'application/json; charset=UTF-8',
-  //     },
-  //   );
-  //
-  //   if (response.statusCode == 200) {
-  //     final data = jsonDecode(response.body);
-  //     setState(() {
-  //       monthlyData = {
-  //         'totalMonthlyCO2Emissions': data['totalMonthlyCO2Emissions'],
-  //         'totalMonthlyConsumption': data['totalMonthlyConsumption'],
-  //         'totalMonthlyKwhConsumption': data['totalMonthlyKwhConsumption'],
-  //       };
-  //     });
-  //     print(
-  //         'Fetched totalMonthlyConsumption: ${monthlyData['totalMonthlyConsumption']}');
-  //     print(
-  //         'Fetched totalMonthlyKwhConsumption: ${monthlyData['totalMonthlyKwhConsumption']}');
-  //   } else {
-  //     print('Failed to fetch totalMonthlyConsumption: ${response.statusCode}');
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {

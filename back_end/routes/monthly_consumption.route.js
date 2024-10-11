@@ -142,6 +142,31 @@ router.get('/get-daily-consumption/:userId', async (req, res) => {
   }
 });
 
+// In your routes file (e.g., monthly_consumption.route.js)
+
+router.get('/monthlyConsumption', asyncHandler(async (req, res) => {
+    const { userId, month, year } = req.query;
+
+    // Validate required parameters
+    if (!userId || !month || !year) {
+        return res.status(400).json({ message: 'userId, month, and year are required.' });
+    }
+
+    // Fetch the monthly consumption for the given user, month, and year
+    const monthlyConsumption = await MonthlyConsumption.findOne({
+        userId,
+        month: parseInt(month, 10),  // Convert to integer
+        year: parseInt(year, 10)      // Convert to integer
+    });
+
+    // If not found, return a 404 error
+    if (!monthlyConsumption) {
+        return res.status(404).json({ message: 'Monthly consumption not found.' });
+    }
+
+    // Send the found monthly consumption data
+    res.status(200).json(consumption);
+}));
 
 router.get('/monthly-consumption/:userId', async (req, res) => {
     const { userId } = req.params;

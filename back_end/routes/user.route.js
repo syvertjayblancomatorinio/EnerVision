@@ -165,7 +165,22 @@ router.patch('/updateKwh/:userId', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ message: 'User updated successfully', user: updateKWHRate });
+    res.json({ message: 'Users KWH  updated successfully', user: updateKWHRate });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+});
+
+router.get("/user/:userId/kwhRate", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Assuming the user object has a field 'kwhRate'
+    res.json({ kwhRate: user.kwhRate });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
