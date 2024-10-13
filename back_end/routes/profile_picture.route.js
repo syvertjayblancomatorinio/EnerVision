@@ -4,7 +4,6 @@ const asyncHandler = require('../centralized_codes/authMiddleware'); // Your asy
 const multer = require("multer");
 const router = express.Router();
 const path = require("path");
-
 router.post('/uploadProfilePicture', upload.single('profilePicture'), async (req, res) => {
   try {
     const { userId } = req.body;

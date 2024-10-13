@@ -17,12 +17,21 @@ class LastMonthPage extends StatefulWidget {
 
 class _LastMonthPageState extends State<LastMonthPage> {
   Map<String, dynamic> monthlyData = {};
-  int applianceCount = 0; // Renamed for clarity
+  int applianceCount = 0;
   DateTime selectedDate = DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    // Set selectedDate to the previous month
+    DateTime now = DateTime.now();
+    selectedDate = DateTime(now.year, now.month - 1, now.day);
+
+    // Adjust for January to December transition
+    if (now.month == 1) {
+      selectedDate = DateTime(now.year - 1, 12, now.day);
+    }
+
     getLastMonth(selectedDate);
     getUsersApplianceCount(); // Fetching the appliance count during init
   }

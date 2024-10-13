@@ -6,7 +6,7 @@ const applianceSchema = new Schema({
     applianceName: { type: String, required: true, trim: true },
     wattage: { type: Number, required: true },
     usagePatternPerDay: { type: Number, required: true },
-    usagePatternPerWeek: { type: Number, required: true },
+    usagePatternPerWeek: { type: Number, required: false },
     monthlyCost: { type: Number, default: 0 },
     applianceCategory: {
         type: String,

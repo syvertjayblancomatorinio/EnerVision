@@ -46,10 +46,10 @@ cron.schedule('0 0 1 * *', async () => {
 });
 
 
-
 // Connect to MongoDB with error handling
 mongoose.connect(
-  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
+"mongodb://localhost:27017/enervision"
+//  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
 //  { useNewUrlParser: true, useUnifiedTopology: true }
 ).then(() => {
   console.log('Connected to MongoDB');
@@ -70,8 +70,10 @@ app.use('/images', express.static('C:/Users/SyvertJayMartorinio/OneDrive - Geidi
 // Route definitions
 app.use('/', require('./routes/user.route'));
 app.use('/', require('./routes/appliances.route'));
+app.use('/', require('./routes/new_appliance.route'));
 app.use('/', require('./routes/post.route'));
 app.use('/', require('./routes/suggestions.route'));
+app.use('/', require('./routes/profile.route'));
 app.use('/', require('./routes/profile.route'));
 app.use('/', require('./routes/profiles.route'));
 app.use('/', require('./routes/compared_appliance.route'));

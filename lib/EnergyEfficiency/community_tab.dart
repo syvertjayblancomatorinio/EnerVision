@@ -5,7 +5,10 @@ import 'package:supabase_project/AuthService/auth_profile.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
+import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/create_post.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:http/http.dart' as http;
 
 class CommunityTab extends StatefulWidget {
@@ -19,17 +22,139 @@ class _CommunityTabState extends State<CommunityTab> {
   List<dynamic> posts = [];
   bool isLoading = false;
   bool showUsersPosts = false;
-
+  bool isUserPost = false;
   @override
   void initState() {
     super.initState();
     getPosts();
-    getUsersPost();
   }
+
+  Future<void> deletePost(String postId) async {
+    try {
+      await PostsService.deletePost(postId);
+      print('Post deleted successfully');
+    } catch (e) {
+      print('Error deleting post: $e');
+    }
+  }
+
+  void _confirmDeletePost(int index) {
+    final post = posts[index];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 16,
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.warning, // Warning icon for deletion
+                  color: AppColors.primaryColor,
+                  size: 50,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Delete Post?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Are you sure you want to delete this Post? This cannot be undone.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        deletePost(post['_id']).then((_) {
+                          // After deletion, pop the dialog
+                          Navigator.of(context).pop();
+
+                          // Optionally refresh the UI or fetch posts again
+                          // fetchPosts();
+                        }).catchError((error) {
+                          // Handle error if deletion fails
+                          print('Deletion failed: $error');
+                          Navigator.of(context)
+                              .pop(); // Close dialog even on error
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontFamily: 'Montserrat',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Future<void> deletePost(String postId) async {
+  //   setState(() {
+  //     isLoading = true; // Set loading to true at the start of the process
+  //   });
+  //
+  //   try {
+  //     var deletedPost = await PostsService.deletePost(postId);
+  //     setState(() {
+  //       posts.removeWhere((post) => post['id'] == postId);
+  //     });
+  //   } catch (err) {
+  //     print('Failed to delete post: $err');
+  //   } finally {
+  //     setState(() {
+  //       isLoading = false;
+  //     });
+  //   }
+  // }
 
   Future<void> getPosts() async {
     setState(() {
       isLoading = true;
+      isUserPost = false;
     });
 
     try {
@@ -49,6 +174,7 @@ class _CommunityTabState extends State<CommunityTab> {
   Future<void> getUsersPost() async {
     setState(() {
       isLoading = true;
+      isUserPost = true;
     });
 
     try {
@@ -110,6 +236,36 @@ class _CommunityTabState extends State<CommunityTab> {
             style: TextStyle(
               color: Colors.redAccent,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _editPostActionSheet(BuildContext context, int index) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Actions'),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              _confirmDeletePost(index);
+            },
+            child: const Text('Delete Post'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () {
+            Navigator.pop(context); // Close the action sheet
+          },
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+                // color: Colors.redAccent,
+                ),
           ),
         ),
       ),
@@ -204,7 +360,7 @@ class _CommunityTabState extends State<CommunityTab> {
   Widget _buildUserPost(String title, String description, String timeAgo,
       String tags, String profileImageUrl, String postImageUrl) {
     const String placeholderImage = 'assets/image (6).png';
-
+    int index = 0;
     final String validProfileImageUrl =
         profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
 
@@ -265,7 +421,11 @@ class _CommunityTabState extends State<CommunityTab> {
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 const SizedBox(width: 10.0),
-                const Icon(Icons.more_vert),
+                GestureDetector(
+                    onTap: () {
+                      _editPostActionSheet(context, index);
+                    },
+                    child: const Icon(Icons.more_vert)),
               ],
             ),
             const SizedBox(height: 10.0),

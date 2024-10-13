@@ -4,11 +4,12 @@ const multer = require("multer");
 const path = require("path"); // Import path module for file extension handling
 const fs = require("fs");
 const router = express.Router();
+const asyncHandler = require('../centralized_codes/authMiddleware');
 
 // Ensure the uploads directory exists
-const uploadDir = "./uploads";
+const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Set up multer storage
@@ -17,65 +18,62 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, req.decoded.username + path.extname(file.originalname)); // Include the original file extension
+    const username = req.decoded?.username || 'user';
+    cb(null, `${username}-${Date.now()}${path.extname(file.originalname)}`);
   },
 });
 
+// Configure multer without file type restriction
 const upload = multer({
   storage: storage,
   limits: {
     fileSize: 1024 * 1024 * 6, // 6MB limit
   },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
-      cb(null, true);
-    } else {
-      cb(null, false);
-    }
-  },
 });
 
+
 // Route to create or update user profile
-router.post('/updateUserProfile', upload.single('img'), async (req, res) => {
-  const { username, name, profession, DOB, titleline, about } = req.body;
+router.post('/updateUserProfile', upload.single('avatar'), asyncHandler(async (req, res) => {
+  const { userId, name, gender, occupation, birthDate, energyInterest, mobileNumber, address } = req.body;
 
   try {
-    // Check if the user profile exists
-    let userProfile = await UserProfile.findOne({ username });
+    let userProfile = await UserProfile.findOne({ userId });
 
-    const avatar = req.file ? req.file.path : null; // Get avatar path if available
+    const avatar = req.file ? req.file.path : null;
 
     if (userProfile) {
-      // Update existing profile
-      userProfile.name = name || userProfile.name;
-      userProfile.profession = profession || userProfile.profession;
-      userProfile.DOB = DOB || userProfile.DOB;
-      userProfile.titleline = titleline || userProfile.titleline;
-      userProfile.about = about || userProfile.about;
-      userProfile.img = avatar || userProfile.img; // Update image if provided
+      userProfile.name = name;
+      userProfile.gender = gender;
+      userProfile.occupation = occupation;
+      userProfile.birthDate = birthDate;
+      userProfile.energyInterest = energyInterest;
+      userProfile.mobileNumber = mobileNumber;
+      userProfile.avatar = avatar || userProfile.avatar;
+      userProfile.address = address;
 
-      await userProfile.save(); // Save updated profile
+      await userProfile.save();
       return res.status(200).json({ message: 'User profile updated successfully!', userProfile });
     } else {
       // Create new profile
       userProfile = new UserProfile({
-        username,
+        userId,
         name,
-        profession,
-        DOB,
-        titleline,
-        about,
-        img: avatar, // Include avatar if provided
+        gender,
+        occupation,
+        birthDate,
+        energyInterest,
+        mobileNumber,
+        avatar,
+        address
       });
 
       await userProfile.save(); // Save new profile
       return res.status(201).json({ message: 'User profile created successfully!', userProfile });
     }
   } catch (error) {
-    return res.status(500).json({ message: 'Failed to update or create user profile', error: error.message });
+    res.status(500).json({ message: 'Failed to update or create user profile', error: error.message });
   }
-});
-
+}));
 // Route to get user profile
 router.get('/getUserProfile', async (req, res) => {
   const { username } = req.query; // Get username from query parameters

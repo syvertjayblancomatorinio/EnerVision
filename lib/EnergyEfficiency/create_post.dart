@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/EnergyEfficiency/energy_effieciency_page.dart';
 import '../CommonWidgets/dialogs/error_dialog.dart';
 import 'community_tab.dart';
@@ -19,22 +21,27 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
   XFile? _image;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-
-  // Use a list to store selected tags
+  int _clickCount = 0;
+  final int _clickLimit = 1;
   final List<String> tags = [
     'Renewable Energy',
     'Solar Energy',
     'Green Living',
     'Energy Conservation',
   ];
+  bool isLoading = false;
+  List<dynamic> posts = [];
 
-  // Use this to keep track of the selected tags
   List<bool> selectedTags = List.filled(4, false);
 
-  // Use a separate list to store the names of selected tags for database
   List<String> finalSelectedTags = [];
 
-  String displayTag = 'Search or Choose a Tag'; // Track currently displayed tag
+  String displayTag = 'Search or Choose a Tag';
+  @override
+  void initState() {
+    super.initState();
+    getPosts();
+  }
 
   Future<void> createPost(
       String currentUserId, Map<String, dynamic> postData) async {
@@ -57,7 +64,7 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
         'postData': {
           'title': _titleController.text,
           'description': _descriptionController.text,
-          'tags': tagsAsString, // Send tags as a string
+          'tags': tagsAsString,
         }
       }),
     );
@@ -74,6 +81,25 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
       print('Post added successfully');
     } else {
       print('Failed to add post: ${response.body}');
+    }
+  }
+
+  Future<void> getPosts() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final fetchedPosts = await PostsService.getPosts();
+      setState(() {
+        posts = fetchedPosts;
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -107,34 +133,45 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
         _descriptionController.text.trim().isNotEmpty;
   }
 
+  // void _handleButtonClick() {
+  //   if (_clickCount < _clickLimit) {
+  //     setState(() {
+  //       _clickCount++;
+  //     });
+  //   }
+  // }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: customAppBar1(
-        title: 'Share Your Story',
-        showTitle: true,
-        showProfile: false,
-        onBackPressed: () {
-          Navigator.pop(context);
-        },
-      ),
-      bottomNavigationBar: const BottomNavigation(selectedIndex: 1),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTitleSection(),
-            const SizedBox(height: 20),
-            _buildDescriptionSection(),
-            const SizedBox(height: 20),
-            _buildTagSection(context),
-            const SizedBox(height: 20),
-            _buildPhotoContainer(),
-            const SizedBox(height: 20),
-            _buildUploadButton(),
-          ],
+    return MaterialApp(
+      theme: AppTheme.getAppTheme(),
+      home: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: customAppBar1(
+          title: 'Share Your Story',
+          showTitle: true,
+          showProfile: false,
+          onBackPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        bottomNavigationBar: const BottomNavigation(selectedIndex: 1),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTitleSection(),
+              const SizedBox(height: 20),
+              _buildDescriptionSection(),
+              const SizedBox(height: 20),
+              _buildTagSection(context),
+              const SizedBox(height: 20),
+              _buildPhotoContainer(),
+              const SizedBox(height: 20),
+              _buildUploadButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -298,6 +335,12 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
             }
             if (_descriptionController.text.trim().isEmpty) {
               _descriptionController.text = 'Please add a description.';
+            }
+            if (_clickCount >= _clickLimit) {
+              Text(
+                'Button disabled after $_clickLimit clicks!',
+                style: const TextStyle(color: Colors.red),
+              );
             }
 
             await _showApplianceErrorDialog(context);
