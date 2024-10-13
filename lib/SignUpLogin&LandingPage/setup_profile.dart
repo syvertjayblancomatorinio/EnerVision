@@ -5,6 +5,7 @@ import 'package:country_picker/country_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
+import 'package:supabase_project/ConstantTexts/final_texts.dart';
 import 'package:supabase_project/MainFolder/secondaryMain.dart';
 import 'dart:convert';
 
@@ -26,86 +27,6 @@ class _SetupProfileState extends State<SetupProfile> {
   final _birthDateController = TextEditingController();
   final _occupationController = TextEditingController();
   String? _selectedCountry;
-
-  final List<String> barangays = [
-    'Adlaon',
-    'Agsungot',
-    'Apas',
-    'Babag',
-    'Bacayan',
-    'Banilad',
-    'Basak Pardo',
-    'Basak San Nicolas',
-    'Binaliw',
-    'Buhisan',
-    'Bulacao',
-    'Busay',
-    'Calamba',
-    'Cambinocot',
-    'Capitol Site',
-    'Carreta',
-    'Cogon Pardo',
-    'Cogon Ramos',
-    'Day‑as',
-    'Duljo Fatima',
-    'Ermita',
-    'Guadalupe',
-    'Guba',
-    'Hipodromo',
-    'Inayawan',
-    'Kalubihan',
-    'Kalunasan',
-    'Kamagayan',
-    'Kamputhaw (Camputhaw)',
-    'Kasambagan',
-    'Kinasang‑an Pardo',
-    'Labangon',
-    'Lahug',
-    'Lorega San Miguel',
-    'Lusaran',
-    'Luz',
-    'Mabini',
-    'Mabolo',
-    'Malubog',
-    'Mambaling',
-    'Pahina Central',
-    'Pahina San Nicolas',
-    'Pamutan',
-    'Pari-an',
-    'Paril',
-    'Pasil',
-    'Pit-os',
-    'Poblacion Pardo',
-    'Pulangbato',
-    'Pung-ol Sibugay',
-    'Punta Princesa',
-    'Quiot Pardo',
-    'Sambag I',
-    'Sambag II',
-    'San Antonio',
-    'San Jose',
-    'San Nicolas Proper',
-    'San Roque',
-    'Santa Cruz',
-    'Santo Niño (Poblacion)',
-    'Sapangdaku',
-    'Sawang Calero',
-    'Sinsin',
-    'Sirao',
-    'Suba',
-    'Sudlon I',
-    'Sudlon II',
-    'T. Padilla',
-    'Tabunan',
-    'Tagba-o',
-    'Talamban',
-    'Taptap',
-    'Tejero (Villa Gonzalo)',
-    'Tinago',
-    'Tisa',
-    'To-ong',
-    'Zapatera'
-  ]; // For storing selected street/barangay
 
   final List<String> city = ['Cebu City']; // For storing selected country
 
@@ -675,17 +596,23 @@ class _SetupProfileState extends State<SetupProfile> {
                           fontSize: 14.0,
                         ),
                         keyboardType: TextInputType.phone,
-                        maxLength: 11,
-                        decoration: const InputDecoration(
+                        maxLength:
+                            10, // Adjusted to 10 digits since +63 is included
+                        decoration: InputDecoration(
                           border: InputBorder.none,
                           hintText: 'Enter your Phone Number',
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                             color: Color(0xFF969696),
                             fontSize: 14.0,
                           ),
-                          contentPadding: EdgeInsets.symmetric(
+                          contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 16),
                           counterText: '',
+                          prefixText: '+63 ', // Adding country code as prefix
+                          prefixStyle: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 14.0,
+                          ),
                         ),
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -693,7 +620,7 @@ class _SetupProfileState extends State<SetupProfile> {
                           } else if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
                             return 'Please enter a valid phone number (numbers only)';
                           } else if (value.length != 10) {
-                            return 'Phone number must be 11 digits';
+                            return 'Phone number must be 10 digits'; // Changed to 10 digits
                           }
                           return null;
                         },

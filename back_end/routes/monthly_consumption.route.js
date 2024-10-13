@@ -142,6 +142,31 @@ router.get('/get-daily-consumption/:userId', async (req, res) => {
   }
 });
 
+// In your routes file (e.g., monthly_consumption.route.js)
+
+router.get('/monthlyConsumption', asyncHandler(async (req, res) => {
+    const { userId, month, year } = req.query;
+
+    // Validate required parameters
+    if (!userId || !month || !year) {
+        return res.status(400).json({ message: 'userId, month, and year are required.' });
+    }
+
+    // Fetch the monthly consumption for the given user, month, and year
+    const monthlyConsumption = await MonthlyConsumption.findOne({
+        userId,
+        month: parseInt(month, 10),  // Convert to integer
+        year: parseInt(year, 10)      // Convert to integer
+    });
+
+    // If not found, return a 404 error
+    if (!monthlyConsumption) {
+        return res.status(404).json({ message: 'Monthly consumption not found.' });
+    }
+
+    // Send the found monthly consumption data
+    res.status(200).json(consumption);
+}));
 
 router.get('/monthly-consumption/:userId', async (req, res) => {
     const { userId } = req.params;
@@ -179,6 +204,96 @@ router.get('/monthly-consumption/:userId', async (req, res) => {
 
 
 
+function getRemainingOccurrences(year, month, startDay, selectedDays) {
+    let dayOccurrences = {};
+    selectedDays.forEach(day => {
+        dayOccurrences[day] = 0;
+    });
+
+    let currentDate = new Date(year, month - 1, startDay);
+    const lastDay = new Date(year, month, 0);
+
+    for (let day = currentDate; day <= lastDay; day.setDate(day.getDate() + 1)) {
+        const currentDayOfWeek = day.getDay();
+        if (selectedDays.includes(currentDayOfWeek)) {
+            dayOccurrences[currentDayOfWeek]++;
+        }
+    }
+    return dayOccurrences;
+}
+
+
+router.post('/calculate-occurrences', (req, res) => {
+    const { year, month, startDay, selectedDays } = req.body;
+    // Check if any required parameter is missing
+    if (!year || !month || !startDay || !selectedDays) {
+        return res.status(400).send({ error: 'Missing required parameters' });
+    }
+
+    // Calculate the occurrences of the selected days
+//    const occurrences = getRemainingDates(year, month, startDay, selectedDays);
+
+    // Calculate the total number of occurrences (sum of all values in the occurrences object)
+   const occurrences = getRemainingOccurrences(year, month, startDay, selectedDays);
+   const totalOccurrences = Object.values(occurrences).reduce((sum, count) => sum + count, 0);
+
+   // Multiply totalOccurrences by something (e.g., a rate or value)
+   const result = totalOccurrences * 18;
+
+   res.send({ occurrences, totalOccurrences, result });
+
+});
+
+function getOccurrencesBetweenDates(year, month, startDate, endDate, selectedDays) {
+    let dayOccurrences = {};
+    selectedDays.forEach(day => {
+        dayOccurrences[day] = 0;
+    });
+
+    let currentDate = new Date(year, month - 1, startDate);
+    let lastDate = new Date(year, month - 1, endDate);
+
+    // Loop from startDate to endDate
+    for (let day = currentDate; day <= lastDate; day.setDate(day.getDate() + 1)) {
+        const currentDayOfWeek = day.getDay();
+        if (selectedDays.includes(currentDayOfWeek)) {
+            dayOccurrences[currentDayOfWeek]++;
+        }
+    }
+
+    return dayOccurrences;
+}
+
+// API endpoint to handle original and new selected days after the update
+router.post('/calculate-occurrences-update', (req, res) => {
+    const { year, month, originalStartDay, updateDay, originalSelectedDays, newSelectedDays } = req.body;
+
+    if (!year || !month || !originalStartDay || !updateDay || !originalSelectedDays || !newSelectedDays) {
+        return res.status(400).send({ error: 'Missing required parameters' });
+    }
+
+    // 1. Calculate occurrences from original start date to the day before the update using original selected days
+    const occurrencesBeforeUpdate = getOccurrencesBetweenDates(year, month, originalStartDay, updateDay - 1, originalSelectedDays);
+
+    // 2. Calculate occurrences from update day to the end of the month using new selected days
+    const lastDayOfMonth = new Date(year, month, 0).getDate();  // Get the last day of the month
+    const occurrencesAfterUpdate = getOccurrencesBetweenDates(year, month, updateDay, lastDayOfMonth, newSelectedDays);
+
+    // 3. Sum the occurrences from both periods
+    const totalOccurrencesBeforeUpdate = Object.values(occurrencesBeforeUpdate).reduce((sum, count) => sum + count, 0);
+    const totalOccurrencesAfterUpdate = Object.values(occurrencesAfterUpdate).reduce((sum, count) => sum + count, 0);
+
+    const totalOccurrences = totalOccurrencesBeforeUpdate + totalOccurrencesAfterUpdate;
+
+    // Respond with detailed occurrences and total count
+    res.send({
+        occurrencesBeforeUpdate,
+        occurrencesAfterUpdate,
+        totalOccurrencesBeforeUpdate,
+        totalOccurrencesAfterUpdate,
+        totalOccurrences
+    });
+});
 
 
 module.exports = router;

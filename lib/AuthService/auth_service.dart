@@ -66,7 +66,7 @@ class AuthService {
       if (response.statusCode == 201) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
+          MaterialPageRoute(builder: (context) => SetupProfile()),
         );
       } else if (response.statusCode == 400) {
         final responseBody = jsonDecode(response.body);

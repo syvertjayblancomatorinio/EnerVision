@@ -4,6 +4,7 @@ class EditApplianceDialog extends StatelessWidget {
   final TextEditingController editApplianceNameController;
   final TextEditingController editWattageController;
   final TextEditingController editUsagePatternController;
+  final TextEditingController editWeeklyPatternController;
   final GlobalKey<FormState> formKey;
   final VoidCallback editAppliance;
   final Map<String, dynamic> appliance;
@@ -22,6 +23,7 @@ class EditApplianceDialog extends StatelessWidget {
     required this.updateAppliance,
     required this.fetchAppliances,
     required this.fetchDailyCosts,
+    required this.editWeeklyPatternController,
   }) : super(key: key);
 
   void _showSnackBar(BuildContext context, String message) {
@@ -75,6 +77,14 @@ class EditApplianceDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
+                  onChanged: (value) {
+                    if (value.length > 6) {
+                      editWattageController.text = value.substring(0, 6);
+                      editWattageController.selection =
+                          TextSelection.fromPosition(TextPosition(
+                              offset: editWattageController.text.length));
+                    }
+                  },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter the wattage';
@@ -95,6 +105,46 @@ class EditApplianceDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
+                  onChanged: (value) {
+                    final doubleValue = double.tryParse(value);
+                    if (doubleValue != null && doubleValue > 24) {
+                      editUsagePatternController.text = '24';
+                      editUsagePatternController.selection =
+                          TextSelection.fromPosition(
+                        const TextPosition(offset: '24'.length),
+                      );
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the usage pattern';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: editWeeklyPatternController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Usage Pattern (Days used per week)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    final doubleValue = double.tryParse(value);
+                    if (doubleValue != null && doubleValue > 7) {
+                      editWeeklyPatternController.text = '7';
+                      editWeeklyPatternController.selection =
+                          TextSelection.fromPosition(
+                        const TextPosition(offset: '7'.length),
+                      );
+                    }
+                  },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter the usage pattern';
@@ -123,8 +173,10 @@ class EditApplianceDialog extends StatelessWidget {
                           final updatedAppliance = {
                             'applianceName': editApplianceNameController.text,
                             'wattage': double.parse(editWattageController.text),
-                            'usagePattern':
+                            'usagePatternPerDay':
                                 double.parse(editUsagePatternController.text),
+                            'usagePatternPerWeek':
+                                double.parse(editWeeklyPatternController.text),
                           };
 
                           updateAppliance(appliance['_id'], updatedAppliance)

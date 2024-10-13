@@ -58,6 +58,27 @@ class PostsService {
     }
   }
 
+  static Future<void> deletePost(String postId) async {
+    // SharedPreferences preferences = await SharedPreferences.getInstance();
+    // final userId = prefs.getString('userId');
+
+    final url = Uri.parse('$baseUrl/posts/$postId');
+    final response = await http.delete(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+    if (response.statusCode == 200) {
+      // Success - post was deleted
+      print('Post deleted successfully');
+    } else {
+      // Failure - show the error message returned by the server
+      final responseBody = jsonDecode(response.body);
+      throw Exception('Failed to delete Post: ${responseBody['message']}');
+    }
+  }
+
   // Helper method to calculate "time ago"
   static String _timeAgo(DateTime dateTime) {
     final Duration difference = DateTime.now().difference(dateTime);

@@ -17,12 +17,21 @@ class LastMonthPage extends StatefulWidget {
 
 class _LastMonthPageState extends State<LastMonthPage> {
   Map<String, dynamic> monthlyData = {};
-  int applianceCount = 0; // Renamed for clarity
+  int applianceCount = 0;
   DateTime selectedDate = DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    // Set selectedDate to the previous month
+    DateTime now = DateTime.now();
+    selectedDate = DateTime(now.year, now.month - 1, now.day);
+
+    // Adjust for January to December transition
+    if (now.month == 1) {
+      selectedDate = DateTime(now.year - 1, 12, now.day);
+    }
+
     getLastMonth(selectedDate);
     getUsersApplianceCount(); // Fetching the appliance count during init
   }
@@ -90,15 +99,32 @@ class _LastMonthPageState extends State<LastMonthPage> {
       );
 
       if (response.statusCode == 404) {
+        // Reset monthlyData to default values when 404 occurs
+        setState(() {
+          monthlyData = {
+            'totalMonthlyConsumption': null,
+            'totalMonthlyKwhConsumption': null,
+          };
+        });
         await _showApplianceErrorDialog(context);
         return;
       } else if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        final double totalMonthlyConsumption =
+            data['data']['totalMonthlyConsumption']?.toDouble() ?? 0.0;
+
+        // Fetch user's kwhRate from a reliable source
+        final double kwhRate = await getUserKwhRate(
+            userId); // Assuming this method retrieves the kwhRate
+
+        // Calculate totalKwhConsumption
+        double totalKwhConsumption =
+            (kwhRate > 0) ? totalMonthlyConsumption / kwhRate : 0.0;
+
         setState(() {
           monthlyData = {
-            'totalMonthlyConsumption': data['data']['totalMonthlyConsumption'],
-            'totalMonthlyKwhConsumption': data['data']
-                ['totalMonthlyKwhConsumption'],
+            'totalMonthlyConsumption': totalMonthlyConsumption,
+            'totalMonthlyKwhConsumption': totalKwhConsumption,
           };
         });
         print("Monthly Data: $monthlyData");
@@ -109,6 +135,28 @@ class _LastMonthPageState extends State<LastMonthPage> {
     } catch (e) {
       print("Error fetching monthly data: $e");
     }
+  }
+
+  Future<double> getUserKwhRate(String userId) async {
+    final url = Uri.parse("http://10.0.2.2:8080/user/$userId/kwhRate");
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['kwhRate']?.toDouble() ?? 0.0;
+      } else {
+        print("Failed to fetch kwhRate. Status code: ${response.statusCode}");
+        return 0.0;
+      }
+    } catch (e) {
+      print("Error fetching kwhRate: $e");
+      return 0.0;
+    }
+  }
+
+  Future<void> saveUserKwhRate(double kwhRate) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('kwhRate', kwhRate);
   }
 
   void onDateSelected(DateTime date) {

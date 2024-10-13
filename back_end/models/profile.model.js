@@ -27,6 +27,7 @@ const userProfileSchema = new Schema({
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 
+
 userProfileSchema.methods.getAge = function() {
   const today = new Date();
   const birthDate = new Date(this.birthDate);

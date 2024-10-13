@@ -108,7 +108,6 @@ class ApplianceService {
       },
     );
     if (response.statusCode == 200) {
-      print('Appliance deleted successfully');
     } else {
       final responseBody = jsonDecode(response.body);
       throw Exception('Failed to delete appliance: ${responseBody['message']}');
@@ -123,7 +122,6 @@ class ApplianceService {
     final userId = prefs.getString('userId');
 
     if (userId == null) {
-      print("User ID is null. Cannot fetch daily consumption.");
       return null;
     }
 
@@ -139,23 +137,31 @@ class ApplianceService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
+        // Safely parse the totalDailyConsumptionCost and totalDailyKwhConsumption
+        final totalDailyConsumptionCost =
+            double.tryParse(data['totalDailyConsumptionCost'].toString()) ??
+                0.00;
+        final totalDailyKwhConsumption =
+            double.tryParse(data['totalDailyKwhConsumption'].toString()) ??
+                0.00;
+
         return {
           'totalDailyConsumptionCost':
-              (data['totalDailyConsumptionCost'] as double).toStringAsFixed(2),
+              totalDailyConsumptionCost.toStringAsFixed(2),
           'totalDailyKwhConsumption':
-              (data['totalDailyKwhConsumption'] as double).toStringAsFixed(2),
+              totalDailyKwhConsumption.toStringAsFixed(2),
         };
       } else {
-        print('Failed to fetch daily consumption: ${response.statusCode}');
         return null;
       }
     } catch (error) {
-      print('Error fetching daily consumption: $error');
       return null;
     }
   }
 }
 /*
+
 Widget _buildUserPost(String title, String description, String timeAgo,
       String tags, String profileImageUrl, String postImageUrl) {
     const String placeholderImage = 'assets/image (6).png';

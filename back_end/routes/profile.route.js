@@ -6,59 +6,33 @@ const path = require('path');
 const router = express.Router();
 const fs = require('fs');
 
-// Ensure the uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
 
-// Set up multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir);
+    cb(null, 'uploads/'); // folder to save images
   },
   filename: (req, file, cb) => {
-    const username = req.decoded?.username || 'user';
-    cb(null, `${username}-${Date.now()}${path.extname(file.originalname)}`);
+    cb(null, Date.now() + '-' + file.originalname); // unique file name
   },
 });
 
-// Configure multer
 const upload = multer({
   storage: storage,
-  limits: {
-    fileSize: 1024 * 1024 * 6, // 6MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = ['image/jpeg', 'image/png'];
-    if (allowedMimeTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only JPEG and PNG are allowed.'), false);
-    }
-  },
+  limits: { fileSize: 1024 * 1024 * 5 }, // Limit file size to 5MB
 });
 
-// Error handling middleware
-const errorHandler = (err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    return res.status(400).send({ error: err.message });
-  } else if (err) {
-    return res.status(400).send({ error: err.message });
-  }
-  next();
-};
-
-// Route to create or update user profile
+// Update user profile route
 router.post('/updateUserProfile', upload.single('avatar'), asyncHandler(async (req, res) => {
   const { userId, name, gender, occupation, birthDate, energyInterest, mobileNumber, address } = req.body;
 
   try {
     let userProfile = await UserProfile.findOne({ userId });
 
+    // Check if a file was uploaded
     const avatar = req.file ? req.file.path : null;
 
     if (userProfile) {
+      // Update existing profile
       userProfile.name = name;
       userProfile.gender = gender;
       userProfile.occupation = occupation;
@@ -80,18 +54,17 @@ router.post('/updateUserProfile', upload.single('avatar'), asyncHandler(async (r
         birthDate,
         energyInterest,
         mobileNumber,
-        avatar,
-        address
+        avatar, // Save avatar path
+        address,
       });
 
-      await userProfile.save(); // Save new profile
+      await userProfile.save();
       return res.status(201).json({ message: 'User profile created successfully!', userProfile });
     }
   } catch (error) {
     res.status(500).json({ message: 'Failed to update or create user profile', error: error.message });
   }
 }));
-
 router.get('/getAvatar', asyncHandler(async (req, res) => {
   const { userId } = req.query;
 
