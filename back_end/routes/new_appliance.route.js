@@ -13,7 +13,7 @@ function getRemainingOccurrences(year, month, startDay, selectedDays) {
     });
 
     let currentDate = new Date(year, month - 1, startDay);
-    const lastDay = new Date(year, month, 0); // Get the last day of the month
+    const lastDay = new Date(year, month, 0);
 
     for (let day = currentDate; day <= lastDay; day.setDate(day.getDate() + 1)) {
         const currentDayOfWeek = day.getDay();
@@ -23,6 +23,22 @@ function getRemainingOccurrences(year, month, startDay, selectedDays) {
     }
     return dayOccurrences;
 }
+function getOccurrencesBetweenDates(startDate, endDate, selectedDays) {
+    let dayOccurrences = {};
+    selectedDays.forEach(day => {
+        dayOccurrences[day] = 0;
+    });
+
+    for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
+        const currentDayOfWeek = day.getDay();
+        if (selectedDays.includes(currentDayOfWeek)) {
+            dayOccurrences[currentDayOfWeek]++;
+        }
+    }
+
+    return dayOccurrences;
+}
+
 
 router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
@@ -38,23 +54,28 @@ router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
         return res.status(400).json({ error: 'Wattage and usage pattern must be numbers' });
     }
 
-    const user = await User.findById(userId); // Ensure you have the user model imported and available
+    // Ensure selectedDays is an array of numbers
+    if (!Array.isArray(selectedDays) || !selectedDays.every(Number.isInteger)) {
+        return res.status(400).json({ error: 'Selected days must be an array of integers' });
+    }
+
+    const user = await User.findById(userId);
     if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
 
-    const kwhRate = user.kwhRate || 0; // Default to 0 if kWh rate is not set
+    const kwhRate = user.kwhRate || 0;
     const createdDate = createdAt ? new Date(createdAt) : new Date();
 
     const startDay = createdDate.getDate();
-    const startMonth = createdDate.getMonth() + 1; // +1 to make it 1-based (January = 1)
+    const startMonth = createdDate.getMonth() + 1;
     const startYear = createdDate.getFullYear();
 
     const daysUsed = getRemainingOccurrences(startYear, startMonth, startDay, selectedDays);
     const totalDaysUsed = Object.values(daysUsed).reduce((sum, count) => sum + count, 0);
 
     const totalHoursUsed = totalDaysUsed * usagePatternPerDay;
-    const energyKwh = (wattage / 1000) * totalHoursUsed; // Convert wattage to kWh
+    const energyKwh = (wattage / 1000) * totalHoursUsed;
 
     const monthlyCost = kwhRate * energyKwh;
 
@@ -65,7 +86,8 @@ router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
         usagePatternPerDay,
         createdAt: createdDate,
         monthlyCost,
-        userId
+        userId,
+        selectedDays // Store selected days as an array of integers
     });
 
     // Save the new appliance and update the user's appliance list
@@ -76,55 +98,95 @@ router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
     res.status(201).json({ message: 'Appliance added to user', appliance: newAppliance });
 }));
 
-function getOccurrencesBetweenDates(year, month, startDate, endDate, selectedDays) {
-    let dayOccurrences = {};
-    selectedDays.forEach(day => {
-        dayOccurrences[day] = 0;
-    });
+router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req, res) => {
+    const applianceId = req.params.applianceId;
 
-    let currentDate = new Date(year, month - 1, startDate);
-    let lastDate = new Date(year, month - 1, endDate);
+    const { userId, updatedAt, updatedData } = req.body;
+    const { wattage, usagePatternPerDay, selectedDays } = updatedData;
 
-    // Loop from startDate to endDate
-    for (let day = currentDate; day <= lastDate; day.setDate(day.getDate() + 1)) {
-        const currentDayOfWeek = day.getDay();
-        if (selectedDays.includes(currentDayOfWeek)) {
-            dayOccurrences[currentDayOfWeek]++;
-        }
+    // Validate input
+    if (!userId || !applianceId || !updatedAt || !updatedData || !wattage || !usagePatternPerDay || !selectedDays) {
+        return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    return dayOccurrences;
-}
-
-router.post('/calculate-occurrences-update', (req, res) => {
-    const { year, month, originalStartDay, updateDay, originalSelectedDays, newSelectedDays } = req.body;
-
-    if (!year || !month || !originalStartDay || !updateDay || !originalSelectedDays || !newSelectedDays) {
-        return res.status(400).send({ error: 'Missing required parameters' });
+    // Ensure wattage and usage pattern are numbers
+    if (typeof wattage !== 'number' || typeof usagePatternPerDay !== 'number') {
+        return res.status(400).json({ error: 'Wattage and usage pattern must be numbers' });
     }
 
-    // 1. Calculate occurrences from original start date to the day before the update using original selected days
-    const occurrencesBeforeUpdate = getOccurrencesBetweenDates(year, month, originalStartDay, updateDay - 1, originalSelectedDays);
+    // Ensure selectedDays is an array of numbers
+    if (!Array.isArray(selectedDays) || !selectedDays.every(Number.isInteger)) {
+        return res.status(400).json({ error: 'Selected days must be an array of integers' });
+    }
 
-    // 2. Calculate occurrences from update day to the end of the month using new selected days
-    const lastDayOfMonth = new Date(year, month, 0).getDate();  // Get the last day of the month
-    const occurrencesAfterUpdate = getOccurrencesBetweenDates(year, month, updateDay, lastDayOfMonth, newSelectedDays);
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
 
-    // 3. Sum the occurrences from both periods
-    const totalOccurrencesBeforeUpdate = Object.values(occurrencesBeforeUpdate).reduce((sum, count) => sum + count, 0);
-    const totalOccurrencesAfterUpdate = Object.values(occurrencesAfterUpdate).reduce((sum, count) => sum + count, 0);
+    const appliance = await Appliance.findById(applianceId);
+    if (!appliance) {
+        return res.status(404).json({ error: 'Appliance not found' });
+    }
+   const currentMonth = new Date().getMonth();
+   const currentYear = new Date().getFullYear();
+   const applianceLastUpdatedMonth = new Date(appliance.updatedAt).getMonth();
+   const applianceLastUpdatedYear = new Date(appliance.updatedAt).getFullYear();
 
-    const totalOccurrences = totalOccurrencesBeforeUpdate + totalOccurrencesAfterUpdate;
+   // Check if the appliance has already been updated this month
+   if (applianceLastUpdatedMonth === currentMonth && applianceLastUpdatedYear === currentYear) {
+       return res.status(400).json({ error: 'Appliance can only be updated once per month' });
+   }
 
-    // Respond with detailed occurrences and total count
-    res.send({
-        occurrencesBeforeUpdate,
-        occurrencesAfterUpdate,
-        totalOccurrencesBeforeUpdate,
-        totalOccurrencesAfterUpdate,
-        totalOccurrences
-    });
-});
+//   // Proceed with checking for concurrent modification
+//   const applianceVersion = appliance.__v;
+//   if (applianceVersion !== updatedData.__v) {
+//       return res.status(409).json({ error: 'Concurrent modification detected' });
+//   }
 
+
+    const kwhRate = user.kwhRate || 0;
+    const createdDate = appliance.createdAt;
+    const updatedDate = new Date(updatedAt);
+
+    // Ensure the updatedAt date is not before the createdAt date
+    if (updatedDate < createdDate) {
+        return res.status(400).json({ error: 'Updated date cannot be before the created date' });
+    }
+
+    // --- First Calculation: From createdAt to day before updatedAt using old data ---
+    const oldEndDate = new Date(updatedDate);
+    oldEndDate.setDate(updatedDate.getDate() - 1);  // Exclude the updatedAt day
+
+    const oldDaysUsed = getOccurrencesBetweenDates(createdDate, oldEndDate, appliance.selectedDays);
+    const oldTotalDaysUsed = Object.values(oldDaysUsed).reduce((sum, count) => sum + count, 0);
+    const oldTotalHoursUsed = oldTotalDaysUsed * appliance.usagePatternPerDay;
+    const oldEnergyKwh = (appliance.wattage / 1000) * oldTotalHoursUsed;
+
+    // --- Second Calculation: From updatedAt to end of the month using new data ---
+    const updatedEndOfMonth = new Date(updatedDate.getFullYear(), updatedDate.getMonth() + 1, 0);
+    const newDaysUsed = getOccurrencesBetweenDates(updatedDate, updatedEndOfMonth, selectedDays);
+    const newTotalDaysUsed = Object.values(newDaysUsed).reduce((sum, count) => sum + count, 0);
+    const newTotalHoursUsed = newTotalDaysUsed * usagePatternPerDay;
+    const newEnergyKwh = (wattage / 1000) * newTotalHoursUsed;
+
+    // Sum both energy consumptions
+    const totalEnergyKwh = oldEnergyKwh + newEnergyKwh;
+
+    // Calculate the final monthly cost
+    const updatedMonthlyCost = kwhRate * totalEnergyKwh;
+
+    // Update the appliance data with the new information
+    appliance.wattage = wattage;
+    appliance.usagePatternPerDay = usagePatternPerDay;
+    appliance.selectedDays = selectedDays;
+    appliance.updatedAt = updatedDate;
+    appliance.monthlyCost = updatedMonthlyCost;
+
+    await appliance.save();
+
+    res.status(200).json({ message: 'Appliance updated successfully',newEnergyKwh, oldEnergyKwh ,newTotalDaysUsed, appliance});
+
+}));
 
 module.exports = router;
