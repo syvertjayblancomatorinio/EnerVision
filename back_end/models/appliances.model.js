@@ -7,6 +7,7 @@ const applianceSchema = new Schema({
     wattage: { type: Number, required: true },
     usagePatternPerDay: { type: Number, required: true },
     usagePatternPerWeek: { type: Number, required: false },
+    selectedDays: { type: [Number], required: true },
     monthlyCost: { type: Number, default: 0 },
     applianceCategory: {
         type: String,
@@ -21,7 +22,7 @@ const applianceSchema = new Schema({
         default: 'Personal Devices',
     },
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: null },
     deletedAt: { type: Date, default: null },
 });
 

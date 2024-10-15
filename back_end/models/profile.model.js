@@ -4,8 +4,6 @@ const { Schema } = mongoose;
 const userProfileSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
-  gender: { type: String, required: true },
-  occupation: { type: String, required: true },
   birthDate: { type: Date, required: true },
   energyInterest: { type: String },
   mobileNumber: {

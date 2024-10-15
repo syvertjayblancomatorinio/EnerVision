@@ -23,7 +23,7 @@ const upload = multer({
 
 // Update user profile route
 router.post('/updateUserProfile', upload.single('avatar'), asyncHandler(async (req, res) => {
-  const { userId, name, gender, occupation, birthDate, energyInterest, mobileNumber, address } = req.body;
+  const { userId, name, birthDate, energyInterest, mobileNumber, address } = req.body;
 
   try {
     let userProfile = await UserProfile.findOne({ userId });
@@ -34,8 +34,6 @@ router.post('/updateUserProfile', upload.single('avatar'), asyncHandler(async (r
     if (userProfile) {
       // Update existing profile
       userProfile.name = name;
-      userProfile.gender = gender;
-      userProfile.occupation = occupation;
       userProfile.birthDate = birthDate;
       userProfile.energyInterest = energyInterest;
       userProfile.mobileNumber = mobileNumber;
@@ -49,12 +47,10 @@ router.post('/updateUserProfile', upload.single('avatar'), asyncHandler(async (r
       userProfile = new UserProfile({
         userId,
         name,
-        gender,
-        occupation,
         birthDate,
         energyInterest,
         mobileNumber,
-        avatar, // Save avatar path
+        avatar,
         address,
       });
 

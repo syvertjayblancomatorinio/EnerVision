@@ -23,12 +23,10 @@ class _SetupProfileState extends State<SetupProfile> {
   final _streetLineController = TextEditingController();
   final _mobileNumberController = TextEditingController();
   final _nameController = TextEditingController();
-  final _genderController = TextEditingController();
   final _birthDateController = TextEditingController();
-  final _occupationController = TextEditingController();
   String? _selectedCountry;
 
-  final List<String> city = ['Cebu City']; // For storing selected country
+  final List<String> city = ['Cebu City'];
 
   // Function to pick a date from the calendar
   Future<void> _pickDate(BuildContext context) async {
@@ -76,8 +74,6 @@ class _SetupProfileState extends State<SetupProfile> {
     // Debug prints for each input
     print('UserId: $userId');
     print('Name: ${_nameController.text}');
-    print('Gender: ${_genderController.text}');
-    print('Occupation: ${_occupationController.text}');
     print('Birth Date: ${_birthDateController.text}');
     print('Mobile Number: ${_mobileNumberController.text}');
     print('Country: $_selectedCountry');
@@ -95,8 +91,6 @@ class _SetupProfileState extends State<SetupProfile> {
         body: jsonEncode(<String, dynamic>{
           'userId': userId,
           'name': _nameController.text,
-          'gender': _genderController.text,
-          'occupation': _occupationController.text,
           'birthDate': _birthDateController.text,
           'mobileNumber': _mobileNumberController.text,
           'address': {
@@ -307,103 +301,6 @@ class _SetupProfileState extends State<SetupProfile> {
                         readOnly: true,
                         validator: (value) => value!.isEmpty
                             ? 'Please select your birth date'
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    const Text(
-                      'Gender',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5.0),
-
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey), // Grey border
-                        borderRadius:
-                            BorderRadius.circular(10), // Rounded corners
-                      ),
-                      child: DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        value: _genderController.text.isEmpty
-                            ? null
-                            : _genderController.text,
-                        onChanged: (newValue) {
-                          setState(() {
-                            _genderController.text = newValue!;
-                          });
-                        },
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 16),
-                        ),
-                        items: ['Male', 'Female', 'Other']
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 14.0,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        validator: (value) =>
-                            value == null ? 'Please select your gender' : null,
-                        hint: Text(
-                          _streetLineController.text.isEmpty
-                              ? 'Select your Gender'
-                              : _genderController.text,
-                          style: const TextStyle(
-                            color: Color(0xFF969696),
-                            fontSize: 14.0,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    const Text(
-                      'Occupation',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5.0),
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey), // Grey border
-                        borderRadius:
-                            BorderRadius.circular(10), // Rounded corners
-                      ),
-                      child: TextFormField(
-                        controller: _occupationController,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 14.0,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Enter your Occupation',
-                          hintStyle: TextStyle(
-                            color: Color(0xFF969696),
-                            fontSize: 14.0,
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                        ),
-                        validator: (value) => value!.isEmpty
-                            ? 'Please enter your occupation'
                             : null,
                       ),
                     ),
@@ -673,8 +570,6 @@ class _SetupProfileState extends State<SetupProfile> {
     _streetLineController.dispose();
     _mobileNumberController.dispose();
     _nameController.dispose();
-    _genderController.dispose();
-    _occupationController.dispose();
     _birthDateController.dispose();
     super.dispose();
   }

@@ -28,6 +28,23 @@ let checkToken = (req, res, next) => {
   }
 };
 
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1]; // Extract the token from Bearer token
+
+  if (!token) {
+    return res.status(401).json({ message: "Access token is required" });
+  }
+
+  jwt.verify(token, 'your_jwt_secret', (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid or expired token" });
+    }
+    req.decoded = decoded; // Attach the decoded information to the request
+    next(); // Proceed to the next middleware or route handler
+  });
+};
+
+
 module.exports = {
   checkToken: checkToken,
 };
