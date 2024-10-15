@@ -15,7 +15,7 @@ const userSchema = new Schema({
   },
   password: { type: String, required: true },
   username: { type: String, required: true, unique: true },
-  kwhRate: { type: Number, required: true },
+  kwhRate: { type: Number },
   status: {
     type: String,
     enum: ['active', 'banned', 'deleted'],

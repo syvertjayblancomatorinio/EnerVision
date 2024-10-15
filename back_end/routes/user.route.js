@@ -5,6 +5,7 @@ const UserProfile = require("../models/profile.model");
 const router = express.Router();
 const path = require("path");
 const fs = require('fs');
+const jwt = require("jsonwebtoken");
 
 // Ensure the uploads directory exists
 const uploadDir = path.join(__dirname, 'uploads'); // Using __dirname for portability
@@ -50,18 +51,53 @@ const errorHandler = (err, req, res, next) => {
 };
 
 
+router.post("/signin", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Compare the entered password with the stored hashed password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign({ id: user._id, username: user.username }, 'your_jwt_secret', { expiresIn: '1h' });
+
+    // Check if the user has a profile
+    const profile = await UserProfile.findOne({ userId: user._id });
+
+    // Successful login response
+    return res.status(200).json({
+      token, // Include the token in the response
+      user: {
+        _id: user._id,
+        profiles: profile ? true : false,
+      },
+    });
+  } catch (err) {
+    console.error("Error during signin: ", err.message);
+    res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+});
+
 router.post("/signup", async (req, res) => {
   try {
     const existingUser = await User.findOne({ email: req.body.email });
     if (!existingUser) {
       const newUser = new User({
         email: req.body.email,
-        password: req.body.password, // Password will be hashed by Mongoose middleware
+        password: req.body.password,
         username: req.body.username,
         kwhRate: req.body.kwhRate
       });
 
-//      await newUser.save({ validateBeforeSave: false });
       await newUser.save();
 
       console.log(newUser);
@@ -74,8 +110,50 @@ router.post("/signup", async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
 });
+router.patch('/updateKwh/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const updates = req.body;
 
+    // Find and update the appliance
+    const updateKWHRate = await User.findByIdAndUpdate(userId, updates, { new: true });
 
+    if (!updateKWHRate) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ message: 'Users KWH  updated successfully', user: updateKWHRate });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+  }
+});
+
+router.put("/update-kwh-rate",  async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { kwhRate } = req.body;
+
+    // Validate kwhRate
+    if (typeof kwhRate !== 'number' || kwhRate <= 0) {
+      return res.status(400).json({ message: "Invalid kwhRate" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { kwhRate },
+      { new: true } // Return the updated document
+    );
+
+    res.status(200).json({ message: "kWh rate updated successfully", user: updatedUser });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error", error: err.message });
+  }
+});
+
+// Older versions of my sign-up and sign-in
+/*
 router.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -107,9 +185,7 @@ router.post("/signin", async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
 });
-
-
-
+*/
 
 router.post(
   "/updateProfile",
@@ -153,22 +229,21 @@ router.post(
   }
 );
 
-router.patch('/updateKwh/:userId', async (req, res) => {
+router.get('/getUserKwhRate/:userId', async (req, res) => {
   try {
-    const userId = req.params.userId;
-    const updates = req.body;
+    const userId = req.params.userId; // Get the userId from the request parameters
 
-    // Find and update the appliance
-    const updateKWHRate = await User.findByIdAndUpdate(userId, updates, { new: true });
+    // Fetch user from the database
+    const user = await User.findById(userId);
 
-    if (!updateKWHRate) {
-      return res.status(404).json({ message: 'User not found' });
+    if (user) {
+      // Assuming the user has a kwhRate field
+      res.status(200).json({ kwhRate: user.kwhRate });
+    } else {
+      res.status(404).json({ message: 'User not found' });
     }
-
-    res.json({ message: 'Users KWH  updated successfully', user: updateKWHRate });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error', error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch user kwhRate', error });
   }
 });
 
@@ -239,38 +314,3 @@ res.json({message : 'User deleted successfully'});
 module.exports = router;
 
 
-//
-//router.post("/signup", async (req, res) => {
-//  try {
-//    const user = await User.findOne({ email: req.body.email });
-//    if (user == null) {
-//      const newUser = new User({
-//        email: req.body.email,
-//        password: req.body.password,
-//        username: req.body.username,
-//        kwhRate : req.body.kwhRate
-//      });
-//      await newUser.save();
-//      console.log(newUser);
-//      res.json(newUser);
-//    } else {
-//      res.json({ message: "Email is not available" });
-//    }
-//  } catch (err) {
-//    console.log(err);
-//    res.json(err);
-//  }
-//});
-//
-//router.post("/signin", async (req, res) => {
-//  try {
-//    const user = await User.findOne({
-//      email: req.body.email,
-//      password: req.body.password,
-//    });
-//    res.json(user);
-//  } catch (err) {
-//    console.log(err);
-//    res.json(err);
-//  }
-//});
