@@ -6,11 +6,12 @@ const router = express.Router();
 
 router.post('/addAppliance', asyncHandler(async (req, res) => {
     try {
-        const { compareApplianceName, costPerHour, monthlyCost, carbonEmission } = req.body;
+        const { compareApplianceName, applianceCategory, costPerHour, monthlyCost, carbonEmission } = req.body;
 
         // Create a new appliance instance with the provided data
         const newAppliance = new Appliance({
             compareApplianceName,
+            applianceCategory,
             costPerHour,
             monthlyCost,
             carbonEmission

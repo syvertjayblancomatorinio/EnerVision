@@ -10,10 +10,7 @@ Widget firstParagraph(BuildContext context, String descriptions,
     margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
     child: RichText(
       text: TextSpan(
-        style: Theme.of(context)
-            .textTheme
-            .bodyMedium
-            ?.copyWith(fontSize: 10), // Adjusting text style to match theme
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 10),
         children: [
           TextSpan(
             text: firstWords,
@@ -31,6 +28,43 @@ Widget firstParagraph(BuildContext context, String descriptions,
   );
 }
 
+Widget newFirstParagraph(
+    BuildContext context, String descriptions, String applianceName) {
+  final parts = descriptions.split(applianceName);
+  return Container(
+    margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+    child: RichText(
+      text: TextSpan(
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 10),
+        children: [
+          TextSpan(
+            text: parts[0],
+            style:
+                Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 10),
+          ),
+          TextSpan(
+            text: applianceName,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                ),
+          ),
+          if (parts.length > 1)
+            TextSpan(
+              text: parts[1],
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontSize: 10),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+// Kini para sa bold ang first words. Add space if ni sobra ang bold words.
+// Or change the number of firsWordsCount.
 Widget benefits(BuildContext context, String text1, String text2, String text3,
     String text4) {
   double screenWidth = MediaQuery.of(context).size.width;
@@ -44,7 +78,7 @@ Widget benefits(BuildContext context, String text1, String text2, String text3,
         buildRichText(context, text1),
         buildRichText(context, text2),
         buildRichText(context, text3),
-        buildRichText(context, text4, firstWordsCount: 4),
+        buildRichText(context, text4, firstWordsCount: 7),
       ],
     ),
   );
@@ -59,10 +93,7 @@ Widget buildRichText(BuildContext context, String text,
     padding: const EdgeInsets.all(3.0),
     child: RichText(
       text: TextSpan(
-        style: Theme.of(context)
-            .textTheme
-            .bodyMedium
-            ?.copyWith(fontSize: 10), // Adjusting text style to match theme
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 10),
         children: [
           TextSpan(
             text: firstWords,
@@ -98,10 +129,55 @@ Widget bigImageContainer(BuildContext context, String imagePath) {
   );
 }
 
+Widget title(String title) {
+  return Container(
+    margin: const EdgeInsets.symmetric(vertical: 30, horizontal: 60),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(5),
+      boxShadow: const [
+        BoxShadow(
+          color: AppColors.primaryColor,
+          spreadRadius: 2,
+        ),
+        BoxShadow(
+          color: Colors.white,
+          offset: Offset(0.0, 0.0),
+          blurRadius: 0.0,
+          spreadRadius: 0.0,
+        ),
+      ],
+    ),
+    height: 30,
+    child: Center(
+      child: Text(
+        title ?? 'Appliance Name',
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  );
+}
+
+Widget smallerImageContainer(BuildContext context, String imagePath) {
+  double screenWidth = MediaQuery.of(context).size.width;
+  return Padding(
+    padding: const EdgeInsets.all(20),
+    child: Image.asset(
+      imagePath,
+      width: screenWidth - 30,
+      height: 120,
+      fit: BoxFit.contain,
+    ),
+  );
+}
+
 Widget header(BuildContext context, String descriptions) {
   return Container(
     height: 30,
-    color: AppColors.primaryColor.withOpacity(0.7),
+    color: const Color(0xFF1BBC9B),
+    // color: AppColors.primaryColor.withOpacity(0.7),
     width: double.infinity,
     margin: const EdgeInsets.symmetric(vertical: 20),
     child: Center(
@@ -109,9 +185,9 @@ Widget header(BuildContext context, String descriptions) {
         descriptions,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.black,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
             ),
       ),
     ),

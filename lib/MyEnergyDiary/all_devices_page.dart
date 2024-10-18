@@ -6,11 +6,12 @@ import 'package:intl/intl.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kwh.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/add_appliance_dialog.dart';
+import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/micaella.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
 import '../../ConstantTexts/Theme.dart';
 import '../../YourEnergyCalculator&Compare/compare_device.dart';
 
@@ -23,14 +24,14 @@ class AllDevicesPage extends StatefulWidget {
 }
 
 class _AllDevicesPageState extends State<AllDevicesPage> {
-  final addApplianceNameController = TextEditingController();
-  final addWattageController = TextEditingController();
-  final addUsagePatternController = TextEditingController();
-  final addWeeklyPatternController = TextEditingController();
+  final AppControllers controllers = AppControllers();
+
   late final TextEditingController controller;
+
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   List<dynamic> appliances = [];
   Map<String, dynamic> dailyCost = {};
+  List<int> selectedDays = [];
 
   bool isLoading = false;
   late String? userId;
@@ -41,19 +42,6 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     super.initState();
     fetchAppliances();
     fetchDailyCost();
-
-    addUsagePatternController.addListener(() {
-      String text = addUsagePatternController.text;
-      double? value = double.tryParse(text);
-      if (value != null && value > 24) {
-        addUsagePatternController.value = TextEditingValue(
-          text: '24',
-          selection: TextSelection.fromPosition(
-            const TextPosition(offset: '24'.length),
-          ),
-        );
-      }
-    });
   }
 
   Future<void> _showApplianceErrorDialog(BuildContext context) async {
@@ -62,8 +50,6 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       message:
           'Invalid Appliance\nOops! The appliance either already exists in your list or the name contains only spaces. Please add a different appliance with a valid name.',
     );
-
-    // Call the showErrorDialog function directly
     errorDialog.showErrorDialog(context);
   }
 
@@ -104,73 +90,40 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
   }
 
   Future<void> addAppliance() async {
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceToUser");
+    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
+    final Map<String, dynamic> applianceData = {
+      'applianceName': controllers.addApplianceNameController.text.trim(),
+      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
+      'usagePatternPerDay':
+          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
+      'applianceCategory':
+          controllers.addApplianceCategoryController.text.trim(),
+      'selectedDays': selectedDays,
+    };
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? userId = prefs.getString('userId');
+
+    if (userId == null) {
+      print('User ID not found in shared preferences');
+      return;
+    }
 
     var response = await http.post(
       url,
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(<String, dynamic>{
-        'userId': widget.userId, // Include userId in the request
-        'applianceData': {
-          'applianceName': addApplianceNameController.text.trim(),
-          'wattage': addWattageController.text,
-          'usagePatternPerDay': addUsagePatternController.text,
-          'usagePatternPerWeek': addWeeklyPatternController.text
-        }
+      body: jsonEncode({
+        'userId': userId,
+        'applianceData': applianceData,
       }),
     );
-    if (response != null) {
-      if (response.statusCode == 400) {
-        // ErrorDialogButton();
-        await _showApplianceErrorDialog(context);
-      } else if (response.statusCode == 201) {
-        print('Appliance added successfully');
-        fetchAppliances();
-        fetchDailyCost();
-      } else {
-        print('Failed to add appliance: ${response.body}');
-      }
-    }
-  }
 
-  Future<void> updateAppliance(
-      String applianceId, Map<String, dynamic> updates) async {
-    final url = Uri.parse('http://10.0.2.2:8080/updateAppliance/$applianceId');
-
-    final response = await http.patch(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(updates),
-    );
-
-    if (response.statusCode == 200) {
-      final responseBody = jsonDecode(response.body);
-      _showSnackBar('Update Success');
-    } else {
-      // Handle error response
-      final responseBody = jsonDecode(response.body);
-      _showSnackBar('Failed to update appliance: ${responseBody['message']}');
-    }
-  }
-
-  Future<void> deleteAppliance(String applianceId) async {
-    final url = Uri.parse('http://10.0.2.2:8080/deleteAppliance/$applianceId');
-    final response = await http.delete(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-    );
-    if (response.statusCode == 200) {
-      print('Appliance deleted successfully');
-      fetchDailyCost();
+    if (response.statusCode == 201) {
       fetchAppliances();
     } else {
-      print('Failed to delete appliance: ${response.body}');
+      await _showApplianceErrorDialog(context);
     }
   }
 
@@ -192,36 +145,23 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     }
   }
 
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Center(child: Text(message)),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  void showAddApplianceDialog(
-      BuildContext context,
-      TextEditingController addApplianceNameController,
-      TextEditingController addWattageController,
-      TextEditingController addUsagePatternController,
-      GlobalKey<FormState> formKey,
-      VoidCallback addAppliance) {
-    addApplianceNameController.clear();
-    addWattageController.clear();
-    addUsagePatternController.clear();
-    addWeeklyPatternController.clear();
+  void _showAddApplianceDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AddApplianceDialog(
-          addApplianceNameController: addApplianceNameController,
-          addWattageController: addWattageController,
-          addUsagePatternController: addUsagePatternController,
-          addmonthlyPatternController: addWeeklyPatternController,
+          addApplianceNameController: controllers.addApplianceNameController,
+          addWattageController: controllers.addWattageController,
+          addUsagePatternController: controllers.addUsagePatternController,
+          addApplianceCategoryController:
+              controllers.addApplianceCategoryController,
           formKey: formKey,
-          addAppliance: addAppliance,
+          addAppliance: (List<int> selectedDays) {
+            setState(() {
+              this.selectedDays = selectedDays;
+            });
+            addAppliance();
+          },
         );
       },
     );
@@ -229,7 +169,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
 
   @override
   void dispose() {
-    addUsagePatternController.dispose();
+    controllers.addUsagePatternController.dispose();
     super.dispose();
   }
 
@@ -255,13 +195,8 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
               bottom: 20.0,
               right: 20.0,
               child: ElevatedButton(
-                onPressed: () => showAddApplianceDialog(
+                onPressed: () => _showAddApplianceDialog(
                   context,
-                  addApplianceNameController,
-                  addWattageController,
-                  addUsagePatternController,
-                  formKey,
-                  addAppliance,
                 ),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(

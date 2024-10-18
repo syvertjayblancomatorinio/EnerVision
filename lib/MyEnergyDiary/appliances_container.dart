@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/kwh_rate_dialog.dart';
+import 'package:supabase_project/MyEnergyDiary/common-widgets.dart';
 import 'package:supabase_project/zNotUsedFiles/buttons_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -13,6 +15,8 @@ import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dar
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+
+import '../CommonWidgets/controllers/app_controllers.dart';
 
 const Duration kFakeHttpRequestDuration = Duration(seconds: 3);
 
@@ -24,40 +28,225 @@ class AppliancesContainer extends StatefulWidget {
 }
 
 class _AppliancesContainerState extends State<AppliancesContainer> {
-  TextEditingController editApplianceNameController = TextEditingController();
-  TextEditingController editWattageController = TextEditingController();
-  TextEditingController editUsagePatternController = TextEditingController();
-  TextEditingController editWeeklyPatternController = TextEditingController();
+  final AppControllers controllers = AppControllers();
 
-  TextEditingController addApplianceNameController = TextEditingController();
-  TextEditingController addWattageController = TextEditingController();
-  TextEditingController addUsagePatternController = TextEditingController();
-  final addWeeklyPatternController = TextEditingController();
   late final TextEditingController controller;
-
-  TextEditingController addMonthlyPatternController = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   List<Map<String, dynamic>> appliances = [];
   Map<String, dynamic> dailyCost = {};
-  bool isLoading = false;
+  bool isLoading = true;
+  String? kwhRate;
+  late String index = '0';
 
   @override
   void initState() {
     super.initState();
     fetchAppliances();
     fetchDailyCost();
+    getKwhRate();
   }
 
   @override
   void dispose() {
-    editApplianceNameController.dispose();
-    editWattageController.dispose();
-    editUsagePatternController.dispose();
-
-    addApplianceNameController.dispose();
-    addWattageController.dispose();
-    addUsagePatternController.dispose();
+    controllers.dispose();
     super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        myAppliancesContent(),
+      ],
+    );
+  }
+
+  Widget myAppliancesContent() {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (ScrollNotification notification) {
+        // Check if the scroll notification is of type ScrollUpdateNotification
+        if (notification is ScrollUpdateNotification) {
+          // Check if the scroll position is at the top
+          if (notification.metrics.pixels == 0) {
+            fetchAppliances();
+          }
+        }
+        return true;
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TotalCostDisplay(
+                cost: dailyCost['totalDailyConsumptionCost'] != null
+                    ? '₱ ${double.parse(dailyCost['totalDailyConsumptionCost'].toString()).toStringAsFixed(2)}'
+                    : 'COST',
+              ),
+              const SizedBox(width: 20),
+              TotalCostDisplay(
+                cost: dailyCost['totalDailyKwhConsumption'] != null
+                    ? '${double.parse(dailyCost['totalDailyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
+                    : 'KWH',
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.only(
+              left: 20.0,
+              top: 30,
+            ),
+            child: Text('Appliance',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(height: 10),
+          if (isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else if (appliances.isEmpty)
+            const Center(
+              child: Text(
+                'No appliances added',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            )
+          else
+            ...appliances.asMap().entries.map((entry) {
+              int index = entry.key;
+              var appliance = entry.value;
+              return Center(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    leading: Image.asset(
+                        appliance['imagePath'] ?? 'assets/deviceImage.png'),
+                    title: Text(appliance['applianceName'] ?? 'Unknown'),
+                    subtitle: Text(
+                        'Wattage: ${appliance['wattage'] ?? 'N/A'}\nUsage Pattern: ${appliance['usagePatternPerDay'] ?? 'N/A'}\nWeekly Usage: ${appliance['usagePatternPerWeek'] ?? 'N/A'}\n'),
+                    trailing: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _showActionSheet(context, index),
+                      child: const Icon(Icons.more_vert),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40),
+            child: Center(
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final kwhRate = await getKwhRate();
+
+                  if (kwhRate != null) {
+                    showAddApplianceDialog(
+                      context,
+                      controllers.addApplianceNameController,
+                      controllers.addWattageController,
+                      controllers.addUsagePatternController,
+                      controllers.addWeeklyPatternController,
+                      controllers.addApplianceCategoryController,
+                      formKey,
+                      addAppliance,
+                    );
+                  } else {
+                    showKwhRateDialog(
+                      context,
+                      controllers.kwhRateController,
+                      saveKwhRate,
+                      fetchAppliances,
+                      fetchDailyCost,
+                    );
+                  }
+                },
+                icon: const Icon(Icons.add, size: 0),
+                label: const Text('Add Appliance'),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                  ),
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> saveKwhRate(String kwhRate) async {
+    // Wait for SharedPreferences to initialize
+    final prefs = await SharedPreferences.getInstance();
+
+    // Get userId from SharedPreferences
+    final String? userId = prefs.getString('userId');
+
+    // Check if userId is available
+    if (userId == null) {
+      throw Exception('User ID not found');
+    }
+
+    // Build the request URL
+    final url = Uri.parse('http://10.0.2.2:8080/updateKwh/$userId');
+
+    // Send the HTTP PATCH request to update the kWh rate
+    final response = await http.patch(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({'kwhRate': kwhRate}),
+    );
+
+    // Log the response for debugging
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    // Check if the request was successful
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save kWh rate');
+    }
+  }
+
+  Future<int?> getKwhRate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in shared preferences');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/getUserKwhRate/$userId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('KwhRate found: ${data['kwhRate']}');
+      return data['kwhRate'];
+    } else if (response.statusCode == 404) {
+      print('KwhRate not found for user.');
+      return null;
+    } else {
+      throw Exception('Failed to load user kwhRate');
+    }
   }
 
   void _showActionSheet(BuildContext context, int index) {
@@ -207,6 +396,54 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
+  Future<void> saveAppliance() async {
+    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
+
+    // Example selectedDays data (adjust as needed based on user input)
+    List<int> selectedDays = [1, 3, 5]; // Sample for Mon, Wed, Fri
+
+    final Map<String, dynamic> applianceData = {
+      'applianceName': controllers.addApplianceNameController.text.trim(),
+      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
+      'usagePatternPerDay':
+          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
+      'applianceCategory':
+          controllers.addApplianceCategoryController.text.trim(),
+      'createdAt':
+          DateTime.now().toIso8601String(), // Or allow user input for the date
+      'selectedDays':
+          selectedDays, // Assuming user-selected days are passed here
+    };
+
+    // Assuming you have the `userId` stored in shared preferences
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? userId = prefs.getString('userId');
+
+    if (userId == null) {
+      print('User ID not found in shared preferences');
+      return;
+    }
+
+    var response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'applianceData': applianceData,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      print('Appliance successfully added');
+    } else {
+      print('Failed to add appliance: ${response.body}');
+    }
+
+    Navigator.of(context).pop(); // Close the dialog
+  }
+
   Future<void> save() async {
     final url = Uri.parse("http://10.0.2.2:8080/addApplianceToUser");
 
@@ -216,9 +453,10 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        'applianceName': addApplianceNameController.text,
-        'wattage': addWattageController.text,
-        'usagePatternPerDay': addUsagePatternController.text
+        'applianceName': controllers.addApplianceNameController.text,
+        'wattage': controllers.addWattageController.text,
+        'usagePatternPerDay': controllers.addUsagePatternController.text,
+        'applianceCategory': controllers.addApplianceCategoryController.text,
       }),
     );
 
@@ -240,12 +478,15 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       TextEditingController addApplianceNameController,
       TextEditingController addWattageController,
       TextEditingController addUsagePatternController,
+      TextEditingController weeklyUsagePatternController,
+      TextEditingController addApplianceCategoryController,
       GlobalKey<FormState> formKey,
       VoidCallback addAppliance) {
     addApplianceNameController.clear();
     addWattageController.clear();
     addUsagePatternController.clear();
-    addWeeklyPatternController.clear();
+    weeklyUsagePatternController.clear();
+    addApplianceCategoryController.clear();
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -253,9 +494,10 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           addApplianceNameController: addApplianceNameController,
           addWattageController: addWattageController,
           addUsagePatternController: addUsagePatternController,
-          addmonthlyPatternController: addWeeklyPatternController,
           formKey: formKey,
           addAppliance: addAppliance,
+          addWeeklyPatternController: weeklyUsagePatternController,
+          addApplianceCategoryController: addApplianceCategoryController,
         );
       },
     );
@@ -309,6 +551,18 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
+  Future<void> newAddAppliance(
+      String userId, Map<String, dynamic> applianceData) async {
+    try {
+      await ApplianceService.newAddAppliances(userId, applianceData);
+      _showSnackBar('Appliance added successfully');
+      fetchDailyCost();
+      fetchAppliances();
+    } catch (e) {
+      print('Failed to add appliance: $e');
+    }
+  }
+
   Future<void> addAppliance() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
@@ -322,10 +576,11 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       body: jsonEncode(<String, dynamic>{
         'userId': userId, // Include userId in the request
         'applianceData': {
-          'applianceName': addApplianceNameController.text,
-          'wattage': addWattageController.text,
-          'usagePatternPerDay': addUsagePatternController.text,
-          'usagePatternPerWeek': addWeeklyPatternController.text
+          'applianceName': controllers.addApplianceNameController.text,
+          'wattage': controllers.addWattageController.text,
+          'usagePatternPerDay': controllers.addUsagePatternController.text,
+          'usagePatternPerWeek': controllers.addWeeklyPatternController.text,
+          'applianceCategory': controllers.addApplianceCategoryController.text
         }
       }),
     );
@@ -360,57 +615,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
-  // Future<void> getAppliances() async {
-  //   try {
-  //     await ApplianceService.getAppliances();
-  //     _showSnackBar('Fetched appliances');
-  //
-  //     print('Fetched appliances');
-  //   } catch (e) {
-  //     _showSnackBar('Failed to get Appliances - ');
-  //     print('Failed to fetch appliances: $e');
-  //   }
-  // }
-
-  Future<void> getAppliances1() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      print("User ID is null. Cannot fetch appliances.");
-      return;
-    }
-
-    final url = Uri.parse("http://10.0.2.2:8080/user/$userId/appliances");
-
-    final response = await http.get(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      List<dynamic> fetchedAppliances = jsonDecode(response.body);
-
-      setState(() {
-        appliances = fetchedAppliances.map((appliance) {
-          return {
-            'applianceName': appliance['applianceName'],
-            'wattage': appliance['wattage'],
-            'usagePatternPerDay': appliance['usagePatternPerDay'],
-            'imagePath':
-                'assets/default_appliance_image.png', // Placeholder image
-          };
-        }).toList();
-      });
-
-      print('Fetched appliances: $appliances');
-    } else {
-      print('Failed to fetch appliances: ${response.statusCode}');
-    }
-  }
-
   Future<void> deleteAppliances(String applianceId) async {
     try {
       await ApplianceService.deleteAppliance(applianceId);
@@ -437,20 +641,22 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   void openEditApplianceDialog(int index) {
     var appliance = appliances[index];
 
-    editApplianceNameController.text = appliance['applianceName'] ?? '';
-    editWattageController.text = appliance['wattage']?.toString() ?? '';
-    editUsagePatternController.text =
+    controllers.editApplianceNameController.text =
+        appliance['applianceName'] ?? '';
+    controllers.editWattageController.text =
+        appliance['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
         appliance['usagePatternPerDay']?.toString() ?? '';
-    editWeeklyPatternController.text =
+    controllers.editWeeklyPatternController.text =
         appliance['usagePatternPerWeek']?.toString() ?? '';
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return EditApplianceDialog(
-          editApplianceNameController: editApplianceNameController,
-          editWattageController: editWattageController,
-          editUsagePatternController: editUsagePatternController,
-          editWeeklyPatternController: editWeeklyPatternController,
+          editApplianceNameController: controllers.editApplianceNameController,
+          editWattageController: controllers.editWattageController,
+          editUsagePatternController: controllers.editUsagePatternController,
+          editWeeklyPatternController: controllers.editWeeklyPatternController,
           formKey: formKey,
           editAppliance: () {},
           appliance: appliance,
@@ -459,130 +665,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           fetchDailyCosts: fetchDailyCost,
         );
       },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        myAppliancesContent(),
-      ],
-    );
-  }
-
-  Widget myAppliancesContent() {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (ScrollNotification notification) {
-        // Check if the scroll notification is of type ScrollUpdateNotification
-        if (notification is ScrollUpdateNotification) {
-          // Check if the scroll position is at the top
-          if (notification.metrics.pixels == 0) {
-            fetchAppliances();
-          }
-        }
-        return true;
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TotalCostDisplay(
-                cost: dailyCost['totalDailyConsumptionCost'] != null
-                    ? '₱ ${double.parse(dailyCost['totalDailyConsumptionCost'].toString()).toStringAsFixed(2)}'
-                    : 'N/A',
-              ),
-              const SizedBox(width: 20),
-              TotalCostDisplay(
-                cost: dailyCost['totalDailyKwhConsumption'] != null
-                    ? '${double.parse(dailyCost['totalDailyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
-                    : 'KWH',
-              ),
-            ],
-          ),
-          const Padding(
-            padding: EdgeInsets.only(
-              left: 20.0,
-              top: 30,
-            ),
-            child: Text('Appliance',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 10),
-          if (isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
-            )
-          else if (appliances.isEmpty)
-            const Center(
-              child: Text(
-                'No appliances added',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            )
-          else
-            ...appliances.asMap().entries.map((entry) {
-              int index = entry.key;
-              var appliance = entry.value;
-              return Center(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 8.0, horizontal: 16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: ListTile(
-                    leading: Image.asset(
-                        appliance['imagePath'] ?? 'assets/deviceImage.png'),
-                    title: Text(appliance['applianceName'] ?? 'Unknown'),
-                    subtitle: Text(
-                        'Wattage: ${appliance['wattage'] ?? 'N/A'}\nUsage Pattern: ${appliance['usagePatternPerDay'] ?? 'N/A'}\nWeekly Usage: ${appliance['usagePatternPerWeek'] ?? 'N/A'}\n'),
-                    trailing: CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () => _showActionSheet(context, index),
-                      child: const Icon(Icons.more_vert),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40),
-            child: Center(
-              child: ElevatedButton.icon(
-                onPressed: () => showAddApplianceDialog(
-                  context,
-                  addApplianceNameController,
-                  addWattageController,
-                  addUsagePatternController,
-                  formKey,
-                  addAppliance,
-                ),
-                icon: const Icon(Icons.add, size: 0),
-                label: const Text('Add Appliance'),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                  ),
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

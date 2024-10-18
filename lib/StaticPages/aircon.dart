@@ -65,8 +65,7 @@ class _AirConditionerState extends State<AirConditioner> {
           showProfile: false,
           onBackPressed: () => Navigator.of(context).pop(),
         ),
-        body:
-            content(context, compareAppliances), // Pass compareAppliances here
+        body: content(context, compareAppliances),
       ),
     );
   }

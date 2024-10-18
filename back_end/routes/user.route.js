@@ -110,6 +110,7 @@ router.post("/signup", async (req, res) => {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
 });
+
 router.patch('/updateKwh/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -210,7 +211,6 @@ router.post(
           streetLine,
           mobileNumber,
           profilePicture: profilePicturePath,
-//          appliances : [{}]
         },
         { new: true }
       );
@@ -232,18 +232,20 @@ router.post(
 router.get('/getUserKwhRate/:userId', async (req, res) => {
   try {
     const userId = req.params.userId; // Get the userId from the request parameters
+    const user = await User.findById(userId); // Fetch user by ID
 
-    // Fetch user from the database
-    const user = await User.findById(userId);
-
-    if (user) {
-      // Assuming the user has a kwhRate field
-      res.status(200).json({ kwhRate: user.kwhRate });
-    } else {
-      res.status(404).json({ message: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' }); // Handle no user found
     }
+
+    if (user.kwhRate != null && user.kwhRate !== '') {
+      return res.status(200).json({ kwhRate: user.kwhRate }); // Send kwhRate if found
+    } else {
+      return res.status(404).json({ message: 'kwhRate not found for the user' }); // No kwhRate set
+    }
+
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch user kwhRate', error });
+    return res.status(500).json({ message: 'Failed to fetch user kwhRate', error: error.message });
   }
 });
 
