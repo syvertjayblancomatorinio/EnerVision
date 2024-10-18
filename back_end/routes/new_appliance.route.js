@@ -49,6 +49,10 @@ router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const existingAppliance = await Appliance.findOne({ applianceName: applianceName.trim(), userId });
+    if (existingAppliance) {
+        return res.status(400).json({ message: 'Appliance already exists for this user.' });
+    }
     // Ensure wattage and usage pattern are numbers
     if (typeof wattage !== 'number' || typeof usagePatternPerDay !== 'number') {
         return res.status(400).json({ error: 'Wattage and usage pattern must be numbers' });
