@@ -87,7 +87,7 @@ router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
         createdAt: createdDate,
         monthlyCost,
         userId,
-        selectedDays // Store selected days as an array of integers
+        selectedDays
     });
 
     // Save the new appliance and update the user's appliance list

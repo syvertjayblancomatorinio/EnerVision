@@ -6,20 +6,18 @@ class AddApplianceDialog extends StatefulWidget {
   final TextEditingController addApplianceNameController;
   final TextEditingController addWattageController;
   final TextEditingController addUsagePatternController;
-  final TextEditingController addWeeklyPatternController;
   final TextEditingController addApplianceCategoryController;
   final GlobalKey<FormState> formKey;
-  final VoidCallback addAppliance;
+  final Function(List<int>) addAppliance;
   const AddApplianceDialog({
-    Key? key,
+    super.key,
     required this.addApplianceNameController,
     required this.addWattageController,
     required this.addUsagePatternController,
     required this.formKey,
     required this.addAppliance,
-    required this.addWeeklyPatternController,
     required this.addApplianceCategoryController,
-  }) : super(key: key);
+  });
 
   @override
   State<AddApplianceDialog> createState() => _AddApplianceDialogState();
@@ -226,32 +224,6 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
             },
           ),
           const SizedBox(height: 10),
-          TextFormField(
-            controller: widget.addWeeklyPatternController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Days used per Week',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-            onChanged: (value) {
-              final doubleValue = double.tryParse(value);
-              if (doubleValue != null && doubleValue > 7) {
-                widget.addWeeklyPatternController.text = '7';
-                widget.addWeeklyPatternController.selection =
-                    TextSelection.fromPosition(
-                  const TextPosition(offset: '7'.length),
-                );
-              }
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter the usage pattern';
-              }
-              return null;
-            },
-          ),
         ],
       ),
     );
@@ -271,7 +243,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
         ElevatedButton(
           onPressed: () {
             if (widget.formKey.currentState!.validate()) {
-              widget.addAppliance();
+              widget.addAppliance(selectedDays);
               Navigator.of(context).pop();
             }
           },
@@ -308,13 +280,13 @@ class DropdownWithIcon extends StatelessWidget {
   final FormFieldValidator<String>? validator;
 
   const DropdownWithIcon({
-    Key? key,
+    super.key,
     required this.labelText,
     required this.items,
     required this.controller,
     required this.icon,
     this.validator,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -9,10 +9,12 @@ import 'package:supabase_project/StaticPages/aircon.dart';
 import 'package:supabase_project/MainFolder/secondary_compare.dart';
 import 'dart:async';
 
+import 'package:supabase_project/StaticPages/anne_aircon.dart';
+
 Future<void> main() async {
   runApp(
     const MaterialApp(
-      home: CommunityTab(),
+      home: CarmelAndAnne(selectedIndex: 1),
     ),
   );
 }

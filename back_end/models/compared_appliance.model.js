@@ -7,6 +7,18 @@ const compareApplianceSchema = new Schema({
         required: true,
         unique: true
     },
+    applianceCategory: {
+            type: String,
+            enum: [
+                'Personal Devices',
+                'Kitchen Appliances',
+                'Cleaning & Laundry Appliances',
+                'Personal Care Appliances',
+                'Home Media and Office Appliances',
+                'Climate and Lighting Control Appliances'
+            ],
+            default: 'Personal Devices',
+        },
     costPerHour: {
         type: Number,
         required: true,

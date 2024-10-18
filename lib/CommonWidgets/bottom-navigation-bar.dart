@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/energy_effieciency_page.dart';
 import 'package:supabase_project/EnergyPage/EnergyTracker/energy_tracker.dart';
+import 'package:supabase_project/MainFolder/calculator.dart';
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 import 'package:supabase_project/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
 import 'package:supabase_project/Settings/app-settings-widget.dart';
@@ -28,8 +29,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
   Future<void> _loadUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      userId = prefs
-          .getString('userId'); // Retrieve the userId from SharedPreferences
+      userId = prefs.getString('userId');
     });
   }
 
@@ -65,7 +65,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const EnergyTracker(),
+            builder: (context) => const EnergyUsageTracker(),
           ),
         );
       } else if (index == 4) {

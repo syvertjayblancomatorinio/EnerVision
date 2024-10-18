@@ -5,8 +5,34 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApplianceService {
   static const String baseUrl = 'http://10.0.2.2:8080';
 
-// Static method to Create an appliance
-//   Status: unfinished
+  static Future<void> newAddAppliance(
+      String userId, Map<String, dynamic> applianceData) async {
+    final url = Uri.parse('$baseUrl/addApplianceNewLogic');
+
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'userId': userId,
+        'applianceData': applianceData,
+      }),
+    );
+
+    // Handling the response
+    if (response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+      return responseBody['applianceId'];
+    } else if (response.statusCode == 400) {
+      final responseBody = jsonDecode(response.body);
+      throw Exception('Failed to add appliance: ${responseBody['message']}');
+    } else {
+      final responseBody = jsonDecode(response.body);
+      throw Exception('Failed to add appliance: ${responseBody['message']}');
+    }
+  }
+
   static Future<void> addAppliance(
       String userId, Map<String, dynamic> applianceData) async {
     final url = Uri.parse('$baseUrl/addApplianceToUser');
@@ -35,8 +61,33 @@ class ApplianceService {
     }
   }
 
-  // Static method to Read appliances
+  static Future<void> newAddAppliances(
+      String userId, Map<String, dynamic> applianceData) async {
+    final url = Uri.parse('$baseUrl/addApplianceNewLogic');
 
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'applianceData': applianceData,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+      print('Appliance added: ${responseBody['appliance']}');
+    } else if (response.statusCode == 400) {
+      final responseBody = jsonDecode(response.body);
+      throw Exception('Failed to add appliance: ${responseBody['error']}');
+    } else {
+      throw Exception('Unexpected error: ${response.body}');
+    }
+  }
+
+  // Static method to Read appliances
   static Future<List<Map<String, dynamic>>> fetchAppliance() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
