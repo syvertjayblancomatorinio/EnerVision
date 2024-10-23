@@ -194,3 +194,89 @@ router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req
 }));
 
 module.exports = router;
+//router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req, res) => {
+//    const applianceId = req.params.applianceId;
+//    const { updatedAt, updatedData } = req.body; // Extract updatedAt and updatedData from request body
+//    const { wattage, usagePatternPerDay, selectedDays } = updatedData;
+//
+//    // Validate input
+//    if (!applianceId || !updatedAt || !updatedData || !wattage || !usagePatternPerDay || !selectedDays) {
+//        return res.status(400).json({ error: 'Missing required fields' });
+//    }
+//
+//    // Ensure wattage and usage pattern are numbers
+//    if (typeof wattage !== 'number' || typeof usagePatternPerDay !== 'number') {
+//        return res.status(400).json({ error: 'Wattage and usage pattern must be numbers' });
+//    }
+//
+//    // Ensure selectedDays is an array of numbers
+//    if (!Array.isArray(selectedDays) || !selectedDays.every(Number.isInteger)) {
+//        return res.status(400).json({ error: 'Selected days must be an array of integers' });
+//    }
+//
+//    // Find the appliance by its ID
+//    const appliance = await Appliance.findById(applianceId);
+//    if (!appliance) {
+//        return res.status(404).json({ error: 'Appliance not found' });
+//    }
+//
+//    // Find the user associated with the appliance (by appliance.userId)
+//    const user = await User.findById(appliance.userId);
+//    if (!user) {
+//        return res.status(404).json({ error: 'User not found' });
+//    }
+//
+//    const kwhRate = user.kwhRate || 0;
+//
+//    const currentMonth = new Date().getMonth();
+//    const currentYear = new Date().getFullYear();
+//    const applianceLastUpdatedMonth = new Date(appliance.updatedAt).getMonth();
+//    const applianceLastUpdatedYear = new Date(appliance.updatedAt).getFullYear();
+//
+//    // Check if the appliance has already been updated this month
+//    if (applianceLastUpdatedMonth === currentMonth && applianceLastUpdatedYear === currentYear) {
+//        return res.status(400).json({ error: 'Appliance can only be updated once per month' });
+//    }
+//
+//    const createdDate = appliance.createdAt;
+//    const updatedDate = new Date(updatedAt);
+//
+//    // Ensure the updatedAt date is not before the createdAt date
+//    if (updatedDate < createdDate) {
+//        return res.status(400).json({ error: 'Updated date cannot be before the created date' });
+//    }
+//
+//    // --- First Calculation: From createdAt to day before updatedAt using old data ---
+//    const oldEndDate = new Date(updatedDate);
+//    oldEndDate.setDate(updatedDate.getDate() - 1);  // Exclude the updatedAt day
+//
+//    const oldDaysUsed = getOccurrencesBetweenDates(createdDate, oldEndDate, appliance.selectedDays);
+//    const oldTotalDaysUsed = Object.values(oldDaysUsed).reduce((sum, count) => sum + count, 0);
+//    const oldTotalHoursUsed = oldTotalDaysUsed * appliance.usagePatternPerDay;
+//    const oldEnergyKwh = (appliance.wattage / 1000) * oldTotalHoursUsed;
+//
+//    // --- Second Calculation: From updatedAt to end of the month using new data ---
+//    const updatedEndOfMonth = new Date(updatedDate.getFullYear(), updatedDate.getMonth() + 1, 0);
+//    const newDaysUsed = getOccurrencesBetweenDates(updatedDate, updatedEndOfMonth, selectedDays);
+//    const newTotalDaysUsed = Object.values(newDaysUsed).reduce((sum, count) => sum + count, 0);
+//    const newTotalHoursUsed = newTotalDaysUsed * usagePatternPerDay;
+//    const newEnergyKwh = (wattage / 1000) * newTotalHoursUsed;
+//
+//    // Sum both energy consumptions
+//    const totalEnergyKwh = oldEnergyKwh + newEnergyKwh;
+//
+//    // Calculate the final monthly cost
+//    const updatedMonthlyCost = kwhRate * totalEnergyKwh;
+//
+//    // Update the appliance data with the new information
+//    appliance.wattage = wattage;
+//    appliance.usagePatternPerDay = usagePatternPerDay;
+//    appliance.selectedDays = selectedDays;
+//    appliance.updatedAt = updatedDate;
+//    appliance.monthlyCost = updatedMonthlyCost;
+//
+//    await appliance.save();
+//
+//    res.status(200).json({ message: 'Appliance updated successfully', newEnergyKwh, oldEnergyKwh, newTotalDaysUsed, appliance });
+//
+//}));

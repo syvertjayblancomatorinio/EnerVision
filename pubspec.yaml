@@ -91,6 +91,7 @@ flutter:
      - assets/add_post 1.png
      - assets/loading.png
      - assets/refrigerator.png
+     - assets/suggestion.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

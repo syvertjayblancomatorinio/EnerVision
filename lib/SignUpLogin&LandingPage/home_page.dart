@@ -161,7 +161,7 @@ Widget energyCategories(BuildContext context) {
           children: [
             storyTag('Renewable Energy', context,
                 const RenewableEnergy(selectedIndex: 1)),
-            storyTag('Solar Energy', context, const FossilFuelsWidget()),
+            storyTag('Fossil Fuels', context, const FossilFuelsWidget()),
             storyTag('EnergyStorage', context,
                 const EnergyStorage(selectedIndex: 1)),
             storyTag('Energy Efficiency Widget', context,

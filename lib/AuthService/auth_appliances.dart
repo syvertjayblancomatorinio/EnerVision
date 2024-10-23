@@ -123,6 +123,7 @@ class ApplianceService {
   }
 
   // Static method to Update an appliance
+
   static Future<Map<String, dynamic>> updateAppliance(
       String applianceId, Map<String, dynamic> updates) async {
     final url = Uri.parse('$baseUrl/updateAppliance/$applianceId');
@@ -138,7 +139,7 @@ class ApplianceService {
 
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
-        return responseBody; // Return the updated appliance data or confirmation
+        return responseBody;
       } else {
         final responseBody = jsonDecode(response.body);
         throw Exception(

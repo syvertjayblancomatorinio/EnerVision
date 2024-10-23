@@ -24,17 +24,18 @@ class _SetupProfileState extends State<SetupProfile> {
   final _mobileNumberController = TextEditingController();
   final _nameController = TextEditingController();
   final _birthDateController = TextEditingController();
-  String? _selectedCountry;
+  String? _selectedCountry = 'Philippines';
 
   final List<String> city = ['Cebu City'];
 
-  // Function to pick a date from the calendar
   Future<void> _pickDate(BuildContext context) async {
     DateTime? selectedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: DateTime(
+          DateTime.now().year - 18, DateTime.now().month, DateTime.now().day),
       firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      lastDate: DateTime(
+          DateTime.now().year - 18, DateTime.now().month, DateTime.now().day),
     );
     if (selectedDate != null) {
       setState(() {
@@ -104,7 +105,7 @@ class _SetupProfileState extends State<SetupProfile> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         var profileData = jsonDecode(response.body);
         print('Profile updated successfully: ${profileData['message']}');
-
+        await prefs.setString('name', _nameController.text);
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => SplashScreen()),
@@ -317,6 +318,16 @@ class _SetupProfileState extends State<SetupProfile> {
                         showCountryPicker(
                           context: context,
                           showPhoneCode: false,
+                          countryListTheme: const CountryListThemeData(
+                              flagSize: 25,
+                              backgroundColor: Colors.white,
+                              textStyle: TextStyle(
+                                  fontSize: 16, color: Colors.blueGrey),
+                              bottomSheetHeight: 700,
+                              inputDecoration: InputDecoration(
+                                  labelText: 'Search',
+                                  hintText:
+                                      'Start typing to Search your country')),
                           onSelect: (Country country) {
                             setState(() {
                               _selectedCountry = country.name;
@@ -495,18 +506,18 @@ class _SetupProfileState extends State<SetupProfile> {
                         keyboardType: TextInputType.phone,
                         maxLength:
                             10, // Adjusted to 10 digits since +63 is included
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           border: InputBorder.none,
                           hintText: 'Enter your Phone Number',
-                          hintStyle: const TextStyle(
+                          hintStyle: TextStyle(
                             color: Color(0xFF969696),
                             fontSize: 14.0,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
+                          contentPadding: EdgeInsets.symmetric(
                               horizontal: 12, vertical: 16),
                           counterText: '',
                           prefixText: '+63 ', // Adding country code as prefix
-                          prefixStyle: const TextStyle(
+                          prefixStyle: TextStyle(
                             color: Colors.black,
                             fontSize: 14.0,
                           ),
@@ -543,13 +554,10 @@ class _SetupProfileState extends State<SetupProfile> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color(0xFF00C29A), // Button color (green)
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 16), // Retained vertical padding
+                          backgroundColor: const Color(0xFF00C29A),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                15), // Rounded corners with radius 8
+                            borderRadius: BorderRadius.circular(15),
                           ),
                         ),
                       ),

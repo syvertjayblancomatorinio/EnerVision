@@ -64,6 +64,13 @@ class AuthService {
       );
 
       if (response.statusCode == 201) {
+        var responseBody = jsonDecode(response.body);
+
+        String userId = responseBody['user']['_id'];
+
+        // Save the user ID to shared preferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userId', userId);
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => SetupProfile()),

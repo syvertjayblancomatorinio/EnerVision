@@ -6,6 +6,7 @@ import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
+import 'package:supabase_project/SignUpLogin&LandingPage/setup_profile.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/textfield.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/user.dart';
 import 'package:supabase_project/buttons/sign_up_button.dart';
@@ -148,7 +149,6 @@ class _SignUpPageState extends State<SignUpPage> {
                             //     }
                             //   },
                             // ),
-                            const SizedBox(height: 20),
                             CustomTextField(
                               controller: _emailController,
                               hintText: 'Email',
@@ -219,7 +219,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  SplashScreen()),
+                                                  SetupProfile()),
                                         );
                                       }
                                     } else {

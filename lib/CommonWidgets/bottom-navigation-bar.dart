@@ -8,6 +8,8 @@ import 'package:supabase_project/MyEnergyDiary/segmentPages/my_energy_diary_page
 import 'package:supabase_project/Settings/app-settings-widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../PreCode/addSuggestion.dart';
+
 class BottomNavigation extends StatefulWidget {
   final int selectedIndex;
   const BottomNavigation({Key? key, required this.selectedIndex});
@@ -65,7 +67,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const EnergyUsageTracker(),
+            builder: (context) => SuggestionExample(),
           ),
         );
       } else if (index == 4) {

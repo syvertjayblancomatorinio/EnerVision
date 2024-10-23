@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/kwh_rate_dialog.dart';
 import 'package:supabase_project/MyEnergyDiary/common-widgets.dart';
 import 'package:supabase_project/zNotUsedFiles/buttons_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -442,16 +441,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
   }
 
-  // AddApplianceDialog(
-  // addApplianceNameController: addApplianceNameController,
-  // addWattageController: addWattageController,
-  // addUsagePatternController: addUsagePatternController,
-  // formKey: formKey,
-  // addAppliance: addAppliance,
-  // addWeeklyPatternController: weeklyUsagePatternController,
-  // addApplianceCategoryController: addApplianceCategoryController,
-  // );
-
   Future<double?> getKwhRate() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
@@ -499,98 +488,11 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close the action sheet
+            Navigator.pop(context);
           },
           child: const Text('Cancel'),
         ),
       ),
-    );
-  }
-
-  void _confirmDeleteAppliance(int index) {
-    final appliance = appliances[index];
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 16,
-          backgroundColor: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.warning, // You can change the icon to any suitable one.
-                  color: AppColors.primaryColor,
-                  size: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Delete Appliance?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Are you sure you want to delete this appliance? This cannot be undone.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        deleteAppliance(appliance['_id']).then((_) {
-                          fetchAppliances();
-                          fetchDailyCost();
-                          Navigator.of(context).pop();
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                          fontFamily: 'Montserrat',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -622,74 +524,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
-  Future<void> saveAppliance() async {
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
-
-    // Example selectedDays data (adjust as needed based on user input)
-    List<int> selectedDays = [1, 3, 5]; // Sample for Mon, Wed, Fri
-
-    final Map<String, dynamic> applianceData = {
-      'applianceName': controllers.addApplianceNameController.text.trim(),
-      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
-      'usagePatternPerDay':
-          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
-      'applianceCategory':
-          controllers.addApplianceCategoryController.text.trim(),
-      'createdAt':
-          DateTime.now().toIso8601String(), // Or allow user input for the date
-      'selectedDays':
-          selectedDays, // Assuming user-selected days are passed here
-    };
-
-    // Assuming you have the `userId` stored in shared preferences
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? userId = prefs.getString('userId');
-
-    if (userId == null) {
-      print('User ID not found in shared preferences');
-      return;
-    }
-
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'applianceData': applianceData,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      print('Appliance successfully added');
-    } else {
-      print('Failed to add appliance: ${response.body}');
-    }
-
-    Navigator.of(context).pop(); // Close the dialog
-  }
-
-  Future<void> save() async {
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceToUser");
-
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'applianceName': controllers.addApplianceNameController.text,
-        'wattage': controllers.addWattageController.text,
-        'usagePatternPerDay': controllers.addUsagePatternController.text,
-        'applianceCategory': controllers.addApplianceCategoryController.text,
-      }),
-    );
-
-    print(response.body);
-    Navigator.of(context).pop();
-  }
-
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -699,36 +533,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
   }
 
-  // void showAddApplianceDialog(
-  //     BuildContext context,
-  //     TextEditingController addApplianceNameController,
-  //     TextEditingController addWattageController,
-  //     TextEditingController addUsagePatternController,
-  //     TextEditingController weeklyUsagePatternController,
-  //     TextEditingController addApplianceCategoryController,
-  //     GlobalKey<FormState> formKey,
-  //     VoidCallback addAppliance) {
-  //   addApplianceNameController.clear();
-  //   addWattageController.clear();
-  //   addUsagePatternController.clear();
-  //   weeklyUsagePatternController.clear();
-  //   addApplianceCategoryController.clear();
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AddApplianceDialog(
-  //         addApplianceNameController: addApplianceNameController,
-  //         addWattageController: addWattageController,
-  //         addUsagePatternController: addUsagePatternController,
-  //         formKey: formKey,
-  //         addAppliance: addAppliance,
-  //         addWeeklyPatternController: weeklyUsagePatternController,
-  //         addApplianceCategoryController: addApplianceCategoryController,
-  //       );
-  //     },
-  //   );
-  // }
-
   Future<void> _showApplianceErrorDialog(BuildContext context) async {
     await showCustomDialog(
       context: context,
@@ -737,44 +541,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           'Appliance name must not have a duplicate.\nPlease use a different name.',
       buttonText: 'OK',
     );
-  }
-
-  Future<void> addToMonthlyConsumption() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    final url = Uri.parse("http://10.0.2.2:8080/save-consumption");
-
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, dynamic>{
-        'userId': userId,
-        'applianceId': controller.text,
-        'usage': controller.text,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      print('Monthly consumption added successfully');
-      // Fetch updated appliances after adding a new consumption
-      fetchAppliances();
-    } else {
-      print('Failed to add monthly consumption: ${response.body}');
-    }
-  }
-
-  Future<void> addAppliance1(
-      String userId, Map<String, dynamic> applianceData) async {
-    try {
-      await ApplianceService.addAppliance(userId, applianceData);
-      _showSnackBar('Appliance added successfully');
-      fetchDailyCost();
-      fetchAppliances();
-    } catch (e) {
-      print('Failed to add appliance: $e');
-    }
   }
 
   Future<void> newAddAppliance(
@@ -895,6 +661,103 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           fetchDailyCosts: fetchDailyCost,
         );
       },
+    );
+  }
+
+  void _confirmDeleteAppliance(int index) {
+    final appliance = appliances[index];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 16,
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.warning,
+                  color: AppColors.primaryColor,
+                  size: 50,
+                ),
+                const SizedBox(height: 20),
+                _popupTitle('Delete Appliance?'),
+                const SizedBox(height: 10),
+                _popupDescription(
+                  'Are you sure you want to delete this appliance? This cannot be undone.',
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        deleteAppliance(appliance['_id']).then((_) {
+                          fetchAppliances();
+                          fetchDailyCost();
+                          Navigator.of(context).pop();
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontFamily: 'Montserrat',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _popupTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+        fontFamily: 'Montserrat',
+      ),
+    );
+  }
+
+  Widget _popupDescription(String description) {
+    return Text(
+      description,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 14,
+        color: Colors.grey[500],
+        fontFamily: 'Montserrat',
+      ),
     );
   }
 }

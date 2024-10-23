@@ -16,7 +16,7 @@ const userProfileSchema = new Schema({
   address: {
     countryLine: {
       type: String,
-      enum: ['USA', 'Canada', 'UK', 'Australia', 'Philippines'],
+      enum: ['United States', 'Canada', 'UK', 'Australia', 'Philippines'],
       required: true,
     },
     cityLine: { type: String, required: true },

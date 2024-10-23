@@ -5,11 +5,13 @@ import 'package:supabase_project/AuthService/auth_profile.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
+import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/create_post.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/PreCode/deleteDialog.dart';
 
 class CommunityTab extends StatefulWidget {
   const CommunityTab({super.key});
@@ -19,10 +21,19 @@ class CommunityTab extends StatefulWidget {
 }
 
 class _CommunityTabState extends State<CommunityTab> {
+  AppControllers controller = AppControllers();
+  List<TextEditingController> editControllers = [];
+
   List<dynamic> posts = [];
   bool isLoading = false;
   bool showUsersPosts = false;
   bool isUserPost = false;
+  List<String> suggestions = [];
+  String placeholderImage = 'assets/image (6).png';
+  int? activeSuggestionIndex;
+  int? _tappedIndex;
+  int? editingIndex;
+
   @override
   void initState() {
     super.initState();
@@ -93,11 +104,8 @@ class _CommunityTabState extends State<CommunityTab> {
                     ElevatedButton(
                       onPressed: () {
                         deletePost(post['_id']).then((_) {
-                          // After deletion, pop the dialog
                           Navigator.of(context).pop();
-
-                          // Optionally refresh the UI or fetch posts again
-                          // fetchPosts();
+                          getPosts();
                         }).catchError((error) {
                           // Handle error if deletion fails
                           print('Deletion failed: $error');
@@ -131,25 +139,6 @@ class _CommunityTabState extends State<CommunityTab> {
       },
     );
   }
-
-  // Future<void> deletePost(String postId) async {
-  //   setState(() {
-  //     isLoading = true; // Set loading to true at the start of the process
-  //   });
-  //
-  //   try {
-  //     var deletedPost = await PostsService.deletePost(postId);
-  //     setState(() {
-  //       posts.removeWhere((post) => post['id'] == postId);
-  //     });
-  //   } catch (err) {
-  //     print('Failed to delete post: $err');
-  //   } finally {
-  //     setState(() {
-  //       isLoading = false;
-  //     });
-  //   }
-  // }
 
   Future<void> getPosts() async {
     setState(() {
@@ -229,7 +218,7 @@ class _CommunityTabState extends State<CommunityTab> {
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close the action sheet
+            Navigator.pop(context);
           },
           child: const Text(
             'Cancel',
@@ -306,6 +295,7 @@ class _CommunityTabState extends State<CommunityTab> {
         else
           ...sortedPosts.asMap().entries.map((entry) {
             var post = entry.value;
+            int index = entry.key; // Get the index
             return _buildUserPost(
               post['title'] ?? 'No Title',
               post['description'] ?? 'No Description',
@@ -313,8 +303,9 @@ class _CommunityTabState extends State<CommunityTab> {
               post['tags'] ?? 'No tags',
               'https://example.com/user_avatar.jpg',
               'https://example.com/sample_image.jpg',
+              index, // Pass the index here
             );
-          }),
+          }).toList(),
       ],
     );
   }
@@ -343,13 +334,15 @@ class _CommunityTabState extends State<CommunityTab> {
               onTap: () {
                 _showActionSheet(context);
               },
-              child: const Icon(Icons.edit, color: Color(0xFF1BBC9B)),
+              child: const Icon(Icons.edit),
             ),
             GestureDetector(
               onTap: () {
-                getPosts(); // Fetch all posts on refresh
+                getPosts();
               },
-              child: const Icon(Icons.refresh, color: Color(0xFF1BBC9B)),
+              child: const Icon(
+                Icons.refresh,
+              ),
             ),
           ],
         ),
@@ -357,16 +350,167 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  Widget _buildUserPost(String title, String description, String timeAgo,
-      String tags, String profileImageUrl, String postImageUrl) {
-    const String placeholderImage = 'assets/image (6).png';
-    int index = 0;
+  Widget _buildTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Montserrat',
+      ),
+    );
+  }
+
+  Widget _buildTags(String tags) {
+    return Text(
+      tags,
+      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+    );
+  }
+
+  Widget _buildTitleTags(String title, String tags) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTitle(title),
+        const SizedBox(height: 4.0),
+        _buildTags(tags),
+      ],
+    );
+  }
+
+  Widget _buildDescription(String description) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 30, left: 10, bottom: 10),
+      child: Text(
+        description,
+        style: const TextStyle(fontSize: 14),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(String profileImageUrl, String postImageUrl) {
     final String validProfileImageUrl =
         profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
+    return CircleAvatar(
+      radius: 20.0,
+      backgroundImage: NetworkImage(validProfileImageUrl),
+      child: ClipOval(
+        child: Image.network(
+          validProfileImageUrl,
+          width: 40.0,
+          height: 40.0,
+          fit: BoxFit.cover,
+          errorBuilder:
+              (BuildContext context, Object error, StackTrace? stackTrace) {
+            return Image.asset(
+              placeholderImage,
+              fit: BoxFit.cover,
+            );
+          },
+        ),
+      ),
+    );
+  }
 
+  Widget _buildIcon(int index) {
+    return GestureDetector(
+        onTap: () {
+          _editPostActionSheet(context, index);
+        },
+        child: const Icon(Icons.more_vert));
+  }
+
+  Widget _buildPostImage(
+    String profileImageUrl,
+    String postImageUrl,
+  ) {
     final String validPostImageUrl =
         postImageUrl.isNotEmpty ? postImageUrl : placeholderImage;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        validPostImageUrl,
+        width: double.infinity,
+        height: 200.0,
+        fit: BoxFit.cover,
+        errorBuilder:
+            (BuildContext context, Object error, StackTrace? stackTrace) {
+          return Image.asset(
+            placeholderImage,
+            width: double.infinity,
+            height: 200.0,
+            fit: BoxFit.cover,
+          );
+        },
+      ),
+    );
+  }
 
+  Widget _buildSuggestionsButton(String profileImageUrl, int index) {
+    final String validProfileImageUrl =
+        profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
+    return Row(
+      children: [
+        Row(
+          children: List.generate(3, (index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3.0),
+              child: CircleAvatar(
+                radius: 10.0,
+                backgroundImage: NetworkImage(validProfileImageUrl),
+                child: ClipOval(
+                  child: Image.network(
+                    validProfileImageUrl,
+                    width: 20.0,
+                    height: 20.0,
+                    fit: BoxFit.cover,
+                    errorBuilder: (BuildContext context, Object error,
+                        StackTrace? stackTrace) {
+                      return Image.asset(
+                        placeholderImage,
+                        fit: BoxFit.cover,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        const Spacer(),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              if (_tappedIndex == index) {
+                _tappedIndex =
+                    null; // Hide the text field if the same post is tapped again
+              } else {
+                _tappedIndex = index; // Set the tapped index
+              }
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1BBC9B),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+          ),
+          child: const Text('Add Suggestions'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUserPost(
+    String title,
+    String description,
+    String timeAgo,
+    String tags,
+    String profileImageUrl,
+    String postImageUrl,
+    int index, // Pass the index
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
       child: Container(
@@ -377,126 +521,173 @@ class _CommunityTabState extends State<CommunityTab> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 20.0,
-                  backgroundImage: NetworkImage(validProfileImageUrl),
-                  child: ClipOval(
-                    child: Image.network(
-                      validProfileImageUrl,
-                      width: 40.0,
-                      height: 40.0,
-                      fit: BoxFit.cover,
-                      errorBuilder: (BuildContext context, Object error,
-                          StackTrace? stackTrace) {
-                        return Image.asset(
-                          placeholderImage,
-                          fit: BoxFit.cover,
-                        );
-                      },
-                    ),
-                  ),
+                _buildAvatar(
+                  profileImageUrl,
+                  postImageUrl,
                 ),
                 const SizedBox(width: 10.0),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Montserrat',
-                      ),
-                    ),
-                    const SizedBox(height: 4.0),
-                    Text(
-                      tags,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
+                _buildTitleTags(title, tags),
                 const Spacer(),
-                Text(
-                  timeAgo,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+                _buildTags(timeAgo),
                 const SizedBox(width: 10.0),
-                GestureDetector(
-                    onTap: () {
-                      _editPostActionSheet(context, index);
-                    },
-                    child: const Icon(Icons.more_vert)),
+                _buildIcon(index),
               ],
             ),
+            _buildDescription(description),
             const SizedBox(height: 10.0),
-            Text(
-              description,
-              style: const TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 10.0),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                validPostImageUrl,
-                width: double.infinity,
-                height: 200.0,
-                fit: BoxFit.cover,
-                errorBuilder: (BuildContext context, Object error,
-                    StackTrace? stackTrace) {
-                  return Image.asset(
-                    placeholderImage,
-                    width: double.infinity,
-                    height: 200.0,
-                    fit: BoxFit.cover,
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 10.0),
-            Row(
-              children: [
-                Row(
-                  children: List.generate(3, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 3.0),
-                      child: CircleAvatar(
-                        radius: 10.0,
-                        backgroundImage: NetworkImage(validProfileImageUrl),
-                        child: ClipOval(
-                          child: Image.network(
-                            validProfileImageUrl,
-                            width: 20.0,
-                            height: 20.0,
-                            fit: BoxFit.cover,
-                            errorBuilder: (BuildContext context, Object error,
-                                StackTrace? stackTrace) {
-                              return Image.asset(
-                                placeholderImage,
-                                fit: BoxFit.cover,
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1BBC9B),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                  ),
-                  child: const Text('Add Suggestions'),
-                ),
-              ],
-            ),
+            _buildSuggestionsButton(postImageUrl, index),
+            if (_tappedIndex == index) _buildSuggestionTextField(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSuggestionTextField() {
+    return Container(
+      margin: const EdgeInsets.all(18.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(7.0),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: 2.0),
+            child: Image(
+              image: AssetImage('assets/suggestion.png'),
+              width: 50.0,
+              height: 50.0,
+            ),
+          ),
+          const SizedBox(width: 5.0),
+          Expanded(
+            child: TextField(
+              controller: controller.suggestionController,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: 'Suggest changes or additional tips...',
+                hintStyle: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12.0,
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.send_rounded,
+              color: Color(0xFF1BBC9B),
+              size: 24,
+            ),
+            onPressed: () {
+              if (controller.suggestionController.text.isNotEmpty) {
+                setState(() {
+                  suggestions.add(controller.suggestionController.text);
+                  controller.suggestionController.clear();
+                });
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsList() {
+    return ListView.builder(
+      itemCount: suggestions.length,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 2.0),
+          padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 10.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(7.0),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Juan Dela Cruz',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1BBC9B),
+                      fontSize: 16.0,
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz),
+                    onSelected: (String value) {
+                      if (value == 'Edit') {
+                        setState(() {
+                          editingIndex = index;
+                          if (editControllers.length <= index) {
+                            editControllers.add(TextEditingController(
+                                text: suggestions[index]));
+                          }
+                        });
+                      } else if (value == 'Delete') {
+                        showDeleteConfirmationDialog(
+                          context: context,
+                          suggestion: suggestions[index],
+                          onDelete: () {
+                            setState(() {
+                              suggestions.removeAt(index);
+                            });
+                          },
+                        );
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return {'Edit', 'Delete'}.map((String choice) {
+                        return PopupMenuItem<String>(
+                          value: choice,
+                          child: Text(choice),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ],
+              ),
+              if (editingIndex == index)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: editControllers[index],
+                        onSubmitted: (value) {
+                          // _saveEdit(value, index);
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.check, color: Colors.green),
+                      onPressed: () {
+                        // _saveEdit(editControllers[index].text, index);
+                      },
+                    ),
+                  ],
+                )
+              else
+                Text(
+                  suggestions[index],
+                  style: const TextStyle(
+                    fontSize: 14.0,
+                    color: Colors.black,
+                  ),
+                ),
+              const SizedBox(height: 8.0),
+            ],
+          ),
+        );
+      },
     );
   }
 

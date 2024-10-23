@@ -23,6 +23,7 @@ class AppControllers {
   final TextEditingController kwhRateController = TextEditingController();
   final TextEditingController addMonthlyPatternController =
       TextEditingController();
+  final TextEditingController suggestionController = TextEditingController();
 
   // Dispose all controllers
   void dispose() {
