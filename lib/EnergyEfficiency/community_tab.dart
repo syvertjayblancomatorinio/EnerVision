@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_profile.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
@@ -9,8 +10,9 @@ import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart'
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/create_post.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:readmore/readmore.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/EnergyEfficiency/see_more.dart';
 import 'package:supabase_project/PreCode/deleteDialog.dart';
 
 class CommunityTab extends StatefulWidget {
@@ -23,7 +25,7 @@ class CommunityTab extends StatefulWidget {
 class _CommunityTabState extends State<CommunityTab> {
   AppControllers controller = AppControllers();
   List<TextEditingController> editControllers = [];
-
+  late bool _isExpanded;
   List<dynamic> posts = [];
   bool isLoading = false;
   bool showUsersPosts = false;
@@ -33,11 +35,15 @@ class _CommunityTabState extends State<CommunityTab> {
   int? activeSuggestionIndex;
   int? _tappedIndex;
   int? editingIndex;
+  String? username;
+  ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _isExpanded = false;
     getPosts();
+    getUsername();
   }
 
   Future<void> deletePost(String postId) async {
@@ -160,6 +166,29 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
+  Future<String?> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in shared preferences');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/getUsername/$userId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('Username found: ${data['username']}');
+      return data['username'];
+    } else if (response.statusCode == 404) {
+      print('Username not found for user.');
+      return null;
+    } else {
+      throw Exception('Failed to load user kwhRate');
+    }
+  }
+
   Future<void> getUsersPost() async {
     setState(() {
       isLoading = true;
@@ -264,6 +293,7 @@ class _CommunityTabState extends State<CommunityTab> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      controller: _scrollController,
       child: Column(
         children: <Widget>[
           const SizedBox(height: 20),
@@ -273,6 +303,35 @@ class _CommunityTabState extends State<CommunityTab> {
       ),
     );
   }
+
+  void _scrollToPost(int index) {
+    // Calculate the position of the post
+    double position =
+        index * (postHeight); // Replace with actual height and padding
+
+    // Scroll to the calculated position
+    _scrollController.animateTo(
+      position,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  // void _scrollToPost(int index) {
+  //   // Use a global key or calculate the position of the post
+  //   // For example, use an offset based on the index to scroll
+  //   final postPosition =
+  //       index * postHeight; // Calculate position based on index
+  //   _scrollController.animateTo(
+  //     postPosition,
+  //     duration: const Duration(milliseconds: 300),
+  //     curve: Curves.easeInOut,
+  //   );
+  // }
+
+  // Adjust postHeight based on your layout
+  static const double postHeight =
+      100.0; // Replace this with your actual post height
 
   Widget _content() {
     List<dynamic> sortedPosts = List.from(posts);
@@ -305,7 +364,7 @@ class _CommunityTabState extends State<CommunityTab> {
               'https://example.com/sample_image.jpg',
               index, // Pass the index here
             );
-          }).toList(),
+          }),
       ],
     );
   }
@@ -380,14 +439,30 @@ class _CommunityTabState extends State<CommunityTab> {
   }
 
   Widget _buildDescription(String description) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 30, left: 10, bottom: 10),
-      child: Text(
-        description,
-        style: const TextStyle(fontSize: 14),
+    return Container(
+      constraints: const BoxConstraints(
+        maxHeight: 200,
+      ),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 30, left: 10, bottom: 10),
+          child: CustomReadMoreText(
+            text: description,
+            trimLines: 2,
+            trimCollapsedText: 'Show more',
+            trimExpandedText: 'Show less',
+            moreStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryColor,
+            ),
+          ),
+        ),
       ),
     );
   }
+
+  // Create a method to scroll to the post
 
   Widget _buildAvatar(String profileImageUrl, String postImageUrl) {
     final String validProfileImageUrl =
@@ -596,6 +671,66 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
+  Widget _buildBody() {
+    return Stack(
+      children: [
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/add_post 1.png',
+              width: 150.0,
+              fit: BoxFit.fitWidth,
+            ),
+            const SizedBox(height: 20.0),
+            const Text(
+              'Nothing Here Yet',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Montserrat',
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 50.0),
+              child: Text(
+                'Add a post or insight to see content from others.',
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ShareYourStoryPage()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00C29A),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 100.0, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+              ),
+              child: const Text(
+                'Add Post',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14.0,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildSuggestionsList() {
     return ListView.builder(
       itemCount: suggestions.length,
@@ -688,66 +823,6 @@ class _CommunityTabState extends State<CommunityTab> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildBody() {
-    return Stack(
-      children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/add_post 1.png',
-              width: 150.0,
-              fit: BoxFit.fitWidth,
-            ),
-            const SizedBox(height: 20.0),
-            const Text(
-              'Nothing Here Yet',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Montserrat',
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 50.0),
-              child: Text(
-                'Add a post or insight to see content from others.',
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ShareYourStoryPage()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00C29A),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 100.0, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.0),
-                ),
-              ),
-              child: const Text(
-                'Add Post',
-                style: TextStyle(
-                  fontFamily: 'Montserrat',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14.0,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

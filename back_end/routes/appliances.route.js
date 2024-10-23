@@ -42,12 +42,10 @@ const MonthlyConsumption = require('../models/monthly_consumption.model');
 router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
     const { userId, month, year, totalMonthlyConsumption } = req.body;
 
-    // Validate month and year
     if (!month || !year) {
         return res.status(400).json({ message: 'Month and year are required.' });
     }
 
-    // Fetch user
     const user = await User.findById(userId);
     if (!user) {
         return res.status(404).json({ message: 'User not found' });
@@ -55,18 +53,15 @@ router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
 
     let totalMonthlyCost = 0;
 
-    // If totalMonthlyConsumption is provided, use it, otherwise calculate from appliances
     if (totalMonthlyConsumption) {
         totalMonthlyCost = totalMonthlyConsumption;
     } else {
-        // Fetch appliances for the user and calculate total cost
         const appliances = await Appliance.find({ userId });
         totalMonthlyCost = appliances.reduce((total, appliance) => {
             return total + (appliance.monthlyCost || 0);
         }, 0);
     }
 
-    // Create a new MonthlyConsumption record
     const monthlyConsumption = new MonthlyConsumption({
         userId: user._id,
         month: parseInt(month, 10), // Convert to integer
@@ -74,7 +69,6 @@ router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
         totalMonthlyConsumption: totalMonthlyCost
     });
 
-    // Save to database
     await monthlyConsumption.save();
 
     res.status(200).json({ message: 'Monthly consumption saved successfully.', totalMonthlyConsumption: totalMonthlyCost });
