@@ -90,16 +90,16 @@ router.delete('/deletePost/:postId', async (req, res) => {
   try {
     const postId = req.params.postId;
 
-    // Find and delete the post by ID
-    const post = await Post.findByIdAndDelete(postId);
+    // Delete the post from the Post collection
+    const post = await Posts.findByIdAndDelete(postId);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Remove the post reference from the user's list
-    await User.updateMany(
-      { posts: postId }, // Make sure the User schema has 'posts' array
-      { $pull: { posts: postId } } // Pull from 'posts' array, not 'appliances'
+    // Remove the post reference from the user's posts array
+    await User.updateOne(
+      { posts: postId },  // Finds the user with this post in their array
+      { $pull: { posts: postId } }  // Removes the post from the 'posts' array
     );
 
     res.json({ message: 'Post deleted successfully' });
@@ -108,6 +108,7 @@ router.delete('/deletePost/:postId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
+
 
 
 // Update a specific posts of a user

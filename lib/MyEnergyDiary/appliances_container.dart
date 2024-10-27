@@ -611,15 +611,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
-  Future<void> deleteAppliances(String applianceId) async {
-    try {
-      await ApplianceService.deleteAppliance(applianceId);
-      print('Appliance deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
-  }
-
   Future<void> updateAppliance(
       String applianceId, Map<String, dynamic> updates) async {
     try {

@@ -150,6 +150,26 @@ class ApplianceService {
     }
   }
 
+  static Future<void> deletePost(String postId) async {
+    final url = Uri.parse('$baseUrl/deletePost/$postId');
+    print('Sending DELETE request to: $url');
+
+    final response = await http.delete(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Post with ID $postId deleted successfully.');
+    } else {
+      final responseBody = jsonDecode(response.body);
+      print('Failed to delete appliance. Server response: ${response.body}');
+      throw Exception('Failed to delete appliance: ${responseBody['message']}');
+    }
+  }
+
   // Static method to delete an appliance
   static Future<void> deleteAppliance(String applianceId) async {
     final url = Uri.parse('$baseUrl/deleteAppliance/$applianceId');

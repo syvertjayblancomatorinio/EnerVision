@@ -7,6 +7,7 @@ import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/confirm_delete.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/create_post.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,7 @@ import 'package:readmore/readmore.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/EnergyEfficiency/see_more.dart';
 import 'package:supabase_project/PreCode/deleteDialog.dart';
+import 'package:supabase_project/AuthService/auth_appliances.dart';
 
 class CommunityTab extends StatefulWidget {
   const CommunityTab({super.key});
@@ -25,8 +27,9 @@ class CommunityTab extends StatefulWidget {
 class _CommunityTabState extends State<CommunityTab> {
   AppControllers controller = AppControllers();
   List<TextEditingController> editControllers = [];
-  late bool _isExpanded;
-  List<dynamic> posts = [];
+  // List<dynamic> posts = [];
+  List<Map<String, dynamic>> posts = [];
+
   bool isLoading = false;
   bool showUsersPosts = false;
   bool isUserPost = false;
@@ -41,172 +44,55 @@ class _CommunityTabState extends State<CommunityTab> {
   @override
   void initState() {
     super.initState();
-    _isExpanded = false;
     getPosts();
     getUsername();
   }
 
   Future<void> deletePost(String postId) async {
     try {
-      await PostsService.deletePost(postId);
+      await ApplianceService.deletePost(postId);
       print('Post deleted successfully');
     } catch (e) {
-      print('Error deleting post: $e');
+      print('Error deleting appliance: $e');
     }
   }
 
+  Widget _buildIcon(int index) {
+    return GestureDetector(
+        onTap: () {
+          _editPostActionSheet(context, index);
+        },
+        child: const Icon(Icons.more_vert));
+  }
+
   void _confirmDeletePost(int index) {
+    if (index < 0 || index >= posts.length) {
+      print('Invalid index for deleting post');
+      return;
+    }
+
     final post = posts[index];
+
+    if (post['_id'] == null) {
+      print('Post ID is null, cannot delete');
+      return;
+    }
+
+    print('Attempting to delete post with ID: ${post['_id']}');
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 16,
-          backgroundColor: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.warning, // Warning icon for deletion
-                  color: AppColors.primaryColor,
-                  size: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Delete Post?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Are you sure you want to delete this Post? This cannot be undone.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        deletePost(post['_id']).then((_) {
-                          Navigator.of(context).pop();
-                          getPosts();
-                        }).catchError((error) {
-                          // Handle error if deletion fails
-                          print('Deletion failed: $error');
-                          Navigator.of(context)
-                              .pop(); // Close dialog even on error
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                          fontFamily: 'Montserrat',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+        return ConfirmDeleteDialog(
+          title: 'Delete Post?',
+          description:
+              'Are you sure you want to delete this Post? This cannot be undone.',
+          onDelete: () => deletePost(post['_id']).then((_) {
+            // getPosts();
+          }),
         );
       },
     );
-  }
-
-  Future<void> getPosts() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = false;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.getPosts();
-      setState(() {
-        posts = fetchedPosts;
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<String?> getUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
-    }
-
-    final url = Uri.parse('http://10.0.2.2:8080/getUsername/$userId');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print('Username found: ${data['username']}');
-      return data['username'];
-    } else if (response.statusCode == 404) {
-      print('Username not found for user.');
-      return null;
-    } else {
-      throw Exception('Failed to load user kwhRate');
-    }
-  }
-
-  Future<void> getUsersPost() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = true;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.fetchUsersPosts();
-      setState(() {
-        posts = fetchedPosts;
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
   }
 
   void _togglePostView() {
@@ -270,9 +156,15 @@ class _CommunityTabState extends State<CommunityTab> {
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context);
-              _confirmDeletePost(index);
+              if (isUserPost) {
+                _confirmDeletePost(index);
+              } else {
+                _confirmReportPost(index);
+              }
             },
-            child: const Text('Delete Post'),
+            child: isUserPost
+                ? const Text('Delete Post')
+                : const Text('Report Post'),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
@@ -290,6 +182,85 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
+  Future<void> getPosts() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = false;
+    });
+
+    try {
+      final fetchedPosts = await PostsService.getPosts();
+      setState(() {
+        posts = fetchedPosts;
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _confirmReportPost(int index) {
+    final post = posts[index];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ConfirmDeleteDialog(
+          title: 'Report Post?',
+          description: 'Are you sure you want to Report this Post? ',
+          onDelete: () => deletePost(post['_id']).then((_) {
+            getPosts();
+          }),
+        );
+      },
+    );
+  }
+
+  Future<String?> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in shared preferences');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/getUsername/$userId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('Username found: ${data['username']}');
+      return data['username'];
+    } else if (response.statusCode == 404) {
+      print('Username not found for user.');
+      return null;
+    } else {
+      throw Exception('Failed to load user kwhRate');
+    }
+  }
+
+  Future<void> getUsersPost() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = true;
+    });
+
+    try {
+      final fetchedPosts = await PostsService.fetchUsersPosts();
+      setState(() {
+        posts = fetchedPosts;
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -303,35 +274,6 @@ class _CommunityTabState extends State<CommunityTab> {
       ),
     );
   }
-
-  void _scrollToPost(int index) {
-    // Calculate the position of the post
-    double position =
-        index * (postHeight); // Replace with actual height and padding
-
-    // Scroll to the calculated position
-    _scrollController.animateTo(
-      position,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  // void _scrollToPost(int index) {
-  //   // Use a global key or calculate the position of the post
-  //   // For example, use an offset based on the index to scroll
-  //   final postPosition =
-  //       index * postHeight; // Calculate position based on index
-  //   _scrollController.animateTo(
-  //     postPosition,
-  //     duration: const Duration(milliseconds: 300),
-  //     curve: Curves.easeInOut,
-  //   );
-  // }
-
-  // Adjust postHeight based on your layout
-  static const double postHeight =
-      100.0; // Replace this with your actual post height
 
   Widget _content() {
     List<dynamic> sortedPosts = List.from(posts);
@@ -354,7 +296,7 @@ class _CommunityTabState extends State<CommunityTab> {
         else
           ...sortedPosts.asMap().entries.map((entry) {
             var post = entry.value;
-            int index = entry.key; // Get the index
+            int index = entry.key;
             return _buildUserPost(
               post['title'] ?? 'No Title',
               post['description'] ?? 'No Description',
@@ -362,7 +304,7 @@ class _CommunityTabState extends State<CommunityTab> {
               post['tags'] ?? 'No tags',
               'https://example.com/user_avatar.jpg',
               'https://example.com/sample_image.jpg',
-              index, // Pass the index here
+              index,
             );
           }),
       ],
@@ -441,7 +383,7 @@ class _CommunityTabState extends State<CommunityTab> {
   Widget _buildDescription(String description) {
     return Container(
       constraints: const BoxConstraints(
-        maxHeight: 200,
+        maxHeight: 300,
       ),
       child: SingleChildScrollView(
         child: Padding(
@@ -461,8 +403,6 @@ class _CommunityTabState extends State<CommunityTab> {
       ),
     );
   }
-
-  // Create a method to scroll to the post
 
   Widget _buildAvatar(String profileImageUrl, String postImageUrl) {
     final String validProfileImageUrl =
@@ -486,14 +426,6 @@ class _CommunityTabState extends State<CommunityTab> {
         ),
       ),
     );
-  }
-
-  Widget _buildIcon(int index) {
-    return GestureDetector(
-        onTap: () {
-          _editPostActionSheet(context, index);
-        },
-        child: const Icon(Icons.more_vert));
   }
 
   Widget _buildPostImage(

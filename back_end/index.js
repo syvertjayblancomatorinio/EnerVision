@@ -47,6 +47,17 @@ cron.schedule('0 0 1 * *', async () => {
 
 
 // Connect to MongoDB with error handling
+//mongoose.connect(
+////"mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/?retryWrites=true&w=majority&appName=EnerVision-Main"
+//  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
+////  { useNewUrlParser: true, useUnifiedTopology: true }
+//).then(() => {
+//  console.log('Connected to MongoDB');
+//}).catch((error) => {
+//  console.error('MongoDB connection error:', error);
+//});
+
+
 mongoose.connect(
 "mongodb://localhost:27017/enervision"
 //  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
