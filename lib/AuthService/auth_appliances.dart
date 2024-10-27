@@ -124,29 +124,31 @@ class ApplianceService {
 
   // Static method to Update an appliance
 
-  static Future<Map<String, dynamic>> updateAppliance(
-      String applianceId, Map<String, dynamic> updates) async {
-    final url = Uri.parse('$baseUrl/updateAppliance/$applianceId');
+  static Future<void> updateAppliance(
+      String applianceId, Map<String, dynamic> updatedData) async {
+    // Prepare the updated data to include required fields
+    final updates = {
+      'updatedAt':
+          DateTime.now().toIso8601String(), // Current date in ISO format
+      'updatedData': updatedData, // Pass the updated data
+    };
 
-    try {
-      final response = await http.patch(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(updates),
-      );
+    final url = Uri.parse('$baseUrl/updateApplianceOccurrences/$applianceId');
 
-      if (response.statusCode == 200) {
-        final responseBody = jsonDecode(response.body);
-        return responseBody;
-      } else {
-        final responseBody = jsonDecode(response.body);
-        throw Exception(
-            'Failed to update appliance: ${responseBody['message']}');
-      }
-    } catch (e) {
-      throw Exception('Error occurred during update: $e');
+    final response = await http.patch(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(updates),
+    );
+
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      return responseBody; // Return response if needed
+    } else {
+      final responseBody = jsonDecode(response.body);
+      throw Exception('Failed to update appliance: ${responseBody['error']}');
     }
   }
 

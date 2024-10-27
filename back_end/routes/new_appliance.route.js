@@ -104,12 +104,11 @@ router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
 
 router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req, res) => {
     const applianceId = req.params.applianceId;
-
-    const { userId, updatedAt, updatedData } = req.body;
+    const { updatedAt, updatedData } = req.body; // Extract updatedAt and updatedData from request body
     const { wattage, usagePatternPerDay, selectedDays } = updatedData;
 
     // Validate input
-    if (!userId || !applianceId || !updatedAt || !updatedData || !wattage || !usagePatternPerDay || !selectedDays) {
+    if (!applianceId || !updatedData || !wattage || !usagePatternPerDay || !selectedDays) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -123,35 +122,32 @@ router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req
         return res.status(400).json({ error: 'Selected days must be an array of integers' });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-    }
-
+    // Find the appliance by its ID
     const appliance = await Appliance.findById(applianceId);
     if (!appliance) {
         return res.status(404).json({ error: 'Appliance not found' });
     }
-   const currentMonth = new Date().getMonth();
-   const currentYear = new Date().getFullYear();
-   const applianceLastUpdatedMonth = new Date(appliance.updatedAt).getMonth();
-   const applianceLastUpdatedYear = new Date(appliance.updatedAt).getFullYear();
 
-   // Check if the appliance has already been updated this month
-   if (applianceLastUpdatedMonth === currentMonth && applianceLastUpdatedYear === currentYear) {
-       return res.status(400).json({ error: 'Appliance can only be updated once per month' });
-   }
+    // Check the last updated date to enforce once-per-month restriction
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const applianceLastUpdatedMonth = new Date(appliance.updatedAt).getMonth();
+    const applianceLastUpdatedYear = new Date(appliance.updatedAt).getFullYear();
 
-//   // Proceed with checking for concurrent modification
-//   const applianceVersion = appliance.__v;
-//   if (applianceVersion !== updatedData.__v) {
-//       return res.status(409).json({ error: 'Concurrent modification detected' });
-//   }
+    if (applianceLastUpdatedMonth === currentMonth && applianceLastUpdatedYear === currentYear) {
+        return res.status(400).json({ error: 'Appliance can only be updated once per month' });
+    }
 
+    // Find the user associated with the appliance (by appliance.userId)
+    const user = await User.findById(appliance.userId);
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
 
     const kwhRate = user.kwhRate || 0;
+
     const createdDate = appliance.createdAt;
-    const updatedDate = new Date(updatedAt);
+    const updatedDate = updatedAt ? new Date(updatedAt) : new Date(); // Set to current date or override if provided
 
     // Ensure the updatedAt date is not before the createdAt date
     if (updatedDate < createdDate) {
@@ -189,10 +185,8 @@ router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req
 
     await appliance.save();
 
-    res.status(200).json({ message: 'Appliance updated successfully',newEnergyKwh, oldEnergyKwh ,newTotalDaysUsed, appliance});
-
+    res.status(200).json({ message: 'Appliance updated successfully', newEnergyKwh, oldEnergyKwh, newTotalDaysUsed, appliance });
 }));
-
 module.exports = router;
 //router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req, res) => {
 //    const applianceId = req.params.applianceId;

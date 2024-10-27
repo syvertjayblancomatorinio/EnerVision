@@ -588,6 +588,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
 
     if (response.statusCode == 201) {
       fetchAppliances();
+      fetchDailyCost();
     } else {
       await _showApplianceErrorDialog(context);
     }
@@ -618,7 +619,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           await ApplianceService.updateAppliance(applianceId, updates);
       _showSnackBar('Update Success');
 
-      print('Appliance updated successfully: $updatedAppliance');
+      // print('Appliance updated successfully: $updatedAppliance');
     } catch (e) {
       _showSnackBar('Failed to update appliance');
       print('Error updating appliance: $e');
