@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const suggestionsSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  postId: { type: Schema.Types.ObjectId, ref: 'Post', required: true }, // Added reference to Post
+  postId: { type: Schema.Types.ObjectId, ref: 'Post', required: true },
   suggestionText: { type: String, required: true },
   suggestionDate: { type: Date, default: Date.now },
   deletedAt: { type: Date, default: null }
