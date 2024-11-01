@@ -87,6 +87,8 @@ app.use('/', require('./routes/suggestions.route'));
 app.use('/', require('./routes/profile.route'));
 app.use('/', require('./routes/profile.route'));
 app.use('/', require('./routes/profiles.route'));
+app.use('/', require('./routes/chats.route'));
+app.use('/', require('./routes/faqs.route'));
 app.use('/', require('./routes/compared_appliance.route'));
 app.use('/', require('./routes/monthly_consumption.route'));
 
