@@ -3,17 +3,16 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
-import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/kwh_rate_dialog.dart';
-import 'package:supabase_project/MyEnergyDiary/common-widgets.dart';
-import 'package:supabase_project/zNotUsedFiles/buttons_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
+
 import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kwh.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/add_appliance_dialog.dart';
+// import 'package:supabase_project/CommonWidgets/dialogs/add_appliance_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
+import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
 import '../CommonWidgets/controllers/app_controllers.dart';
@@ -37,7 +36,21 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   bool isLoading = true;
   String? kwhRate;
   late String index = '0';
+  List<int> selectedDays = [];
+  String? _selectedProvider;
 
+  final Map<String, String> _electricProviders = {
+    'Cebu Electric Cooperative': '10.5',
+    'Visayan Electric Company (VECO) - Residential': '11.2',
+    'Visayan Electric Company (VECO) - Commercial': '15.2',
+    'Mactan Electric Company - Residential': '10.8',
+    'Mactan Electric Company - Commercial': '13.8',
+    'Churba': '12.0',
+    'Gengeng': '15.5',
+    'Juju on the Beat': '18',
+    'Eyy': '33',
+    'Waw': '21',
+  };
   @override
   void initState() {
     super.initState();
@@ -116,6 +129,28 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
             ...appliances.asMap().entries.map((entry) {
               int index = entry.key;
               var appliance = entry.value;
+              final Map<int, String> dayNames = {
+                1: 'Sunday',
+                2: 'Monday',
+                3: 'Tuesday',
+                4: 'Wednesday',
+                5: 'Thursday',
+                6: 'Friday',
+                7: 'Saturday',
+              };
+
+              List<int>? selectedDays = appliance['selectedDays'] != null
+                  ? (appliance['selectedDays'] as List)
+                      .map((day) => int.parse(day.toString()))
+                      .toList()
+                  : null;
+
+              String selectedDaysNames = selectedDays != null
+                  ? (selectedDays..sort())
+                      .map((day) => dayNames[day] ?? 'Unknown')
+                      .join(', ')
+                  : 'N/A';
+
               return Center(
                 child: Container(
                   margin: const EdgeInsets.symmetric(
@@ -135,13 +170,22 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                   child: ListTile(
                     leading: Image.asset(
                         appliance['imagePath'] ?? 'assets/deviceImage.png'),
-                    title: Text(appliance['applianceName'] ?? 'Unknown'),
-                    subtitle: Text(
-                        'Wattage: ${appliance['wattage'] ?? 'N/A'}\nUsage Pattern: ${appliance['usagePatternPerDay'] ?? 'N/A'}\nWeekly Usage: ${appliance['usagePatternPerWeek'] ?? 'N/A'}\n'),
+                    title: Text(
+                      appliance['applianceName'] ?? 'Unknown',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    // Mapping of numeric days to day names
+
+                    subtitle: Text('Wattage: ${appliance['wattage'] ?? 'N/A'}\n'
+                        'Hours Used: ${appliance['usagePatternPerDay'] ?? 'N/A'}\n'
+                        'Selected Days: $selectedDaysNames\n'),
                     trailing: CupertinoButton(
                       padding: EdgeInsets.zero,
                       onPressed: () => _showActionSheet(context, index),
-                      child: const Icon(Icons.more_vert),
+                      child: const Icon(
+                        Icons.more_vert,
+                        color: AppColors.secondaryColor,
+                      ),
                     ),
                   ),
                 ),
@@ -156,15 +200,8 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                   final kwhRate = await getKwhRate();
 
                   if (kwhRate != null) {
-                    showAddApplianceDialog(
+                    _showAddApplianceDialog(
                       context,
-                      controllers.addApplianceNameController,
-                      controllers.addWattageController,
-                      controllers.addUsagePatternController,
-                      controllers.addWeeklyPatternController,
-                      controllers.addApplianceCategoryController,
-                      formKey,
-                      addAppliance,
                     );
                   } else {
                     showKwhRateDialog(
@@ -189,6 +226,161 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           )
         ],
       ),
+    );
+  }
+
+  Future<void> showKwhRateDialog(
+      BuildContext context,
+      TextEditingController kwhRateController,
+      Function saveKwhRate,
+      Function fetchAppliances,
+      Function fetchDailyCost) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Enter kWh Rate'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  // Icon and Title
+                  const Icon(
+                    Icons.electrical_services,
+                    size: 50,
+                    color: Colors.black,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Kilowatt-Hour Rate',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
+                  Flexible(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedProvider,
+                      isExpanded: true,
+                      hint: const Text('Select your Electric Service Provider'),
+                      items: _electricProviders.keys.map((String provider) {
+                        return DropdownMenuItem<String>(
+                          value: provider,
+                          child: Text(
+                            provider,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14.0),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedProvider = newValue;
+                          controllers.kwhRateController.text =
+                              _electricProviders[newValue!]!;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.1),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
+                  Flexible(
+                    child: TextField(
+                      controller: controllers.kwhRateController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: 'Kilowatt Hour Rate (kWh)',
+                        hintStyle: const TextStyle(color: Colors.black),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.1),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  const SizedBox(height: 25.0),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 50, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(
+                                color: Color(0xFFB1B1B1), width: 1),
+                          ),
+                        ),
+                        child: const Text('Cancel',
+                            style: TextStyle(fontSize: 14.0)),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          String kwhRate = controllers.kwhRateController.text;
+
+                          try {
+                            await saveKwhRate(kwhRate);
+                            Navigator.of(context).pop();
+                            _showAddApplianceDialog(context);
+                            fetchAppliances();
+                            fetchDailyCost();
+                          } catch (e) {
+                            print('Failed to save kWh rate: $e');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          backgroundColor: const Color(0xFF1BBC9B),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 50, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Save',
+                          style: TextStyle(fontSize: 14.0, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -226,7 +418,33 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
-  Future<int?> getKwhRate() async {
+  void _showAddApplianceDialog(BuildContext context) {
+    controllers.addApplianceNameController.clear();
+    controllers.addWattageController.clear();
+    controllers.addUsagePatternController.clear();
+    controllers.addApplianceCategoryController.clear();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AddApplianceDialog(
+          addApplianceNameController: controllers.addApplianceNameController,
+          addWattageController: controllers.addWattageController,
+          addUsagePatternController: controllers.addUsagePatternController,
+          addApplianceCategoryController:
+              controllers.addApplianceCategoryController,
+          formKey: formKey,
+          addAppliance: (List<int> selectedDays) {
+            setState(() {
+              this.selectedDays = selectedDays;
+            });
+            addAppliance();
+          },
+        );
+      },
+    );
+  }
+
+  Future<double?> getKwhRate() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
@@ -273,11 +491,159 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close the action sheet
+            Navigator.pop(context);
           },
           child: const Text('Cancel'),
         ),
       ),
+    );
+  }
+
+  Future<void> deleteAppliance(String applianceId) async {
+    try {
+      await ApplianceService.deleteAppliance(applianceId);
+      print('Appliance deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
+    }
+  }
+
+  Future<void> fetchAppliances() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final appliancesData = await ApplianceService.fetchAppliance();
+      setState(() {
+        appliances = appliancesData;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Center(child: Text(message)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> _showApplianceErrorDialog(BuildContext context) async {
+    await showCustomDialog(
+      context: context,
+      title: 'Appliance not Added',
+      message:
+          'Appliance name must not have a duplicate.\nPlease use a different name.',
+      buttonText: 'OK',
+    );
+  }
+
+  Future<void> addAppliance() async {
+    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
+    final Map<String, dynamic> applianceData = {
+      'applianceName': controllers.addApplianceNameController.text.trim(),
+      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
+      'usagePatternPerDay':
+          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
+      'applianceCategory':
+          controllers.addApplianceCategoryController.text.trim(),
+      'selectedDays': selectedDays,
+    };
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? userId = prefs.getString('userId');
+
+    if (userId == null) {
+      print('User ID not found in shared preferences');
+      return;
+    }
+
+    var response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'applianceData': applianceData,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      fetchAppliances();
+      fetchDailyCost();
+    } else {
+      await _showApplianceErrorDialog(context);
+    }
+  }
+
+  void fetchDailyCost() async {
+    ApplianceService applianceService = ApplianceService();
+    final result = await applianceService.getDaily();
+
+    if (result != null) {
+      setState(() {
+        dailyCost = result;
+      });
+
+      print(
+          'Fetched totalDailyConsumptionCost: ${dailyCost?['totalDailyConsumptionCost']}');
+      print(
+          'Fetched totalDailyKwhConsumption: ${dailyCost?['totalDailyKwhConsumption']}');
+    } else {
+      print('Failed to fetch daily cost');
+    }
+  }
+
+  Future<void> updateAppliance(
+      String applianceId, Map<String, dynamic> updates) async {
+    try {
+      final updatedAppliance =
+          await ApplianceService.updateAppliance(applianceId, updates);
+      _showSnackBar('Update Success');
+
+      // print('Appliance updated successfully: $updatedAppliance');
+    } catch (e) {
+      _showSnackBar('Failed to update appliance');
+      print('Error updating appliance: $e');
+    }
+  }
+
+  void openEditApplianceDialog(int index) {
+    var appliance = appliances[index];
+
+    controllers.editApplianceNameController.text =
+        appliance['applianceName'] ?? '';
+    controllers.editWattageController.text =
+        appliance['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
+        appliance['usagePatternPerDay']?.toString() ?? '';
+    controllers.editWeeklyPatternController.text =
+        appliance['selectedDays']?.toString() ?? '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return EditApplianceDialog(
+          editApplianceNameController: controllers.editApplianceNameController,
+          editWattageController: controllers.editWattageController,
+          editUsagePatternController: controllers.editUsagePatternController,
+          editWeeklyPatternController: controllers.editWeeklyPatternController,
+          formKey: formKey,
+          editAppliance: () {},
+          appliance: appliance,
+          updateAppliance: updateAppliance,
+          fetchAppliances: fetchAppliances,
+          fetchDailyCosts: fetchDailyCost,
+        );
+      },
     );
   }
 
@@ -299,29 +665,15 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
-                  Icons.warning, // You can change the icon to any suitable one.
+                  Icons.warning,
                   color: AppColors.primaryColor,
                   size: 50,
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Delete Appliance?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
+                _popupTitle('Delete Appliance?'),
                 const SizedBox(height: 10),
-                const Text(
+                _popupDescription(
                   'Are you sure you want to delete this appliance? This cannot be undone.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    fontFamily: 'Montserrat',
-                  ),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -368,303 +720,27 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
   }
 
-  Future<void> deleteAppliance(String applianceId) async {
-    try {
-      await ApplianceService.deleteAppliance(applianceId);
-      print('Appliance deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
-  }
-
-  Future<void> fetchAppliances() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      final appliancesData = await ApplianceService.fetchAppliance();
-      setState(() {
-        appliances = appliancesData;
-        isLoading = false;
-      });
-    } catch (e) {
-      print('Error: $e');
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> saveAppliance() async {
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
-
-    // Example selectedDays data (adjust as needed based on user input)
-    List<int> selectedDays = [1, 3, 5]; // Sample for Mon, Wed, Fri
-
-    final Map<String, dynamic> applianceData = {
-      'applianceName': controllers.addApplianceNameController.text.trim(),
-      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
-      'usagePatternPerDay':
-          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
-      'applianceCategory':
-          controllers.addApplianceCategoryController.text.trim(),
-      'createdAt':
-          DateTime.now().toIso8601String(), // Or allow user input for the date
-      'selectedDays':
-          selectedDays, // Assuming user-selected days are passed here
-    };
-
-    // Assuming you have the `userId` stored in shared preferences
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? userId = prefs.getString('userId');
-
-    if (userId == null) {
-      print('User ID not found in shared preferences');
-      return;
-    }
-
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'applianceData': applianceData,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      print('Appliance successfully added');
-    } else {
-      print('Failed to add appliance: ${response.body}');
-    }
-
-    Navigator.of(context).pop(); // Close the dialog
-  }
-
-  Future<void> save() async {
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceToUser");
-
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'applianceName': controllers.addApplianceNameController.text,
-        'wattage': controllers.addWattageController.text,
-        'usagePatternPerDay': controllers.addUsagePatternController.text,
-        'applianceCategory': controllers.addApplianceCategoryController.text,
-      }),
-    );
-
-    print(response.body);
-    Navigator.of(context).pop();
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Center(child: Text(message)),
-        duration: const Duration(seconds: 3),
+  Widget _popupTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+        fontFamily: 'Montserrat',
       ),
     );
   }
 
-  void showAddApplianceDialog(
-      BuildContext context,
-      TextEditingController addApplianceNameController,
-      TextEditingController addWattageController,
-      TextEditingController addUsagePatternController,
-      TextEditingController weeklyUsagePatternController,
-      TextEditingController addApplianceCategoryController,
-      GlobalKey<FormState> formKey,
-      VoidCallback addAppliance) {
-    addApplianceNameController.clear();
-    addWattageController.clear();
-    addUsagePatternController.clear();
-    weeklyUsagePatternController.clear();
-    addApplianceCategoryController.clear();
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AddApplianceDialog(
-          addApplianceNameController: addApplianceNameController,
-          addWattageController: addWattageController,
-          addUsagePatternController: addUsagePatternController,
-          formKey: formKey,
-          addAppliance: addAppliance,
-          addWeeklyPatternController: weeklyUsagePatternController,
-          addApplianceCategoryController: addApplianceCategoryController,
-        );
-      },
-    );
-  }
-
-  Future<void> _showApplianceErrorDialog(BuildContext context) async {
-    await showCustomDialog(
-      context: context,
-      title: 'Appliance not Added',
-      message:
-          'Appliance name must not have a duplicate.\nPlease use a different name.',
-      buttonText: 'OK',
-    );
-  }
-
-  Future<void> addToMonthlyConsumption() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    final url = Uri.parse("http://10.0.2.2:8080/save-consumption");
-
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, dynamic>{
-        'userId': userId,
-        'applianceId': controller.text,
-        'usage': controller.text,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      print('Monthly consumption added successfully');
-      // Fetch updated appliances after adding a new consumption
-      fetchAppliances();
-    } else {
-      print('Failed to add monthly consumption: ${response.body}');
-    }
-  }
-
-  Future<void> addAppliance1(
-      String userId, Map<String, dynamic> applianceData) async {
-    try {
-      await ApplianceService.addAppliance(userId, applianceData);
-      _showSnackBar('Appliance added successfully');
-      fetchDailyCost();
-      fetchAppliances();
-    } catch (e) {
-      print('Failed to add appliance: $e');
-    }
-  }
-
-  Future<void> newAddAppliance(
-      String userId, Map<String, dynamic> applianceData) async {
-    try {
-      await ApplianceService.newAddAppliances(userId, applianceData);
-      _showSnackBar('Appliance added successfully');
-      fetchDailyCost();
-      fetchAppliances();
-    } catch (e) {
-      print('Failed to add appliance: $e');
-    }
-  }
-
-  Future<void> addAppliance() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceToUser");
-
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, dynamic>{
-        'userId': userId, // Include userId in the request
-        'applianceData': {
-          'applianceName': controllers.addApplianceNameController.text,
-          'wattage': controllers.addWattageController.text,
-          'usagePatternPerDay': controllers.addUsagePatternController.text,
-          'usagePatternPerWeek': controllers.addWeeklyPatternController.text,
-          'applianceCategory': controllers.addApplianceCategoryController.text
-        }
-      }),
-    );
-    if (response != null) {
-      if (response.statusCode == 400) {
-        await _showApplianceErrorDialog(context);
-      } else if (response.statusCode == 201) {
-        print('Appliance added successfully');
-        fetchDailyCost();
-        fetchAppliances();
-      } else {
-        print('Failed to add appliance: ${response.body}');
-      }
-    }
-  }
-
-  void fetchDailyCost() async {
-    ApplianceService applianceService = ApplianceService();
-    final result = await applianceService.getDaily();
-
-    if (result != null) {
-      setState(() {
-        dailyCost = result;
-      });
-
-      print(
-          'Fetched totalDailyConsumptionCost: ${dailyCost?['totalDailyConsumptionCost']}');
-      print(
-          'Fetched totalDailyKwhConsumption: ${dailyCost?['totalDailyKwhConsumption']}');
-    } else {
-      print('Failed to fetch daily cost');
-    }
-  }
-
-  Future<void> deleteAppliances(String applianceId) async {
-    try {
-      await ApplianceService.deleteAppliance(applianceId);
-      print('Appliance deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
-  }
-
-  Future<void> updateAppliance(
-      String applianceId, Map<String, dynamic> updates) async {
-    try {
-      final updatedAppliance =
-          await ApplianceService.updateAppliance(applianceId, updates);
-      _showSnackBar('Update Success');
-
-      print('Appliance updated successfully: $updatedAppliance');
-    } catch (e) {
-      _showSnackBar('Failed to update appliance');
-      print('Error updating appliance: $e');
-    }
-  }
-
-  void openEditApplianceDialog(int index) {
-    var appliance = appliances[index];
-
-    controllers.editApplianceNameController.text =
-        appliance['applianceName'] ?? '';
-    controllers.editWattageController.text =
-        appliance['wattage']?.toString() ?? '';
-    controllers.editUsagePatternController.text =
-        appliance['usagePatternPerDay']?.toString() ?? '';
-    controllers.editWeeklyPatternController.text =
-        appliance['usagePatternPerWeek']?.toString() ?? '';
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return EditApplianceDialog(
-          editApplianceNameController: controllers.editApplianceNameController,
-          editWattageController: controllers.editWattageController,
-          editUsagePatternController: controllers.editUsagePatternController,
-          editWeeklyPatternController: controllers.editWeeklyPatternController,
-          formKey: formKey,
-          editAppliance: () {},
-          appliance: appliance,
-          updateAppliance: updateAppliance,
-          fetchAppliances: fetchAppliances,
-          fetchDailyCosts: fetchDailyCost,
-        );
-      },
+  Widget _popupDescription(String description) {
+    return Text(
+      description,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 14,
+        color: Colors.grey[500],
+        fontFamily: 'Montserrat',
+      ),
     );
   }
 }

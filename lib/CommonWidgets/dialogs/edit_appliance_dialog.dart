@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
+import 'package:supabase_project/ConstantTexts/colors.dart';
 
-class EditApplianceDialog extends StatelessWidget {
+class EditApplianceDialog extends StatefulWidget {
   final TextEditingController editApplianceNameController;
   final TextEditingController editWattageController;
   final TextEditingController editUsagePatternController;
@@ -26,6 +28,34 @@ class EditApplianceDialog extends StatelessWidget {
     required this.editWeeklyPatternController,
   }) : super(key: key);
 
+  @override
+  State<EditApplianceDialog> createState() => _EditApplianceDialogState();
+}
+
+class _EditApplianceDialogState extends State<EditApplianceDialog> {
+  List<int> selectedDays = [];
+  final AppControllers controller = AppControllers();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize selectedDays with the data from appliance['selectedDays']
+    if (widget.appliance['selectedDays'] != null) {
+      selectedDays = List<int>.from(widget.appliance['selectedDays']);
+    }
+  }
+
+  void _toggleDay(int day) {
+    setState(() {
+      if (selectedDays.contains(day)) {
+        selectedDays.remove(day);
+      } else {
+        selectedDays.add(day);
+      }
+      print(selectedDays); // Print to debug the selected days
+    });
+  }
+
   void _showSnackBar(BuildContext context, String message) {
     final snackBar = SnackBar(content: Text(message));
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -33,6 +63,8 @@ class EditApplianceDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final days = ["M", "T", "W", "Th", "F", "St", "S"];
+
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
@@ -41,19 +73,19 @@ class EditApplianceDialog extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
-            key: formKey,
+            key: widget.formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset('assets/dialogImage.png', height: 100, width: 100),
                 const SizedBox(height: 20),
                 Text(
-                  'Current Appliance: ${appliance['applianceName']}',
+                  'Current Appliance: ${widget.appliance['applianceName']}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
-                  controller: editApplianceNameController,
+                  controller: widget.editApplianceNameController,
                   decoration: InputDecoration(
                     labelText: 'Enter New Appliance Name',
                     border: OutlineInputBorder(
@@ -69,7 +101,7 @@ class EditApplianceDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
-                  controller: editWattageController,
+                  controller: widget.editWattageController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Wattage',
@@ -79,10 +111,11 @@ class EditApplianceDialog extends StatelessWidget {
                   ),
                   onChanged: (value) {
                     if (value.length > 6) {
-                      editWattageController.text = value.substring(0, 6);
-                      editWattageController.selection =
+                      widget.editWattageController.text = value.substring(0, 6);
+                      widget.editWattageController.selection =
                           TextSelection.fromPosition(TextPosition(
-                              offset: editWattageController.text.length));
+                              offset:
+                                  widget.editWattageController.text.length));
                     }
                   },
                   validator: (value) {
@@ -97,7 +130,7 @@ class EditApplianceDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
-                  controller: editUsagePatternController,
+                  controller: widget.editUsagePatternController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Usage Pattern (hours per day)',
@@ -108,8 +141,8 @@ class EditApplianceDialog extends StatelessWidget {
                   onChanged: (value) {
                     final doubleValue = double.tryParse(value);
                     if (doubleValue != null && doubleValue > 24) {
-                      editUsagePatternController.text = '24';
-                      editUsagePatternController.selection =
+                      widget.editUsagePatternController.text = '24';
+                      widget.editUsagePatternController.selection =
                           TextSelection.fromPosition(
                         const TextPosition(offset: '24'.length),
                       );
@@ -125,35 +158,70 @@ class EditApplianceDialog extends StatelessWidget {
                     return null;
                   },
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: editWeeklyPatternController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Usage Pattern (Days used per week)',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
+                const SizedBox(height: 20),
+                const Text("Select Days", style: TextStyle(fontSize: 18)),
+                const SizedBox(height: 20),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // First row with 4 days
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(4, (index) {
+                        final dayNum = index + 1;
+                        final isSelected = selectedDays.contains(dayNum);
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: GestureDetector(
+                            onTap: () => _toggleDay(dayNum),
+                            child: CircleAvatar(
+                              radius: 25,
+                              backgroundColor: isSelected
+                                  ? AppColors.secondaryColor
+                                  : Colors.grey[300],
+                              child: Text(
+                                days[index],
+                                style: TextStyle(
+                                  color:
+                                      isSelected ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
-                  ),
-                  onChanged: (value) {
-                    final doubleValue = double.tryParse(value);
-                    if (doubleValue != null && doubleValue > 7) {
-                      editWeeklyPatternController.text = '7';
-                      editWeeklyPatternController.selection =
-                          TextSelection.fromPosition(
-                        const TextPosition(offset: '7'.length),
-                      );
-                    }
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the usage pattern';
-                    }
-                    if (double.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
+                    const SizedBox(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(3, (index) {
+                        final dayNum = index + 5;
+                        final isSelected = selectedDays.contains(dayNum);
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: GestureDetector(
+                            onTap: () => _toggleDay(dayNum),
+                            child: CircleAvatar(
+                              radius: 25,
+                              backgroundColor: isSelected
+                                  ? AppColors.secondaryColor
+                                  : Colors.grey[300],
+                              child: Text(
+                                days[dayNum - 1],
+                                style: TextStyle(
+                                  color:
+                                      isSelected ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -169,20 +237,23 @@ class EditApplianceDialog extends StatelessWidget {
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: () {
-                        if (formKey.currentState!.validate()) {
+                        if (widget.formKey.currentState!.validate()) {
                           final updatedAppliance = {
-                            'applianceName': editApplianceNameController.text,
-                            'wattage': double.parse(editWattageController.text),
-                            'usagePatternPerDay':
-                                double.parse(editUsagePatternController.text),
-                            'usagePatternPerWeek':
-                                double.parse(editWeeklyPatternController.text),
+                            'applianceName':
+                                widget.editApplianceNameController.text,
+                            'wattage':
+                                double.parse(widget.editWattageController.text),
+                            'usagePatternPerDay': double.parse(
+                                widget.editUsagePatternController.text),
+                            'selectedDays': selectedDays,
                           };
 
-                          updateAppliance(appliance['_id'], updatedAppliance)
+                          widget
+                              .updateAppliance(
+                                  widget.appliance['_id'], updatedAppliance)
                               .then((_) {
-                            fetchAppliances();
-                            fetchDailyCosts();
+                            widget.fetchAppliances();
+                            widget.fetchDailyCosts();
 
                             Navigator.of(context).pop();
                             _showSnackBar(

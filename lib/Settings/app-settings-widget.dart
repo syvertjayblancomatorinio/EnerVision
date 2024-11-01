@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+import 'package:supabase_project/PreCode/micaella.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
 import '../ConstantTexts/Theme.dart';
@@ -81,7 +82,7 @@ class _AppSettingsState extends State<AppSettings> {
                 () {
                   // Navigate to Support page
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => SignUpPage()));
+                      MaterialPageRoute(builder: (context) => FAQsPage()));
                 },
               ),
               settingsOptions(

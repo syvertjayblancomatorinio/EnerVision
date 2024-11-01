@@ -13,7 +13,16 @@ class Carmel extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: customAppBar1(showProfile: true, showTitle: false),
+        bottomNavigationBar: const BottomNavigation(selectedIndex: 2),
+        appBar: customAppBar1(
+          title: 'All Devices',
+          showBackArrow: true,
+          showProfile: true,
+          showTitle: false,
+          onBackPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         body: content(context),
       ),
     );
@@ -24,6 +33,7 @@ class Carmel extends StatelessWidget {
       children: [
         title("LG Smart Inverter RVSB243PZ"),
         smallerImageContainer(context, 'assets/refrigerator.png'),
+        keyFeatures(context)
       ],
     );
   }
@@ -73,6 +83,57 @@ class Carmel extends StatelessWidget {
       ),
     );
   }
+
+  Widget keyFeatures(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buildRichText(context, 'Key Features:', firstWordsCount: 2),
+        bulletList(context, [
+          'Linear Cooling™',
+          'Smart Inverter Compressor',
+          'Soft LED Lighting',
+          'Fresh Zone',
+          'Spaceplus Ice System',
+          'Express Cool',
+          'Express Freeze',
+        ]),
+        buildRichText(context, 'Energy Star Certified: No', firstWordsCount: 2),
+        buildRichText(context, 'Available Stores: Shopee', firstWordsCount: 2),
+        buildRichText(context, 'Type: Freezing Refrigerator',
+            firstWordsCount: 1),
+      ],
+    );
+  }
+
+  Widget bulletList(BuildContext context, List<String> items) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: items.map((item) {
+          return Padding(
+            padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('• ', style: Theme.of(context).textTheme.bodyMedium),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(fontSize: 10),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 }
 
 class CarmelAndAnne extends StatelessWidget {
@@ -83,8 +144,11 @@ class CarmelAndAnne extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
+        bottomNavigationBar: const BottomNavigation(selectedIndex: 2),
         appBar: customAppBar1(
-          showTitle: false,
+          title: 'All Devices',
+          showBackArrow: true,
+          showProfile: true,
           onBackPressed: () {
             Navigator.pop(context);
           },

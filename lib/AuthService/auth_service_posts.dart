@@ -58,7 +58,7 @@ class PostsService {
     }
   }
 
-  static Future<void> deletePost(String postId) async {
+  static Future<void> deleteAPost(String postId) async {
     // SharedPreferences preferences = await SharedPreferences.getInstance();
     // final userId = prefs.getString('userId');
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_project/CommonWidgets/welcome_page.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/energy_effieciency_page.dart';
 import 'dart:async';
@@ -38,7 +39,9 @@ class _SplashScreenState extends State<SplashScreen>
 
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (context) => isUserLoaded
-          ? const EnergyEfficiencyPage(selectedIndex: 0)
+          ? const WelcomePage(
+              // selectedIndex: 0,
+              )
           : const LoginPage(),
     ));
   }

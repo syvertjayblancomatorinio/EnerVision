@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/AuthService/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
+import 'package:supabase_project/CommonWidgets/loading_page.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
+import 'package:supabase_project/SignUpLogin&LandingPage/setup_profile.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/textfield.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/user.dart';
 import 'package:supabase_project/buttons/sign_up_button.dart';
-import 'package:supabase_project/CommonWidgets/textfield.dart'; // Import your LoginPage
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -26,7 +27,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
-  final _kwhRateController = TextEditingController();
+  // final _kwhRateController = TextEditingController();
   late final TextEditingController controller;
   bool _showClearIcon = false;
   bool _showClearEmailIcon = false;
@@ -53,7 +54,7 @@ class _SignUpPageState extends State<SignUpPage> {
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _kwhRateController.dispose();
+    // _kwhRateController.dispose();
     super.dispose();
   }
 
@@ -121,34 +122,33 @@ class _SignUpPageState extends State<SignUpPage> {
                               keyboardType: TextInputType.text,
                             ),
                             const SizedBox(height: 20),
-                            CustomTextField(
-                              keyboardType: TextInputType.number,
-                              controller: _kwhRateController,
-                              hintText: 'Kwh Rate',
-                              obscureText: false,
-                              prefixIcon: const Icon(
-                                  Icons.energy_savings_leaf_outlined),
-                              onChanged: (value) {
-                                setState(() {
-                                  _showClearIcon = value.isNotEmpty;
-                                });
-
-                                final kwhRate = double.tryParse(value);
-                                if (kwhRate != null) {
-                                  user.kwhRate = kwhRate;
-                                } else {
-                                  user.kwhRate = 0;
-                                }
-                              },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Enter Kwh Rate';
-                                } else {
-                                  return null;
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 20),
+                            // CustomTextField(
+                            //   keyboardType: TextInputType.number,
+                            //   controller: _kwhRateController,
+                            //   hintText: 'Kwh Rate',
+                            //   obscureText: false,
+                            //   prefixIcon: const Icon(
+                            //       Icons.energy_savings_leaf_outlined),
+                            //   onChanged: (value) {
+                            //     setState(() {
+                            //       _showClearIcon = value.isNotEmpty;
+                            //     });
+                            //
+                            //     final kwhRate = double.tryParse(value);
+                            //     if (kwhRate != null) {
+                            //       user.kwhRate = kwhRate;
+                            //     } else {
+                            //       user.kwhRate = 0;
+                            //     }
+                            //   },
+                            //   validator: (value) {
+                            //     if (value == null || value.isEmpty) {
+                            //       return 'Enter Kwh Rate';
+                            //     } else {
+                            //       return null;
+                            //     }
+                            //   },
+                            // ),
                             CustomTextField(
                               controller: _emailController,
                               hintText: 'Email',
@@ -208,7 +208,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                       emailController: _emailController,
                                       passwordController: _passwordController,
                                       usernameController: _usernameController,
-                                      kwhRateController: _kwhRateController,
+                                      // kwhRateController: _kwhRateController,
                                     ).signUp();
 
                                     if (response != null) {
@@ -219,7 +219,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  LoginPage()),
+                                                  SetupProfile()),
                                         );
                                       }
                                     } else {

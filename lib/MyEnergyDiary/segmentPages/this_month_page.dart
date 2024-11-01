@@ -80,10 +80,10 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
 
   Widget _buildEnergyPowerUsed() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text(
-          'Energy Power Used',
+          'Home Usage',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,

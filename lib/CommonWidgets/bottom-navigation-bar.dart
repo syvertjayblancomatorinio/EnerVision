@@ -5,8 +5,11 @@ import 'package:supabase_project/EnergyPage/EnergyTracker/energy_tracker.dart';
 import 'package:supabase_project/MainFolder/calculator.dart';
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 import 'package:supabase_project/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
+import 'package:supabase_project/PreCode/micaella.dart';
 import 'package:supabase_project/Settings/app-settings-widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../PreCode/addSuggestion.dart';
 
 class BottomNavigation extends StatefulWidget {
   final int selectedIndex;
@@ -65,7 +68,8 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const EnergyUsageTracker(),
+            // builder: (context) => SuggestionExample(),
+            builder: (context) => FAQsPage(),
           ),
         );
       } else if (index == 4) {

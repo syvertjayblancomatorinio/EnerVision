@@ -1,15 +1,23 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_profile.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
+import 'package:supabase_project/AuthService/auth_suggestions.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
+import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/confirm_delete.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/create_post.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:readmore/readmore.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/EnergyEfficiency/see_more.dart';
+import 'package:supabase_project/PreCode/addSuggestion.dart';
+import 'package:supabase_project/PreCode/deleteDialog.dart';
+import 'package:supabase_project/AuthService/auth_appliances.dart';
 
 class CommunityTab extends StatefulWidget {
   const CommunityTab({super.key});
@@ -19,176 +27,101 @@ class CommunityTab extends StatefulWidget {
 }
 
 class _CommunityTabState extends State<CommunityTab> {
-  List<dynamic> posts = [];
+  AppControllers controller = AppControllers();
+  List<TextEditingController> editControllers = [];
+  // List<dynamic> posts = [];
+  List<Map<String, dynamic>> posts = [];
+
   bool isLoading = false;
   bool showUsersPosts = false;
   bool isUserPost = false;
+  String placeholderImage = 'assets/image (6).png';
+  int? activeSuggestionIndex;
+  int? _tappedIndex;
+  int? editingIndex;
+  String? username;
+  ScrollController _scrollController = ScrollController();
+  // List<Map<String, dynamic>> suggestions = [];
+  // List<Map<String, dynamic>> suggestions = [];
+  List<dynamic> suggestions = [];
+
+  String? error;
   @override
   void initState() {
     super.initState();
     getPosts();
+    getUsername();
+    fetchSuggestions();
+  }
+
+  Future<void> fetchSuggestions() async {
+    setState(() {
+      isLoading = true;
+      error = null; // Reset error before each fetch
+    });
+
+    try {
+      final suggestionsData = await SuggestionService.getComments();
+      setState(() {
+        suggestions = suggestionsData;
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        error = 'Failed to load suggestions. Please try again later.';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> deletePost(String postId) async {
     try {
-      await PostsService.deletePost(postId);
+      await ApplianceService.deletePost(postId);
       print('Post deleted successfully');
     } catch (e) {
-      print('Error deleting post: $e');
+      print('Error deleting appliance: $e');
     }
   }
 
+  Widget _buildIcon(int index) {
+    return GestureDetector(
+        onTap: () {
+          _editPostActionSheet(context, index);
+        },
+        child: const Icon(Icons.more_vert));
+  }
+
   void _confirmDeletePost(int index) {
+    if (index < 0 || index >= posts.length) {
+      print('Invalid index for deleting post');
+      return;
+    }
+
     final post = posts[index];
+
+    if (post['_id'] == null) {
+      print('Post ID is null, cannot delete');
+      return;
+    }
+
+    print('Attempting to delete post with ID: ${post['_id']}');
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 16,
-          backgroundColor: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.warning, // Warning icon for deletion
-                  color: AppColors.primaryColor,
-                  size: 50,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Delete Post?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Are you sure you want to delete this Post? This cannot be undone.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        deletePost(post['_id']).then((_) {
-                          // After deletion, pop the dialog
-                          Navigator.of(context).pop();
-
-                          // Optionally refresh the UI or fetch posts again
-                          // fetchPosts();
-                        }).catchError((error) {
-                          // Handle error if deletion fails
-                          print('Deletion failed: $error');
-                          Navigator.of(context)
-                              .pop(); // Close dialog even on error
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                          fontFamily: 'Montserrat',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+        return ConfirmDeleteDialog(
+          title: 'Delete Post?',
+          description:
+              'Are you sure you want to delete this Post? This cannot be undone.',
+          onDelete: () => deletePost(post['_id']).then((_) {
+            // getPosts();
+          }),
         );
       },
     );
-  }
-
-  // Future<void> deletePost(String postId) async {
-  //   setState(() {
-  //     isLoading = true; // Set loading to true at the start of the process
-  //   });
-  //
-  //   try {
-  //     var deletedPost = await PostsService.deletePost(postId);
-  //     setState(() {
-  //       posts.removeWhere((post) => post['id'] == postId);
-  //     });
-  //   } catch (err) {
-  //     print('Failed to delete post: $err');
-  //   } finally {
-  //     setState(() {
-  //       isLoading = false;
-  //     });
-  //   }
-  // }
-
-  Future<void> getPosts() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = false;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.getPosts();
-      setState(() {
-        posts = fetchedPosts;
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> getUsersPost() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = true;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.fetchUsersPosts();
-      setState(() {
-        posts = fetchedPosts;
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
   }
 
   void _togglePostView() {
@@ -229,7 +162,7 @@ class _CommunityTabState extends State<CommunityTab> {
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () {
-            Navigator.pop(context); // Close the action sheet
+            Navigator.pop(context);
           },
           child: const Text(
             'Cancel',
@@ -252,9 +185,15 @@ class _CommunityTabState extends State<CommunityTab> {
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context);
-              _confirmDeletePost(index);
+              if (isUserPost) {
+                _confirmDeletePost(index);
+              } else {
+                _confirmReportPost(index);
+              }
             },
-            child: const Text('Delete Post'),
+            child: isUserPost
+                ? const Text('Delete Post')
+                : const Text('Report Post'),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
@@ -272,9 +211,89 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
+  Future<void> getPosts() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = false;
+    });
+
+    try {
+      final fetchedPosts = await PostsService.getPosts();
+      setState(() {
+        posts = fetchedPosts;
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _confirmReportPost(int index) {
+    final post = posts[index];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ConfirmDeleteDialog(
+          title: 'Report Post?',
+          description: 'Are you sure you want to Report this Post? ',
+          onDelete: () => deletePost(post['_id']).then((_) {
+            getPosts();
+          }),
+        );
+      },
+    );
+  }
+
+  Future<String?> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in shared preferences');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/getUsername/$userId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('Username found: ${data['username']}');
+      return data['username'];
+    } else if (response.statusCode == 404) {
+      print('Username not found for user.');
+      return null;
+    } else {
+      throw Exception('Failed to load user kwhRate');
+    }
+  }
+
+  Future<void> getUsersPost() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = true;
+    });
+
+    try {
+      final fetchedPosts = await PostsService.fetchUsersPosts();
+      setState(() {
+        posts = fetchedPosts;
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      controller: _scrollController,
       child: Column(
         children: <Widget>[
           const SizedBox(height: 20),
@@ -306,6 +325,7 @@ class _CommunityTabState extends State<CommunityTab> {
         else
           ...sortedPosts.asMap().entries.map((entry) {
             var post = entry.value;
+            int index = entry.key;
             return _buildUserPost(
               post['title'] ?? 'No Title',
               post['description'] ?? 'No Description',
@@ -313,8 +333,115 @@ class _CommunityTabState extends State<CommunityTab> {
               post['tags'] ?? 'No tags',
               'https://example.com/user_avatar.jpg',
               'https://example.com/sample_image.jpg',
+              index,
             );
           }),
+      ],
+    );
+  }
+
+  Widget _buildUserPost(
+    String title,
+    String description,
+    String timeAgo,
+    String tags,
+    String profileImageUrl,
+    String postImageUrl,
+    int index, // Pass the index
+  ) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+        child: Container(
+          padding: const EdgeInsets.all(10.0),
+          decoration: greyBoxDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _buildAvatar(
+                    profileImageUrl,
+                    postImageUrl,
+                  ),
+                  const SizedBox(width: 10.0),
+                  _buildTitleTags(title, tags),
+                  const Spacer(),
+                  _buildTags(timeAgo),
+                  const SizedBox(width: 10.0),
+                  _buildIcon(index),
+                ],
+              ),
+              _buildDescription(description),
+              const SizedBox(height: 10.0),
+              _buildSuggestionsButton(postImageUrl, index),
+              if (_tappedIndex == index) _buildSuggestionTextField(),
+              // if (_tappedIndex == index) _buildSuggestionsList(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsButton(String profileImageUrl, int index) {
+    final String validProfileImageUrl =
+        profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
+    return Row(
+      children: [
+        Row(
+          children: List.generate(3, (index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3.0),
+              child: CircleAvatar(
+                radius: 10.0,
+                backgroundImage: NetworkImage(validProfileImageUrl),
+                child: ClipOval(
+                  child: Image.network(
+                    validProfileImageUrl,
+                    width: 20.0,
+                    height: 20.0,
+                    fit: BoxFit.cover,
+                    errorBuilder: (BuildContext context, Object error,
+                        StackTrace? stackTrace) {
+                      return Image.asset(
+                        placeholderImage,
+                        fit: BoxFit.cover,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        // Column(
+        //   children: [_buildSuggestionsList()],
+        // ),
+        const Spacer(),
+        ElevatedButton(
+          onPressed: () {
+            // setState(() {
+            //   if (_tappedIndex == index) {
+            //     _tappedIndex =
+            //         null; // Hide the text field if the same post is tapped again
+            //   } else {
+            //     _tappedIndex = index; // Set the tapped index
+            //   }
+            // });
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SuggestionExample()),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1BBC9B),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+          ),
+          child: const Text('Add Suggestions'),
+        ),
       ],
     );
   }
@@ -343,13 +470,15 @@ class _CommunityTabState extends State<CommunityTab> {
               onTap: () {
                 _showActionSheet(context);
               },
-              child: const Icon(Icons.edit, color: Color(0xFF1BBC9B)),
+              child: const Icon(Icons.edit),
             ),
             GestureDetector(
               onTap: () {
-                getPosts(); // Fetch all posts on refresh
+                getPosts();
               },
-              child: const Icon(Icons.refresh, color: Color(0xFF1BBC9B)),
+              child: const Icon(
+                Icons.refresh,
+              ),
             ),
           ],
         ),
@@ -357,145 +486,162 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  Widget _buildUserPost(String title, String description, String timeAgo,
-      String tags, String profileImageUrl, String postImageUrl) {
-    const String placeholderImage = 'assets/image (6).png';
-    int index = 0;
+  Widget _buildTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        fontFamily: 'Montserrat',
+      ),
+    );
+  }
+
+  Widget _buildTags(String tags) {
+    return Text(
+      tags,
+      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+    );
+  }
+
+  Widget _buildTitleTags(String title, String tags) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTitle(title),
+        const SizedBox(height: 4.0),
+        _buildTags(tags),
+      ],
+    );
+  }
+
+  Widget _buildDescription(String description) {
+    return Container(
+      constraints: const BoxConstraints(
+        maxHeight: 300,
+      ),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 30, left: 10, bottom: 10),
+          child: CustomReadMoreText(
+            text: description,
+            trimLines: 2,
+            trimCollapsedText: 'Show more',
+            trimExpandedText: 'Show less',
+            moreStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryColor,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(String profileImageUrl, String postImageUrl) {
     final String validProfileImageUrl =
         profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
+    return CircleAvatar(
+      radius: 20.0,
+      backgroundImage: NetworkImage(validProfileImageUrl),
+      child: ClipOval(
+        child: Image.network(
+          validProfileImageUrl,
+          width: 40.0,
+          height: 40.0,
+          fit: BoxFit.cover,
+          errorBuilder:
+              (BuildContext context, Object error, StackTrace? stackTrace) {
+            return Image.asset(
+              placeholderImage,
+              fit: BoxFit.cover,
+            );
+          },
+        ),
+      ),
+    );
+  }
 
+  Widget _buildPostImage(
+    String profileImageUrl,
+    String postImageUrl,
+  ) {
     final String validPostImageUrl =
         postImageUrl.isNotEmpty ? postImageUrl : placeholderImage;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        validPostImageUrl,
+        width: double.infinity,
+        height: 200.0,
+        fit: BoxFit.cover,
+        errorBuilder:
+            (BuildContext context, Object error, StackTrace? stackTrace) {
+          return Image.asset(
+            placeholderImage,
+            width: double.infinity,
+            height: 200.0,
+            fit: BoxFit.cover,
+          );
+        },
+      ),
+    );
+  }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-      child: Container(
-        padding: const EdgeInsets.all(10.0),
-        decoration: greyBoxDecoration(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 20.0,
-                  backgroundImage: NetworkImage(validProfileImageUrl),
-                  child: ClipOval(
-                    child: Image.network(
-                      validProfileImageUrl,
-                      width: 40.0,
-                      height: 40.0,
-                      fit: BoxFit.cover,
-                      errorBuilder: (BuildContext context, Object error,
-                          StackTrace? stackTrace) {
-                        return Image.asset(
-                          placeholderImage,
-                          fit: BoxFit.cover,
-                        );
-                      },
+  Widget _buildSuggestionTextField() {
+    return Container(
+      margin: const EdgeInsets.all(18.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(7.0),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 2.0),
+                child: Image(
+                  image: AssetImage('assets/suggestion.png'),
+                  width: 50.0,
+                  height: 50.0,
+                ),
+              ),
+              const SizedBox(width: 5.0),
+              Expanded(
+                child: TextField(
+                  controller: controller.suggestionController,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Suggest changes or additional tips...',
+                    hintStyle: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12.0,
                     ),
                   ),
                 ),
-                const SizedBox(width: 10.0),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Montserrat',
-                      ),
-                    ),
-                    const SizedBox(height: 4.0),
-                    Text(
-                      tags,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ],
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.send_rounded,
+                  color: Color(0xFF1BBC9B),
+                  size: 24,
                 ),
-                const Spacer(),
-                Text(
-                  timeAgo,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                const SizedBox(width: 10.0),
-                GestureDetector(
-                    onTap: () {
-                      _editPostActionSheet(context, index);
-                    },
-                    child: const Icon(Icons.more_vert)),
-              ],
-            ),
-            const SizedBox(height: 10.0),
-            Text(
-              description,
-              style: const TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 10.0),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                validPostImageUrl,
-                width: double.infinity,
-                height: 200.0,
-                fit: BoxFit.cover,
-                errorBuilder: (BuildContext context, Object error,
-                    StackTrace? stackTrace) {
-                  return Image.asset(
-                    placeholderImage,
-                    width: double.infinity,
-                    height: 200.0,
-                    fit: BoxFit.cover,
-                  );
+                onPressed: () {
+                  if (controller.suggestionController.text.isNotEmpty) {
+                    setState(() {
+                      // suggestions.add(controller.suggestionController.text);
+                      controller.suggestionController.clear();
+                    });
+                  }
                 },
               ),
-            ),
-            const SizedBox(height: 10.0),
-            Row(
-              children: [
-                Row(
-                  children: List.generate(3, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 3.0),
-                      child: CircleAvatar(
-                        radius: 10.0,
-                        backgroundImage: NetworkImage(validProfileImageUrl),
-                        child: ClipOval(
-                          child: Image.network(
-                            validProfileImageUrl,
-                            width: 20.0,
-                            height: 20.0,
-                            fit: BoxFit.cover,
-                            errorBuilder: (BuildContext context, Object error,
-                                StackTrace? stackTrace) {
-                              return Image.asset(
-                                placeholderImage,
-                                fit: BoxFit.cover,
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1BBC9B),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                  ),
-                  child: const Text('Add Suggestions'),
-                ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -557,6 +703,184 @@ class _CommunityTabState extends State<CommunityTab> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildSuggestionsList() {
+    return ListView.builder(
+      itemCount: suggestions.length,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 2.0),
+          padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 10.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(7.0),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Juan Dela Cruz',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1BBC9B),
+                      fontSize: 16.0,
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz),
+                    onSelected: (String value) {
+                      if (value == 'Edit') {
+                        setState(() {
+                          editingIndex = index;
+                          if (editControllers.length <= index) {
+                            editControllers.add(TextEditingController(
+                                text: suggestions[index]));
+                          }
+                        });
+                      } else if (value == 'Delete') {
+                        showDeleteConfirmationDialog(
+                          context: context,
+                          suggestion: suggestions[index],
+                          onDelete: () {
+                            setState(() {
+                              suggestions.removeAt(index);
+                            });
+                          },
+                        );
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return {'Edit', 'Delete'}.map((String choice) {
+                        return PopupMenuItem<String>(
+                          value: choice,
+                          child: Text(choice),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ],
+              ),
+              if (editingIndex == index)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: editControllers[index],
+                        onSubmitted: (value) {
+                          // _saveEdit(value, index);
+                        },
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.check, color: Colors.green),
+                      onPressed: () {
+                        // _saveEdit(editControllers[index].text, index);
+                      },
+                    ),
+                  ],
+                )
+              else
+                Text(
+                  suggestions[index],
+                  style: const TextStyle(
+                    fontSize: 14.0,
+                    color: Colors.black,
+                  ),
+                ),
+              const SizedBox(height: 8.0),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget appliancesContent() {
+    return ListView(
+      children: suggestions.asMap().entries.map((entry) {
+        var suggestion = entry.value;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              margin:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 2.0),
+              padding:
+                  const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 10.0),
+              decoration: greyBoxDecoration(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 130),
+                    child: Text(
+                      '${suggestion['applianceName'] ?? 'Unknown'}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.battery_charging_full),
+                          const SizedBox(width: 5),
+                          Text('${suggestion['wattage'] ?? 'N/A'} W'),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.watch_later_outlined),
+                          const SizedBox(width: 5),
+                          Text(
+                              '${suggestion['usagePatternPerDay'] ?? 'N/A'} hours'),
+                        ],
+                      ),
+                    ],
+                  ),
+                  // const SizedBox(height: 40),
+                ],
+              ),
+            ),
+            // Appliance Image (overlapping the container)
+            // deviceImages(appliance),
+            // Compare Button (overlapping at the bottom-right)
+            Positioned(
+              bottom: -10,
+              right: 30,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CommunityTab(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Compare'),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 }

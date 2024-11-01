@@ -45,7 +45,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final days = ["M", "T", "W", "Th", "F", "St", "S"];
+    final days = ["S", "M", "T", "W", "Th", "F", "St"];
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -74,29 +74,71 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
                     const SizedBox(height: 20),
                     const Text("Select Days", style: TextStyle(fontSize: 18)),
                     const SizedBox(height: 20),
-                    Wrap(
-                      spacing: 10,
-                      crossAxisAlignment: WrapCrossAlignment.end,
-                      children: List.generate(days.length, (index) {
-                        final dayNum = index + 1;
-                        final isSelected = selectedDays.contains(dayNum);
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // First row with 4 days
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(4, (index) {
+                            final dayNum = index + 1;
+                            final isSelected = selectedDays.contains(dayNum);
 
-                        return GestureDetector(
-                          onTap: () => _toggleDay(dayNum),
-                          child: CircleAvatar(
-                            radius: 25,
-                            backgroundColor: isSelected
-                                ? AppColors.secondaryColor
-                                : Colors.grey[300],
-                            child: Text(
-                              days[index],
-                              style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.black,
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              child: GestureDetector(
+                                onTap: () => _toggleDay(dayNum),
+                                child: CircleAvatar(
+                                  radius: 25,
+                                  backgroundColor: isSelected
+                                      ? AppColors.secondaryColor
+                                      : Colors.grey[300],
+                                  child: Text(
+                                    days[index],
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      }),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 20),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(3, (index) {
+                            final dayNum = index + 5;
+                            final isSelected = selectedDays.contains(dayNum);
+
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              child: GestureDetector(
+                                onTap: () => _toggleDay(dayNum),
+                                child: CircleAvatar(
+                                  radius: 25,
+                                  backgroundColor: isSelected
+                                      ? AppColors.secondaryColor
+                                      : Colors.grey[300],
+                                  child: Text(
+                                    days[dayNum - 1],
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
                     actionButtons(context)
@@ -121,8 +163,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
 
   Widget textFormFields() {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16.0), // Add horizontal padding
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         children: [
           TextFormField(
@@ -175,7 +216,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
             decoration: InputDecoration(
               labelText: 'Wattage',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
             onChanged: (value) {
@@ -203,7 +244,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
             decoration: InputDecoration(
               labelText: 'Usage Pattern (hours per day)',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(20),
               ),
             ),
             onChanged: (value) {
@@ -301,8 +342,11 @@ class DropdownWithIcon extends StatelessWidget {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              suffixIcon: Icon(icon),
+              // suffixIcon: Icon(icon),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 15.0, horizontal: 12.0),
             ),
+            isExpanded: true,
             items: items.map<DropdownMenuItem<String>>((String category) {
               return DropdownMenuItem<String>(
                 value: category,
