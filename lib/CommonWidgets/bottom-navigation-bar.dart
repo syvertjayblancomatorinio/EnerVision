@@ -8,6 +8,7 @@ import 'package:supabase_project/MyEnergyDiary/segmentPages/my_energy_diary_page
 import 'package:supabase_project/PreCode/micaella.dart';
 import 'package:supabase_project/Settings/app-settings-widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/StaticPages/anne_aircon.dart';
 
 import '../PreCode/addSuggestion.dart';
 
@@ -69,7 +70,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
           context,
           MaterialPageRoute(
             // builder: (context) => SuggestionExample(),
-            builder: (context) => FAQsPage(),
+            builder: (context) => Carmel(),
           ),
         );
       } else if (index == 4) {

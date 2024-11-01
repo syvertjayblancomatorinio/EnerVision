@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+import 'package:supabase_project/PreCode/change_password.dart';
 import 'package:supabase_project/PreCode/micaella.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
@@ -37,6 +38,19 @@ class _AppSettingsState extends State<AppSettings> {
                 'Account',
                 Icons.person,
                 () => _confirmLogout(),
+                showDivider: false,
+              ),
+              settingsOptions(
+                context,
+                'Change Password',
+                Icons.lock,
+                () {
+                  // Navigate to Support page
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => PasswordResetApp()));
+                },
                 showDivider: false,
               ),
               const SizedBox(height: 50),
