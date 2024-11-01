@@ -161,30 +161,69 @@ class _EditApplianceDialogState extends State<EditApplianceDialog> {
                 const SizedBox(height: 20),
                 const Text("Select Days", style: TextStyle(fontSize: 18)),
                 const SizedBox(height: 20),
-                Wrap(
-                  spacing: 10,
-                  crossAxisAlignment: WrapCrossAlignment.end,
-                  children: List.generate(days.length, (index) {
-                    final dayNum = index + 1; // Day numbers from 1 to 7
-                    final isSelected = selectedDays.contains(dayNum);
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // First row with 4 days
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(4, (index) {
+                        final dayNum = index + 1;
+                        final isSelected = selectedDays.contains(dayNum);
 
-                    return GestureDetector(
-                      onTap: () => _toggleDay(dayNum),
-                      child: CircleAvatar(
-                        radius: 25,
-                        backgroundColor: isSelected
-                            ? AppColors.secondaryColor
-                            : Colors.grey[300],
-                        child: Text(
-                          days[index],
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black,
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: GestureDetector(
+                            onTap: () => _toggleDay(dayNum),
+                            child: CircleAvatar(
+                              radius: 25,
+                              backgroundColor: isSelected
+                                  ? AppColors.secondaryColor
+                                  : Colors.grey[300],
+                              child: Text(
+                                days[index],
+                                style: TextStyle(
+                                  color:
+                                      isSelected ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    );
-                  }),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(3, (index) {
+                        final dayNum = index + 5;
+                        final isSelected = selectedDays.contains(dayNum);
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: GestureDetector(
+                            onTap: () => _toggleDay(dayNum),
+                            child: CircleAvatar(
+                              radius: 25,
+                              backgroundColor: isSelected
+                                  ? AppColors.secondaryColor
+                                  : Colors.grey[300],
+                              child: Text(
+                                days[dayNum - 1],
+                                style: TextStyle(
+                                  color:
+                                      isSelected ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_profile.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
+import 'package:supabase_project/AuthService/auth_suggestions.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/confirm_delete.dart';
@@ -14,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:readmore/readmore.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/EnergyEfficiency/see_more.dart';
+import 'package:supabase_project/PreCode/addSuggestion.dart';
 import 'package:supabase_project/PreCode/deleteDialog.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 
@@ -33,19 +35,46 @@ class _CommunityTabState extends State<CommunityTab> {
   bool isLoading = false;
   bool showUsersPosts = false;
   bool isUserPost = false;
-  List<String> suggestions = [];
   String placeholderImage = 'assets/image (6).png';
   int? activeSuggestionIndex;
   int? _tappedIndex;
   int? editingIndex;
   String? username;
   ScrollController _scrollController = ScrollController();
+  // List<Map<String, dynamic>> suggestions = [];
+  // List<Map<String, dynamic>> suggestions = [];
+  List<dynamic> suggestions = [];
 
+  String? error;
   @override
   void initState() {
     super.initState();
     getPosts();
     getUsername();
+    fetchSuggestions();
+  }
+
+  Future<void> fetchSuggestions() async {
+    setState(() {
+      isLoading = true;
+      error = null; // Reset error before each fetch
+    });
+
+    try {
+      final suggestionsData = await SuggestionService.getComments();
+      setState(() {
+        suggestions = suggestionsData;
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        error = 'Failed to load suggestions. Please try again later.';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> deletePost(String postId) async {
@@ -311,6 +340,112 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
+  Widget _buildUserPost(
+    String title,
+    String description,
+    String timeAgo,
+    String tags,
+    String profileImageUrl,
+    String postImageUrl,
+    int index, // Pass the index
+  ) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+        child: Container(
+          padding: const EdgeInsets.all(10.0),
+          decoration: greyBoxDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _buildAvatar(
+                    profileImageUrl,
+                    postImageUrl,
+                  ),
+                  const SizedBox(width: 10.0),
+                  _buildTitleTags(title, tags),
+                  const Spacer(),
+                  _buildTags(timeAgo),
+                  const SizedBox(width: 10.0),
+                  _buildIcon(index),
+                ],
+              ),
+              _buildDescription(description),
+              const SizedBox(height: 10.0),
+              _buildSuggestionsButton(postImageUrl, index),
+              if (_tappedIndex == index) _buildSuggestionTextField(),
+              // if (_tappedIndex == index) _buildSuggestionsList(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsButton(String profileImageUrl, int index) {
+    final String validProfileImageUrl =
+        profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
+    return Row(
+      children: [
+        Row(
+          children: List.generate(3, (index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3.0),
+              child: CircleAvatar(
+                radius: 10.0,
+                backgroundImage: NetworkImage(validProfileImageUrl),
+                child: ClipOval(
+                  child: Image.network(
+                    validProfileImageUrl,
+                    width: 20.0,
+                    height: 20.0,
+                    fit: BoxFit.cover,
+                    errorBuilder: (BuildContext context, Object error,
+                        StackTrace? stackTrace) {
+                      return Image.asset(
+                        placeholderImage,
+                        fit: BoxFit.cover,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        // Column(
+        //   children: [_buildSuggestionsList()],
+        // ),
+        const Spacer(),
+        ElevatedButton(
+          onPressed: () {
+            // setState(() {
+            //   if (_tappedIndex == index) {
+            //     _tappedIndex =
+            //         null; // Hide the text field if the same post is tapped again
+            //   } else {
+            //     _tappedIndex = index; // Set the tapped index
+            //   }
+            // });
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SuggestionExample()),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1BBC9B),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+          ),
+          child: const Text('Add Suggestions'),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -454,102 +589,6 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  Widget _buildSuggestionsButton(String profileImageUrl, int index) {
-    final String validProfileImageUrl =
-        profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
-    return Row(
-      children: [
-        Row(
-          children: List.generate(3, (index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3.0),
-              child: CircleAvatar(
-                radius: 10.0,
-                backgroundImage: NetworkImage(validProfileImageUrl),
-                child: ClipOval(
-                  child: Image.network(
-                    validProfileImageUrl,
-                    width: 20.0,
-                    height: 20.0,
-                    fit: BoxFit.cover,
-                    errorBuilder: (BuildContext context, Object error,
-                        StackTrace? stackTrace) {
-                      return Image.asset(
-                        placeholderImage,
-                        fit: BoxFit.cover,
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
-        const Spacer(),
-        ElevatedButton(
-          onPressed: () {
-            setState(() {
-              if (_tappedIndex == index) {
-                _tappedIndex =
-                    null; // Hide the text field if the same post is tapped again
-              } else {
-                _tappedIndex = index; // Set the tapped index
-              }
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1BBC9B),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-          ),
-          child: const Text('Add Suggestions'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUserPost(
-    String title,
-    String description,
-    String timeAgo,
-    String tags,
-    String profileImageUrl,
-    String postImageUrl,
-    int index, // Pass the index
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-      child: Container(
-        padding: const EdgeInsets.all(10.0),
-        decoration: greyBoxDecoration(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _buildAvatar(
-                  profileImageUrl,
-                  postImageUrl,
-                ),
-                const SizedBox(width: 10.0),
-                _buildTitleTags(title, tags),
-                const Spacer(),
-                _buildTags(timeAgo),
-                const SizedBox(width: 10.0),
-                _buildIcon(index),
-              ],
-            ),
-            _buildDescription(description),
-            const SizedBox(height: 10.0),
-            _buildSuggestionsButton(postImageUrl, index),
-            if (_tappedIndex == index) _buildSuggestionTextField(),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildSuggestionTextField() {
     return Container(
       margin: const EdgeInsets.all(18.0),
@@ -559,44 +598,48 @@ class _CommunityTabState extends State<CommunityTab> {
         borderRadius: BorderRadius.circular(7.0),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Row(
+      child: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 2.0),
-            child: Image(
-              image: AssetImage('assets/suggestion.png'),
-              width: 50.0,
-              height: 50.0,
-            ),
-          ),
-          const SizedBox(width: 5.0),
-          Expanded(
-            child: TextField(
-              controller: controller.suggestionController,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                hintText: 'Suggest changes or additional tips...',
-                hintStyle: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12.0,
+          Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 2.0),
+                child: Image(
+                  image: AssetImage('assets/suggestion.png'),
+                  width: 50.0,
+                  height: 50.0,
                 ),
               ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.send_rounded,
-              color: Color(0xFF1BBC9B),
-              size: 24,
-            ),
-            onPressed: () {
-              if (controller.suggestionController.text.isNotEmpty) {
-                setState(() {
-                  suggestions.add(controller.suggestionController.text);
-                  controller.suggestionController.clear();
-                });
-              }
-            },
+              const SizedBox(width: 5.0),
+              Expanded(
+                child: TextField(
+                  controller: controller.suggestionController,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Suggest changes or additional tips...',
+                    hintStyle: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12.0,
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.send_rounded,
+                  color: Color(0xFF1BBC9B),
+                  size: 24,
+                ),
+                onPressed: () {
+                  if (controller.suggestionController.text.isNotEmpty) {
+                    setState(() {
+                      // suggestions.add(controller.suggestionController.text);
+                      controller.suggestionController.clear();
+                    });
+                  }
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -755,6 +798,89 @@ class _CommunityTabState extends State<CommunityTab> {
           ),
         );
       },
+    );
+  }
+
+  Widget appliancesContent() {
+    return ListView(
+      children: suggestions.asMap().entries.map((entry) {
+        var suggestion = entry.value;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              margin:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 2.0),
+              padding:
+                  const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 10.0),
+              decoration: greyBoxDecoration(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 130),
+                    child: Text(
+                      '${suggestion['applianceName'] ?? 'Unknown'}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.battery_charging_full),
+                          const SizedBox(width: 5),
+                          Text('${suggestion['wattage'] ?? 'N/A'} W'),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.watch_later_outlined),
+                          const SizedBox(width: 5),
+                          Text(
+                              '${suggestion['usagePatternPerDay'] ?? 'N/A'} hours'),
+                        ],
+                      ),
+                    ],
+                  ),
+                  // const SizedBox(height: 40),
+                ],
+              ),
+            ),
+            // Appliance Image (overlapping the container)
+            // deviceImages(appliance),
+            // Compare Button (overlapping at the bottom-right)
+            Positioned(
+              bottom: -10,
+              right: 30,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CommunityTab(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Compare'),
+              ),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 }

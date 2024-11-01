@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
+import 'package:supabase_project/CommonWidgets/box_decorations.dart';
+import 'package:supabase_project/ConstantTexts/colors.dart';
+import 'package:supabase_project/EnergyEfficiency/see_more.dart';
+import 'package:supabase_project/EnergyEfficiency/widgets.dart';
 import 'package:supabase_project/PreCode/deleteDialog.dart';
-
 import '../CommonWidgets/bottom-navigation-bar.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SuggestionExample extends StatefulWidget {
   @override
@@ -10,15 +16,11 @@ class SuggestionExample extends StatefulWidget {
 
 class _SuggestionExampleState extends State<SuggestionExample> {
   TextEditingController suggestionController = TextEditingController();
-  List<String> suggestions = [];
-  List<TextEditingController> editControllers = [];
-  int? editingIndex;
+  List<String> suggestions = []; // Store suggestions here
 
   @override
   void dispose() {
-    for (var controller in editControllers) {
-      controller.dispose();
-    }
+    suggestionController.dispose();
     super.dispose();
   }
 
@@ -26,173 +28,161 @@ class _SuggestionExampleState extends State<SuggestionExample> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: Text('Suggestion Text Field Example'),
-          backgroundColor: Color(0xFF00C29A),
+        appBar: customAppBar1(
+          showBackArrow: true,
+          showTitle: false,
+          showProfile: false,
+          onBackPressed: () {
+            Navigator.pop(context);
+          },
         ),
         bottomNavigationBar: const BottomNavigation(selectedIndex: 3),
         body: Column(
           children: [
-            _buildSuggestionTextField(),
-            Expanded(child: _buildSuggestionsList()),
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  // _tappedPostIndex = _tappedPostIndex == 0 ? null : 0;
+                });
+              },
+              child: _buildUserPost('Title', 'Description', 'Time Ago', 'Tags',
+                  'ProfileImageUrl', 'PostImageUrl', 0),
+            ),
+            _buildSuggestionList(), // Display suggestions below
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSuggestionTextField() {
-    return Container(
-      margin: const EdgeInsets.all(18.0),
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(7.0),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 2.0),
-            child: Image(
-              image: AssetImage('assets/suggestion.png'),
-              width: 50.0,
-              height: 50.0,
-            ),
-          ),
-          const SizedBox(width: 5.0),
-          Expanded(
-            child: TextField(
-              controller: suggestionController,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                hintText: 'Suggest changes or additional tips...',
-                hintStyle: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12.0,
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.send_rounded,
-              color: Color(0xFF1BBC9B),
-              size: 24,
-            ),
-            onPressed: () {
-              if (suggestionController.text.isNotEmpty) {
-                setState(() {
-                  suggestions.add(suggestionController.text);
-                  suggestionController.clear();
-                });
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSuggestionsList() {
+  // Widget for displaying suggestions list below the TextField
+  Widget _buildSuggestionList() {
     return ListView.builder(
+      shrinkWrap: true,
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
-        return Container(
-          margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 2.0),
-          padding: EdgeInsets.only(left: 15.0, right: 15.0, bottom: 10.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(7.0),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Juan Dela Cruz',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1BBC9B),
-                      fontSize: 16.0,
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: Icon(Icons.more_horiz),
-                    onSelected: (String value) {
-                      if (value == 'Edit') {
-                        setState(() {
-                          editingIndex = index;
-                          if (editControllers.length <= index) {
-                            editControllers.add(TextEditingController(
-                                text: suggestions[index]));
-                          }
-                        });
-                      } else if (value == 'Delete') {
-                        showDeleteConfirmationDialog(
-                          context: context,
-                          suggestion: suggestions[index],
-                          onDelete: () {
-                            setState(() {
-                              suggestions.removeAt(index);
-                            });
-                          },
-                        );
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return {'Edit', 'Delete'}.map((String choice) {
-                        return PopupMenuItem<String>(
-                          value: choice,
-                          child: Text(choice),
-                        );
-                      }).toList();
-                    },
-                  ),
-                ],
-              ),
-              if (editingIndex == index)
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: editControllers[index],
-                        onSubmitted: (value) {
-                          _saveEdit(value, index);
-                        },
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.check, color: Colors.green),
-                      onPressed: () {
-                        _saveEdit(editControllers[index].text, index);
-                      },
-                    ),
-                  ],
-                )
-              else
-                Text(
-                  suggestions[index],
-                  style: const TextStyle(
-                    fontSize: 14.0,
-                    color: Colors.black,
-                  ),
-                ),
-              SizedBox(height: 8.0),
-            ],
-          ),
+        return ListTile(
+          title: Text(suggestions[index]),
         );
       },
     );
   }
 
-  void _saveEdit(String value, int index) {
-    setState(() {
-      suggestions[index] = value;
-      editingIndex = null;
-    });
+  Widget _buildUserPost(
+    String title,
+    String description,
+    String timeAgo,
+    String tags,
+    String profileImageUrl,
+    String postImageUrl,
+    int index,
+  ) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+        child: Container(
+          padding: const EdgeInsets.all(10.0),
+          decoration: greyBoxDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Avatar(profileImageUrl: 'assets/placeholder.png'),
+                  const SizedBox(width: 10.0),
+                  TitleTags(title: title, tags: tags),
+                  const Spacer(),
+                  _buildTags(timeAgo),
+                  const SizedBox(width: 10.0),
+                  _buildIcon(index),
+                ],
+              ),
+              _buildDescription(description),
+              const SizedBox(height: 10.0),
+              SuggestionTextField(
+                controller: suggestionController,
+                hintText: 'Enter your suggestion...',
+                imagePath: 'assets/suggestion.png',
+                borderColor: Colors.blueGrey,
+                iconColor: AppColors.secondaryColor,
+                onSend: _addSuggestion,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Function to handle adding a suggestion
+  void _addSuggestion() {
+    if (suggestionController.text.isNotEmpty) {
+      setState(() {
+        suggestions.add(suggestionController.text); // Add to local list
+      });
+      suggestionController.clear();
+
+      // Send suggestion to the backend
+      // You may want to replace this with your actual API call
+      sendSuggestionToPost(suggestionController.text);
+    }
+  }
+
+  Widget _buildTags(String tags) {
+    return Text(
+      tags,
+      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+    );
+  }
+
+  Widget _buildDescription(String description) {
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 300),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 30, left: 10, bottom: 10),
+          child: CustomReadMoreText(
+            text: description,
+            trimLines: 2,
+            trimCollapsedText: 'Show more',
+            trimExpandedText: 'Show less',
+            moreStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryColor,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIcon(int index) {
+    return GestureDetector(
+      onTap: () {
+        // _editPostActionSheet(context, index);
+      },
+      child: const Icon(Icons.more_vert),
+    );
+  }
+
+  Future<void> sendSuggestionToPost(String suggestion) async {
+    // Example API call to backend to add suggestion to post
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    final postId = prefs.getString('postId');
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/addSuggestions/${postId}'),
+        body: {'suggestionData': suggestion, 'userId': userId},
+      );
+      if (response.statusCode == 201) {
+        print('Suggestion added successfully');
+      } else {
+        print('Failed to add suggestion');
+      }
+    } catch (e) {
+      print('Error adding suggestion: $e');
+    }
   }
 }

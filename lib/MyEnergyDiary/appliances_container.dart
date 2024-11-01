@@ -3,9 +3,6 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
-import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
-import 'package:supabase_project/MyEnergyDiary/common-widgets.dart';
-import 'package:supabase_project/zNotUsedFiles/buttons_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
@@ -15,6 +12,7 @@ import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kw
 import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
+import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
 import '../CommonWidgets/controllers/app_controllers.dart';
@@ -41,7 +39,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   List<int> selectedDays = [];
   String? _selectedProvider;
 
-  Map<String, String> _electricProviders = {
+  final Map<String, String> _electricProviders = {
     'Cebu Electric Cooperative': '10.5',
     'Visayan Electric Company (VECO) - Residential': '11.2',
     'Visayan Electric Company (VECO) - Commercial': '15.2',
@@ -131,7 +129,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
             ...appliances.asMap().entries.map((entry) {
               int index = entry.key;
               var appliance = entry.value;
-              // Mapping of numeric days to day names
               final Map<int, String> dayNames = {
                 1: 'Sunday',
                 2: 'Monday',
@@ -149,7 +146,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                   : null;
 
               String selectedDaysNames = selectedDays != null
-                  ? selectedDays
+                  ? (selectedDays..sort())
                       .map((day) => dayNames[day] ?? 'Unknown')
                       .join(', ')
                   : 'N/A';
@@ -173,7 +170,10 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                   child: ListTile(
                     leading: Image.asset(
                         appliance['imagePath'] ?? 'assets/deviceImage.png'),
-                    title: Text(appliance['applianceName'] ?? 'Unknown'),
+                    title: Text(
+                      appliance['applianceName'] ?? 'Unknown',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     // Mapping of numeric days to day names
 
                     subtitle: Text('Wattage: ${appliance['wattage'] ?? 'N/A'}\n'
@@ -182,7 +182,10 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                     trailing: CupertinoButton(
                       padding: EdgeInsets.zero,
                       onPressed: () => _showActionSheet(context, index),
-                      child: const Icon(Icons.more_vert),
+                      child: const Icon(
+                        Icons.more_vert,
+                        color: AppColors.secondaryColor,
+                      ),
                     ),
                   ),
                 ),
@@ -541,18 +544,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           'Appliance name must not have a duplicate.\nPlease use a different name.',
       buttonText: 'OK',
     );
-  }
-
-  Future<void> newAddAppliance(
-      String userId, Map<String, dynamic> applianceData) async {
-    try {
-      await ApplianceService.newAddAppliances(userId, applianceData);
-      _showSnackBar('Appliance added successfully');
-      fetchDailyCost();
-      fetchAppliances();
-    } catch (e) {
-      print('Failed to add appliance: $e');
-    }
   }
 
   Future<void> addAppliance() async {
