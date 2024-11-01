@@ -104,3 +104,73 @@ final List<String> barangays = [
   'To-ong',
   'Zapatera'
 ];
+final List<Map<String, dynamic>> descriptions = [
+  {
+    "title": "1. Be Respectful",
+    "description": [
+      "Treat everyone with kindness and respect.",
+      "Avoid personal attacks, insults, or inflammatory remarks.",
+      "Discrimination, hate speech, or harassment will not be tolerated."
+    ]
+  },
+  {
+    "title": "2. Keep It Safe",
+    "description": [
+      "Be cautious when sharing personal information.",
+      "Do not share highly sensitive data like passwords or financial account numbers.",
+      "Avoid posting harmful or illegal content."
+    ]
+  },
+  {
+    "title": "3. Your Name and Profile Information",
+    "description": [
+      "Your name and profile will be visible to others.",
+      "Ensure your profile information is accurate and respectful."
+    ]
+  },
+  {
+    "title": "4. Constructive Communication",
+    "description": [
+      "Engage in meaningful, constructive discussions.",
+      "Disagree respectfully and offer helpful insights."
+    ]
+  },
+  {
+    "title": "5. No Spam or Self-Promotion",
+    "description": [
+      "Avoid spamming the community with irrelevant links or promotional content."
+    ]
+  },
+  {
+    "title": "6. Stay On Topic",
+    "description": ["Keep posts relevant to the community themes."]
+  },
+  {
+    "title": "7. Protect Privacy",
+    "description": [
+      "Do not share private messages or content without permission."
+    ]
+  },
+  {
+    "title": "8. Report Violations",
+    "description": [
+      "Help maintain the community’s quality by reporting inappropriate content."
+    ]
+  },
+  {
+    "title": "9. Follow the Law",
+    "description": ["Ensure posts and interactions comply with laws."]
+  },
+  {
+    "title": "10. Moderation",
+    "description": [
+      "Moderators have the right to remove content that violates guidelines."
+    ]
+  },
+  {
+    "title": "11. Be Kind and Helpful",
+    "description": [
+      "Offer support, advice, and encouragement to fellow members."
+    ]
+  }
+];
