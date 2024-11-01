@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_project/ConstantTexts/final_texts.dart';
 
 class CommunityGuidelines extends StatelessWidget {
   @override
@@ -69,47 +70,7 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
               style: Theme.of(context).textTheme.bodyMedium, // Using bodyMedium
             ),
             const SizedBox(height: 16.0),
-            Text(
-              '''1. Be Respectful
-    • Treat everyone with kindness and respect.
-    • Avoid personal attacks, insults, or inflammatory remarks.
-    • Discrimination, hate speech, or harassment will not be tolerated.
-
-2. Keep It Safe
-    • Be cautious when sharing personal information.
-    • Do not share highly sensitive data like passwords or financial account numbers.
-    • Avoid posting harmful or illegal content.
-
-3. Your Name and Profile Information
-    • Your name and profile will be visible to others.
-    • Ensure your profile information is accurate and respectful.
-
-4. Constructive Communication
-    • Engage in meaningful, constructive discussions.
-    • Disagree respectfully and offer helpful insights.
-
-5. No Spam or Self-Promotion
-    • Avoid spamming the community with irrelevant links or promotional content.
-
-6. Stay On Topic
-    • Keep posts relevant to the community themes.
-
-7. Protect Privacy
-    • Do not share private messages or content without permission.
-
-8. Report Violations
-    • Help maintain the community’s quality by reporting inappropriate content.
-
-9. Follow the Law
-    • Ensure posts and interactions comply with laws.
-
-10. Moderation
-    • Moderators have the right to remove content that violates guidelines.
-
-11. Be Kind and Helpful
-    • Offer support, advice, and encouragement to fellow members.''',
-              style: Theme.of(context).textTheme.bodyMedium, // Using bodyMedium
-            ),
+            _description(context, descriptions),
             const SizedBox(height: 24.0),
             CheckboxListTile(
               title: const Text(
@@ -133,7 +94,6 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
               child: ElevatedButton(
                 onPressed: _isPostingEnabled
                     ? () {
-                        // Add your post action here
                         print("Proceeding to post...");
                       }
                     : null,
@@ -152,5 +112,54 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
         ),
       ),
     );
+  }
+
+  Widget _description(BuildContext context, List<Map<String, dynamic>> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: items.map((item) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+              vertical: 8.0), // spacing between sections
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item['title'] ?? '',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.grey[700]),
+              ),
+              const SizedBox(height: 4.0),
+              ..._buildDescriptionList(item['description']
+                  as List<String>), // Handle multiple bullet points
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  List<Widget> _buildDescriptionList(List<String> descriptions) {
+    return descriptions.map((desc) {
+      return Padding(
+        padding: const EdgeInsets.only(
+            left: 20.0, top: 4.0), // 20 px indentation for bullet points
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("• ",
+                style: TextStyle(fontSize: 16)), // Bullet point symbol
+            Expanded(
+              child: Text(
+                desc,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
   }
 }
