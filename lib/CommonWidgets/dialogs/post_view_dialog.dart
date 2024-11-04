@@ -3,21 +3,19 @@ import 'package:intl/intl.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
-class ApplianceInformationDialog extends StatefulWidget {
-  final Map<String, dynamic> appliance;
+class PostViewDialog extends StatefulWidget {
+  final Map<String, dynamic> post;
 
-  const ApplianceInformationDialog({
+  const PostViewDialog({
     Key? key,
-    required this.appliance,
+    required this.post,
   }) : super(key: key);
 
   @override
-  State<ApplianceInformationDialog> createState() =>
-      _ApplianceInformationDialogState();
+  State<PostViewDialog> createState() => _PostViewDialogState();
 }
 
-class _ApplianceInformationDialogState
-    extends State<ApplianceInformationDialog> {
+class _PostViewDialogState extends State<PostViewDialog> {
   final formatter = NumberFormat('#,##0.00', 'en_PHP');
 
   @override
@@ -48,7 +46,7 @@ class _ApplianceInformationDialogState
               ),
               const SizedBox(height: 20),
               Text(
-                '${widget.appliance['applianceName']}',
+                '${widget.post['title']}',
                 style: const TextStyle(
                   color: AppColors.primaryColor,
                   fontWeight: FontWeight.bold,
@@ -59,13 +57,16 @@ class _ApplianceInformationDialogState
               Column(
                 children: [
                   KeyValueRow(
-                    label: 'Wattage',
-                    value: '${widget.appliance['wattage'] ?? 'N/A'} W',
+                    label: 'Title',
+                    value: '${widget.post['title'] ?? 'N/A'}',
+                  ),
+                  KeyValueRow(
+                    label: 'Tags',
+                    value: '${widget.post['tags'] ?? 'N/A'}',
                   ),
                   KeyValueRow(
                     label: 'Hours Used',
-                    value:
-                        '${widget.appliance['usagePatternPerDay'] ?? 'hours'} hours',
+                    value: '${widget.post['suggestionText'] ?? 'hours'} ',
                   ),
                   Padding(
                     padding: const EdgeInsets.all(10.0),
@@ -80,9 +81,9 @@ class _ApplianceInformationDialogState
                         ),
                         const Spacer(),
                         Text(
-                          widget.appliance['createdAt'] != null
+                          widget.post['createdAt'] != null
                               ? DateFormat('MM/dd/yyyy').format(
-                                  DateTime.parse(widget.appliance['createdAt']))
+                                  DateTime.parse(widget.post['createdAt']))
                               : '',
                           style: const TextStyle(fontSize: 14),
                         ),
@@ -103,9 +104,9 @@ class _ApplianceInformationDialogState
                         const Spacer(),
                         // const Icon(Icons.calendar_month_outlined),
                         Text(
-                          widget.appliance['updatedAt'] != null
+                          widget.post['updatedAt'] != null
                               ? DateFormat('MM/dd/yyyy').format(
-                                  DateTime.parse(widget.appliance['createdAt']))
+                                  DateTime.parse(widget.post['createdAt']))
                               : '',
                           style: const TextStyle(fontSize: 14),
                         ),
@@ -115,7 +116,7 @@ class _ApplianceInformationDialogState
                   KeyValueRow(
                     label: 'Monthly Cost',
                     value:
-                        'PHP ${formatter.format(widget.appliance['monthlyCost'] ?? 0)}',
+                        'PHP ${formatter.format(widget.post['monthlyCost'] ?? 0)}',
                   ),
                 ],
               ),
