@@ -65,6 +65,10 @@ class _PostViewDialogState extends State<PostViewDialog> {
                     value: '${widget.post['tags'] ?? 'N/A'}',
                   ),
                   KeyValueRow(
+                    label: 'Description',
+                    value: '${widget.post['description'] ?? 'hours'} ',
+                  ),
+                  KeyValueRow(
                     label: 'Hours Used',
                     value: '${widget.post['suggestionText'] ?? 'hours'} ',
                   ),
