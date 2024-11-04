@@ -2,15 +2,17 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/CommonWidgets/box_decorations.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
 
 import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kwh.dart';
 // import 'package:supabase_project/CommonWidgets/dialogs/add_appliance_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
@@ -38,6 +40,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   late String index = '0';
   List<int> selectedDays = [];
   String? _selectedProvider;
+  final formatter = NumberFormat('#,##0.00', 'en_PHP');
 
   final Map<String, String> _electricProviders = {
     'Cebu Electric Cooperative': '10.5',
@@ -93,14 +96,24 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TotalCostDisplay(
-                cost: dailyCost['totalDailyConsumptionCost'] != null
-                    ? '₱ ${double.parse(dailyCost['totalDailyConsumptionCost'].toString()).toStringAsFixed(2)}'
+                cost: (dailyCost['totalDailyConsumptionCost'] != null)
+                    ? (double.tryParse(dailyCost['totalDailyConsumptionCost']
+                                    .toString())
+                                ?.isNegative ??
+                            false
+                        ? 'Negative Cost' // or any placeholder for negative values
+                        : '₱ ${formatter.format(double.parse(dailyCost['totalDailyConsumptionCost']))}')
                     : 'COST',
               ),
               const SizedBox(width: 20),
               TotalCostDisplay(
-                cost: dailyCost['totalDailyKwhConsumption'] != null
-                    ? '${double.parse(dailyCost['totalDailyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
+                cost: (dailyCost['totalDailyKwhConsumption'] != null)
+                    ? (double.tryParse(dailyCost['totalDailyKwhConsumption']
+                                    .toString())
+                                ?.isNegative ??
+                            false
+                        ? 'Negative Cost' // or any placeholder for negative values
+                        : '${formatter.format(double.parse(dailyCost['totalDailyKwhConsumption']))} KWH')
                     : 'KWH',
               ),
             ],
@@ -152,39 +165,42 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                   : 'N/A';
 
               return Center(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 8.0, horizontal: 16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
+                child: GestureDetector(
+                  onTap: () {
+                    showApplianceInformationDialog(index);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    margin: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 16.0),
+                    decoration: greyBoxDecoration(),
+                    child: ListTile(
+                      leading: ClipOval(
+                        child: Image.asset(
+                          appliance['imagePath'] ?? 'assets/deviceImage.png',
+                          height: 50,
+                          width: 50,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: ListTile(
-                    leading: Image.asset(
-                        appliance['imagePath'] ?? 'assets/deviceImage.png'),
-                    title: Text(
-                      appliance['applianceName'] ?? 'Unknown',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    // Mapping of numeric days to day names
-
-                    subtitle: Text('Wattage: ${appliance['wattage'] ?? 'N/A'}\n'
-                        'Hours Used: ${appliance['usagePatternPerDay'] ?? 'N/A'}\n'
-                        'Selected Days: $selectedDaysNames\n'),
-                    trailing: CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () => _showActionSheet(context, index),
-                      child: const Icon(
-                        Icons.more_vert,
-                        color: AppColors.secondaryColor,
+                      title: Text(
+                        appliance['applianceName'] ?? 'Unknown Device',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text('Wattage: ${appliance['wattage'] ?? 'N/A'}'
+                          '     '
+                          'Hours Used: ${appliance['usagePatternPerDay'] ?? 'N/A'}\n'
+                          // 'Selected Days: $selectedDaysNames\n',
+                          ),
+                      trailing: CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () => _showActionSheet(context, index),
+                        child: Image.asset(
+                          'assets/edit.png',
+                          scale: 0.7,
+                          // height: 30,
+                          // width: 30,
+                        ),
                       ),
                     ),
                   ),
@@ -385,21 +401,16 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   }
 
   Future<void> saveKwhRate(String kwhRate) async {
-    // Wait for SharedPreferences to initialize
     final prefs = await SharedPreferences.getInstance();
 
-    // Get userId from SharedPreferences
     final String? userId = prefs.getString('userId');
 
-    // Check if userId is available
     if (userId == null) {
       throw Exception('User ID not found');
     }
 
-    // Build the request URL
     final url = Uri.parse('http://10.0.2.2:8080/updateKwh/$userId');
 
-    // Send the HTTP PATCH request to update the kWh rate
     final response = await http.patch(
       url,
       headers: <String, String>{
@@ -408,14 +419,33 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       body: jsonEncode({'kwhRate': kwhRate}),
     );
 
-    // Log the response for debugging
     print('Response status: ${response.statusCode}');
     print('Response body: ${response.body}');
 
-    // Check if the request was successful
     if (response.statusCode != 200) {
       throw Exception('Failed to save kWh rate');
     }
+  }
+
+  void showApplianceInformationDialog(int index) {
+    var appliance = appliances[index];
+
+    controllers.editApplianceNameController.text =
+        appliance['applianceName'] ?? '';
+    controllers.editWattageController.text =
+        appliance['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
+        appliance['usagePatternPerDay']?.toString() ?? '';
+    controllers.editWeeklyPatternController.text =
+        appliance['selectedDays']?.toString() ?? '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ApplianceInformationDialog(
+          appliance: appliance,
+        );
+      },
+    );
   }
 
   void _showAddApplianceDialog(BuildContext context) {

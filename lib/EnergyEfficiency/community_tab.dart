@@ -8,7 +8,9 @@ import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/AuthService/auth_suggestions.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/confirm_delete.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/post_view_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/create_post.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -28,24 +30,25 @@ class CommunityTab extends StatefulWidget {
 
 class _CommunityTabState extends State<CommunityTab> {
   AppControllers controller = AppControllers();
-  List<TextEditingController> editControllers = [];
-  // List<dynamic> posts = [];
-  List<Map<String, dynamic>> posts = [];
+  final AppControllers controllers = AppControllers();
+  final ScrollController _scrollController = ScrollController();
 
   bool isLoading = false;
   bool showUsersPosts = false;
   bool isUserPost = false;
   String placeholderImage = 'assets/image (6).png';
+
   int? activeSuggestionIndex;
   int? _tappedIndex;
   int? editingIndex;
-  String? username;
-  ScrollController _scrollController = ScrollController();
-  // List<Map<String, dynamic>> suggestions = [];
-  // List<Map<String, dynamic>> suggestions = [];
-  List<dynamic> suggestions = [];
 
+  String? username;
   String? error;
+
+  List<TextEditingController> editControllers = [];
+  List<dynamic> suggestions = [];
+  List<Map<String, dynamic>> posts = [];
+
   @override
   void initState() {
     super.initState();
@@ -54,44 +57,23 @@ class _CommunityTabState extends State<CommunityTab> {
     fetchSuggestions();
   }
 
-  Future<void> fetchSuggestions() async {
-    setState(() {
-      isLoading = true;
-      error = null; // Reset error before each fetch
-    });
+  void showPostDialog(int index) {
+    var post = posts[index];
 
-    try {
-      final suggestionsData = await SuggestionService.getComments();
-      setState(() {
-        suggestions = suggestionsData;
-      });
-    } catch (e) {
-      print('Error: $e');
-      setState(() {
-        error = 'Failed to load suggestions. Please try again later.';
-      });
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> deletePost(String postId) async {
-    try {
-      await ApplianceService.deletePost(postId);
-      print('Post deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
-  }
-
-  Widget _buildIcon(int index) {
-    return GestureDetector(
-        onTap: () {
-          _editPostActionSheet(context, index);
-        },
-        child: const Icon(Icons.more_vert));
+    controllers.editApplianceNameController.text = post['applianceName'] ?? '';
+    controllers.editWattageController.text = post['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
+        post['usagePatternPerDay']?.toString() ?? '';
+    controllers.editWeeklyPatternController.text =
+        post['selectedDays']?.toString() ?? '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return PostViewDialog(
+          post: post,
+        );
+      },
+    );
   }
 
   void _confirmDeletePost(int index) {
@@ -211,6 +193,22 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
+  void _confirmReportPost(int index) {
+    final post = posts[index];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ConfirmDeleteDialog(
+          title: 'Report Post?',
+          description: 'Are you sure you want to Report this Post? ',
+          onDelete: () => deletePost(post['_id']).then((_) {
+            getPosts();
+          }),
+        );
+      },
+    );
+  }
+
   Future<void> getPosts() async {
     setState(() {
       isLoading = true;
@@ -231,20 +229,13 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
-  void _confirmReportPost(int index) {
-    final post = posts[index];
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return ConfirmDeleteDialog(
-          title: 'Report Post?',
-          description: 'Are you sure you want to Report this Post? ',
-          onDelete: () => deletePost(post['_id']).then((_) {
-            getPosts();
-          }),
-        );
-      },
-    );
+  Future<void> deletePost(String postId) async {
+    try {
+      await ApplianceService.deletePost(postId);
+      print('Post deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
+    }
   }
 
   Future<String?> getUsername() async {
@@ -283,6 +274,30 @@ class _CommunityTabState extends State<CommunityTab> {
       });
     } catch (e) {
       print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> fetchSuggestions() async {
+    setState(() {
+      isLoading = true;
+      error = null; // Reset error before each fetch
+    });
+
+    try {
+      final suggestionsData = await PostsService.getComments();
+      setState(() {
+        suggestions = suggestionsData;
+        print('suggestions data loaded');
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        error = 'Failed to load suggestions. Please try again later.';
+      });
     } finally {
       setState(() {
         isLoading = false;
@@ -421,6 +436,7 @@ class _CommunityTabState extends State<CommunityTab> {
         const Spacer(),
         ElevatedButton(
           onPressed: () {
+            showPostDialog(index);
             // setState(() {
             //   if (_tappedIndex == index) {
             //     _tappedIndex =
@@ -429,10 +445,10 @@ class _CommunityTabState extends State<CommunityTab> {
             //     _tappedIndex = index; // Set the tapped index
             //   }
             // });
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SuggestionExample()),
-            );
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => SuggestionExample()),
+            // );
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1BBC9B),
@@ -444,6 +460,14 @@ class _CommunityTabState extends State<CommunityTab> {
         ),
       ],
     );
+  }
+
+  Widget _buildIcon(int index) {
+    return GestureDetector(
+        onTap: () {
+          _editPostActionSheet(context, index);
+        },
+        child: const Icon(Icons.more_vert));
   }
 
   Widget _buildTopBar() {

@@ -523,7 +523,7 @@ class _SetupProfileState extends State<SetupProfile> {
                           contentPadding: EdgeInsets.symmetric(
                               horizontal: 12, vertical: 16),
                           counterText: '',
-                          prefixText: '+63 ', // Adding country code as prefix
+                          prefixText: '+63 ',
                           prefixStyle: TextStyle(
                             color: Colors.black,
                             fontSize: 14.0,
@@ -535,7 +535,7 @@ class _SetupProfileState extends State<SetupProfile> {
                           } else if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
                             return 'Please enter a valid phone number (numbers only)';
                           } else if (value.length != 10) {
-                            return 'Phone number must be 10 digits'; // Changed to 10 digits
+                            return 'Phone number must be 10 digits';
                           }
                           return null;
                         },

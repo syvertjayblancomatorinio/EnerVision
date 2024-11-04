@@ -181,8 +181,8 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
               ),
             ),
             onChanged: (value) {
-              if (value.length > 6) {
-                widget.addWattageController.text = value.substring(0, 6);
+              if (value.length > 4) {
+                widget.addWattageController.text = value.substring(1, 4);
                 widget.addWattageController.selection =
                     TextSelection.fromPosition(TextPosition(
                         offset: widget.addWattageController.text.length));
