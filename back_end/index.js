@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const MonthlyConsumption = require('./models/monthly_consumption.model'); // Import model
 const cron = require('node-cron');
 const winston = require('winston');
-
+const multer = require('multer');
 const User = require('./models/user.model'); // Adjust the path as needed
 const Appliance = require('./models/appliances.model');
 
@@ -57,6 +57,35 @@ cron.schedule('0 0 1 * *', async () => {
 //  console.error('MongoDB connection error:', error);
 //});
 
+const imageSchema = new mongoose.Schema({
+    imageUrl: String,
+});
+
+const Image = mongoose.model('Image', imageSchema);
+
+
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/'); // specify the uploads folder
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.originalname); // use the original name of the file
+    },
+});
+
+const upload = multer({ storage });
+
+// Create an upload route
+app.post('/upload', upload.single('image'), async (req, res) => {
+    try {
+        const image = new Image({ imageUrl: req.file.path });
+        await image.save();
+        res.status(200).json({ message: 'Image uploaded successfully', imageUrl: req.file.path });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to upload image' });
+    }
+});
 
 mongoose.connect(
 "mongodb://localhost:27017/enervision"
@@ -72,10 +101,8 @@ mongoose.connect(
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.json()); // Move this before your route handlers
+app.use(express.json());
 
-// Static file serving
-app.use('/uploads', express.static('uploads'));
 app.use('/images', express.static('C:/Users/SyvertJayMartorinio/OneDrive - Geidi/Desktop/auth/back_end/images'));
 
 // Route definitions
@@ -92,11 +119,6 @@ app.use('/', require('./routes/faqs.route'));
 app.use('/', require('./routes/compared_appliance.route'));
 app.use('/', require('./routes/monthly_consumption.route'));
 
-// Profile route usage
-app.use('/api', profileRoutes); // Decide to use either this or the following
-// app.use('/', profileRoutes); // Comment out if using '/api' path
-
-// Upload avatar route (ensure Avatar model is defined and imported)
 app.post('/uploadAvatar', async (req, res) => {
   const { userId, imageUrl } = req.body;
 
