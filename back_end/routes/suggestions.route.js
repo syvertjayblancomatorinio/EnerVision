@@ -15,7 +15,7 @@ router.post('/addSuggestions/:postId', async (req, res) => {
 
     const newSuggestion = new Suggestion({
       ...suggestionData,
-      postId: postId, // Associate suggestion with the post
+      postId: postId,
       userId: userId,
     });
 
