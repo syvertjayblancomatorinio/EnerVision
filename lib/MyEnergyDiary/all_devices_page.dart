@@ -444,31 +444,6 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
                     );
                   }
                 },
-                // onPressed: () => _showAddApplianceDialog(
-                //   context,
-                // ),
-                // onPressed: () async {
-                //   String kwhRate = _kwhRateController.text;
-                //
-                //   try {
-                //     await saveKwhRate(kwhRate);
-                //     Navigator.of(context).pop();
-                //     _showAddApplianceDialog(
-                //       context,
-                //       controllers.addApplianceNameController,
-                //       controllers.addWattageController,
-                //       controllers.addUsagePatternController,
-                //       controllers.addWeeklyPatternController,
-                //       controllers.addApplianceCategoryController,
-                //       formKey,
-                //       addAppliance,
-                //     );
-                //     fetchAppliances();
-                //     fetchDailyCost();
-                //   } catch (e) {
-                //     print('Failed to save kWh rate: $e');
-                //   }
-                // },
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),

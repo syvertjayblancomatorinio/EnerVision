@@ -6,6 +6,7 @@ import 'package:supabase_project/AuthService/auth_profile.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/AuthService/auth_suggestions.dart';
+import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
@@ -48,6 +49,7 @@ class _CommunityTabState extends State<CommunityTab> {
   List<TextEditingController> editControllers = [];
   List<dynamic> suggestions = [];
   List<Map<String, dynamic>> posts = [];
+  static const String baseUrl = 'http://10.0.2.2:8080';
 
   @override
   void initState() {
@@ -57,24 +59,24 @@ class _CommunityTabState extends State<CommunityTab> {
     fetchSuggestions();
   }
 
-  void showPostDialog(int index) {
-    var post = posts[index];
-
-    controllers.editApplianceNameController.text = post['applianceName'] ?? '';
-    controllers.editWattageController.text = post['wattage']?.toString() ?? '';
-    controllers.editUsagePatternController.text =
-        post['usagePatternPerDay']?.toString() ?? '';
-    controllers.editWeeklyPatternController.text =
-        post['selectedDays']?.toString() ?? '';
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return PostViewDialog(
-          post: post,
-        );
-      },
-    );
-  }
+  // void showPostDialog(int index) {
+  //   var post = posts[index];
+  //
+  //   controllers.editApplianceNameController.text = post['applianceName'] ?? '';
+  //   controllers.editWattageController.text = post['wattage']?.toString() ?? '';
+  //   controllers.editUsagePatternController.text =
+  //       post['usagePatternPerDay']?.toString() ?? '';
+  //   controllers.editWeeklyPatternController.text =
+  //       post['selectedDays']?.toString() ?? '';
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return PostViewDialog(
+  //         post: post,
+  //       );
+  //     },
+  //   );
+  // }
 
   void _confirmDeletePost(int index) {
     if (index < 0 || index >= posts.length) {
@@ -305,6 +307,35 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
+  Future<void> addSuggestion(
+      String postId, Map<String, dynamic> suggestionData) async {
+    final url = Uri.parse('$baseUrl/addSuggestions/$postId');
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'suggestionData': suggestionData,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+      print('Suggestion added: ${responseBody['newSuggestion']}');
+    } else if (response.statusCode == 400) {
+      final responseBody = jsonDecode(response.body);
+      throw Exception('Failed to add suggestion: ${responseBody['message']}');
+    } else if (response.statusCode == 404) {
+      throw Exception('Post not found: ${response.body}');
+    } else {
+      throw Exception('Unexpected error: ${response.body}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -364,6 +395,12 @@ class _CommunityTabState extends State<CommunityTab> {
     String postImageUrl,
     int index, // Pass the index
   ) {
+    List<dynamic> sortedPosts = List.from(posts);
+    sortedPosts.sort((a, b) {
+      String timeAgoA = a['timeAgo'] ?? '';
+      String timeAgoB = b['timeAgo'] ?? '';
+      return timeAgoB.compareTo(timeAgoA);
+    });
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
@@ -390,11 +427,78 @@ class _CommunityTabState extends State<CommunityTab> {
               _buildDescription(description),
               const SizedBox(height: 10.0),
               _buildSuggestionsButton(postImageUrl, index),
-              if (_tappedIndex == index) _buildSuggestionTextField(),
-              // if (_tappedIndex == index) _buildSuggestionsList(),
+              if (_tappedIndex == index)
+                _buildSuggestionTextField('670a0ef4905db7eb08546014'),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionTextField(String postId) {
+    return Container(
+      margin: const EdgeInsets.all(18.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(7.0),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 2.0),
+                child: Image(
+                  image: AssetImage('assets/suggestion.png'),
+                  width: 50.0,
+                  height: 50.0,
+                ),
+              ),
+              const SizedBox(width: 5.0),
+              Expanded(
+                child: TextField(
+                  controller: controller.suggestionController,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Suggest changes or additional tips...',
+                    hintStyle: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12.0,
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.send_rounded,
+                  color: Color(0xFF1BBC9B),
+                  size: 24,
+                ),
+                onPressed: () async {
+                  final suggestionText = controller.suggestionController.text;
+
+                  if (suggestionText.isNotEmpty) {
+                    try {
+                      await addSuggestion(postId, {
+                        'suggestionText': suggestionText,
+                      });
+                      showSnackBar(context, 'Suggestion added successfully');
+                      controller.suggestionController
+                          .clear(); // Clear the text field after successful submission
+                    } catch (e) {
+                      showSnackBar(context, 'Failed to add suggestion: $e');
+                    }
+                  } else {
+                    showSnackBar(context, 'Suggestion text cannot be empty');
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -436,15 +540,14 @@ class _CommunityTabState extends State<CommunityTab> {
         const Spacer(),
         ElevatedButton(
           onPressed: () {
-            showPostDialog(index);
-            // setState(() {
-            //   if (_tappedIndex == index) {
-            //     _tappedIndex =
-            //         null; // Hide the text field if the same post is tapped again
-            //   } else {
-            //     _tappedIndex = index; // Set the tapped index
-            //   }
-            // });
+            // showPostDialog(index);
+            setState(() {
+              if (_tappedIndex == index) {
+                _tappedIndex = null;
+              } else {
+                _tappedIndex = index;
+              }
+            });
             // Navigator.push(
             //   context,
             //   MaterialPageRoute(builder: (context) => SuggestionExample()),
@@ -609,63 +712,6 @@ class _CommunityTabState extends State<CommunityTab> {
             fit: BoxFit.cover,
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildSuggestionTextField() {
-    return Container(
-      margin: const EdgeInsets.all(18.0),
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(7.0),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 2.0),
-                child: Image(
-                  image: AssetImage('assets/suggestion.png'),
-                  width: 50.0,
-                  height: 50.0,
-                ),
-              ),
-              const SizedBox(width: 5.0),
-              Expanded(
-                child: TextField(
-                  controller: controller.suggestionController,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: 'Suggest changes or additional tips...',
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12.0,
-                    ),
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.send_rounded,
-                  color: Color(0xFF1BBC9B),
-                  size: 24,
-                ),
-                onPressed: () {
-                  if (controller.suggestionController.text.isNotEmpty) {
-                    setState(() {
-                      // suggestions.add(controller.suggestionController.text);
-                      controller.suggestionController.clear();
-                    });
-                  }
-                },
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
