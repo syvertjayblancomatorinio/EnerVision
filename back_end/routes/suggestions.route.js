@@ -37,7 +37,7 @@ router.post('/addSuggestions/:postId', async (req, res) => {
 });
 
 // Retrieve all suggestions for a specific post
-router.get('/getAllPostsSuggestions/:postId/suggestions', async (req, res) => {
+router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
   try {
     // Populate suggestions and their associated usernames
     const post = await Post.findById(req.params.postId)
