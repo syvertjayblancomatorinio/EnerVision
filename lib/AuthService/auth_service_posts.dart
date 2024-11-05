@@ -94,21 +94,24 @@ class PostsService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getComments() async {
-    final prefs = await SharedPreferences.getInstance();
-    final postId = prefs.getString('postId');
+  static Future<List<Map<String, dynamic>>> getComments(String postId) async {
+    // final prefs = await SharedPreferences.getInstance();
+    // final postId = prefs.getString('postId');
+    //
+    // if (postId == null) {
+    //   throw Exception('Post not found');
+    // }
 
-    if (postId == null) {
-      throw Exception('Post not found');
-    }
-
-    final url =
-        Uri.parse('$baseUrl/getAllPostsSuggestions/$postId/suggestions');
+    final url = Uri.parse('$baseUrl/getAllPostsSuggestions/$postId');
 
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+      try {
+        return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+      } catch (e) {
+        throw Exception('Failed to parse suggestions data');
+      }
     } else if (response.statusCode == 404) {
       throw Exception('Suggestions not found');
     } else {

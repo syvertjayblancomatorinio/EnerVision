@@ -44,6 +44,7 @@ class _CommunityTabState extends State<CommunityTab> {
   int? editingIndex;
 
   String? username;
+  String postId = '';
   String? error;
 
   List<TextEditingController> editControllers = [];
@@ -56,7 +57,7 @@ class _CommunityTabState extends State<CommunityTab> {
     super.initState();
     getPosts();
     getUsername();
-    fetchSuggestions();
+    fetchSuggestions(postId);
   }
 
   // void showPostDialog(int index) {
@@ -100,9 +101,7 @@ class _CommunityTabState extends State<CommunityTab> {
           title: 'Delete Post?',
           description:
               'Are you sure you want to delete this Post? This cannot be undone.',
-          onDelete: () => deletePost(post['_id']).then((_) {
-            // getPosts();
-          }),
+          onDelete: () => deletePost(post['_id']).then((_) {}),
         );
       },
     );
@@ -224,6 +223,7 @@ class _CommunityTabState extends State<CommunityTab> {
       });
     } catch (e) {
       print('Failed to fetch posts: $e');
+      showSnackBar(context, 'Post not fetched');
     } finally {
       setState(() {
         isLoading = false;
@@ -283,14 +283,14 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
-  Future<void> fetchSuggestions() async {
+  Future<void> fetchSuggestions(String postId) async {
     setState(() {
       isLoading = true;
       error = null; // Reset error before each fetch
     });
 
     try {
-      final suggestionsData = await PostsService.getComments();
+      final suggestionsData = await PostsService.getComments(postId);
       setState(() {
         suggestions = suggestionsData;
         print('suggestions data loaded');
@@ -548,6 +548,7 @@ class _CommunityTabState extends State<CommunityTab> {
                 _tappedIndex = index;
               }
             });
+            fetchSuggestions(postId);
             // Navigator.push(
             //   context,
             //   MaterialPageRoute(builder: (context) => SuggestionExample()),
