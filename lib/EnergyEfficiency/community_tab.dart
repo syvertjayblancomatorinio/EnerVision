@@ -60,24 +60,24 @@ class _CommunityTabState extends State<CommunityTab> {
     fetchSuggestions(postId);
   }
 
-  // void showPostDialog(int index) {
-  //   var post = posts[index];
-  //
-  //   controllers.editApplianceNameController.text = post['applianceName'] ?? '';
-  //   controllers.editWattageController.text = post['wattage']?.toString() ?? '';
-  //   controllers.editUsagePatternController.text =
-  //       post['usagePatternPerDay']?.toString() ?? '';
-  //   controllers.editWeeklyPatternController.text =
-  //       post['selectedDays']?.toString() ?? '';
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return PostViewDialog(
-  //         post: post,
-  //       );
-  //     },
-  //   );
-  // }
+  void showPostDialog(int index) {
+    var post = posts[index];
+
+    controllers.editApplianceNameController.text = post['applianceName'] ?? '';
+    controllers.editWattageController.text = post['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
+        post['usagePatternPerDay']?.toString() ?? '';
+    controllers.editWeeklyPatternController.text =
+        post['selectedDays']?.toString() ?? '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return PostViewDialog(
+          post: post,
+        );
+      },
+    );
+  }
 
   void _confirmDeletePost(int index) {
     if (index < 0 || index >= posts.length) {
@@ -540,15 +540,15 @@ class _CommunityTabState extends State<CommunityTab> {
         const Spacer(),
         ElevatedButton(
           onPressed: () {
-            // showPostDialog(index);
-            setState(() {
-              if (_tappedIndex == index) {
-                _tappedIndex = null;
-              } else {
-                _tappedIndex = index;
-              }
-            });
-            fetchSuggestions(postId);
+            showPostDialog(index);
+            // setState(() {
+            //   if (_tappedIndex == index) {
+            //     _tappedIndex = null;
+            //     fetchSuggestions(postId);
+            //   } else {
+            //     _tappedIndex = index;
+            //   }
+            // });
             // Navigator.push(
             //   context,
             //   MaterialPageRoute(builder: (context) => SuggestionExample()),

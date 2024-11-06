@@ -39,7 +39,7 @@ router.post('/addSuggestions/:postId', async (req, res) => {
 // Retrieve all suggestions for a specific post
 router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
   try {
-    // Populate suggestions and their associated usernames
+    // Fetch the post and populate suggestions along with usernames from the user collection
     const post = await Post.findById(req.params.postId)
       .populate({
         path: 'suggestions',
@@ -50,10 +50,11 @@ router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Modify suggestions to include only relevant suggestion details and the username
-    const suggestionsWithUsernames = post.suggestions.map(suggestion => ({
-      ...suggestion.toObject(), // Convert to plain object to manipulate data
-      username: suggestion.userId.username // Add the username from populated data
+    // Extract suggestions with only necessary details and usernames
+    const suggestionsWithUsernames = post.suggestions.map(({ _id, suggestionText, userId }) => ({
+      _id,
+      suggestionText, // Include the suggestion text field
+      username: userId?.username || 'Unknown' // Use 'Unknown' if userId is missing
     }));
 
     res.status(200).json(suggestionsWithUsernames);
@@ -62,6 +63,7 @@ router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
+
 
 // Update a specific suggestion of a user
 router.put('/suggestions/:userId/:suggestionId', async (req, res) => {

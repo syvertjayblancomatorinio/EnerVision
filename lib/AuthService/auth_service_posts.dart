@@ -95,15 +95,7 @@ class PostsService {
   }
 
   static Future<List<Map<String, dynamic>>> getComments(String postId) async {
-    // final prefs = await SharedPreferences.getInstance();
-    // final postId = prefs.getString('postId');
-    //
-    // if (postId == null) {
-    //   throw Exception('Post not found');
-    // }
-
     final url = Uri.parse('$baseUrl/getAllPostsSuggestions/$postId');
-
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
