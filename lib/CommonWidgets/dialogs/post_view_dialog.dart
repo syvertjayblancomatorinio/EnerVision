@@ -68,60 +68,6 @@ class _PostViewDialogState extends State<PostViewDialog> {
                     label: 'Description',
                     value: '${widget.post['description'] ?? 'hours'} ',
                   ),
-                  KeyValueRow(
-                    label: 'Hours Used',
-                    value: '${widget.post['suggestionText'] ?? 'hours'} ',
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Appliance Added on',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          widget.post['createdAt'] != null
-                              ? DateFormat('MM/dd/yyyy').format(
-                                  DateTime.parse(widget.post['createdAt']))
-                              : '',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Last Updated',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const Spacer(),
-                        // const Icon(Icons.calendar_month_outlined),
-                        Text(
-                          widget.post['updatedAt'] != null
-                              ? DateFormat('MM/dd/yyyy').format(
-                                  DateTime.parse(widget.post['createdAt']))
-                              : '',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                  KeyValueRow(
-                    label: 'Monthly Cost',
-                    value:
-                        'PHP ${formatter.format(widget.post['monthlyCost'] ?? 0)}',
-                  ),
                 ],
               ),
               const SizedBox(height: 20),

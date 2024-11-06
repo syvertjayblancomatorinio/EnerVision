@@ -57,7 +57,6 @@ class _CommunityTabState extends State<CommunityTab> {
     super.initState();
     getPosts();
     getUsername();
-    fetchSuggestions(postId);
   }
 
   void showPostDialog(int index) {
@@ -953,5 +952,33 @@ class _CommunityTabState extends State<CommunityTab> {
         );
       }).toList(),
     );
+  }
+}
+// lib/widgets/post_widget.dart
+
+class PostWidget extends StatelessWidget {
+  final String title;
+  final String description;
+  final String timeAgo;
+  final String tags;
+  final String userImageUrl;
+  final String postImageUrl;
+  final String postId;
+
+  PostWidget({
+    required this.title,
+    required this.description,
+    required this.timeAgo,
+    required this.tags,
+    required this.userImageUrl,
+    required this.postImageUrl,
+    required this.postId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+        // UI code for displaying each post
+        );
   }
 }

@@ -199,7 +199,10 @@ class _HelpChatPageState extends State<HelpChatPage> {
                 prefixIcon: const Icon(Icons.message),
                 suffixIcon: TextButton(
                   onPressed: _sendMessage,
-                  child: const Image(image: AssetImage('assets/image1.png')),
+                  child: const Icon(
+                    Icons.send_rounded,
+                    color: AppColors.primaryColor,
+                  ),
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
