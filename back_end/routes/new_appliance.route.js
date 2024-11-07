@@ -105,9 +105,13 @@ router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
 router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req, res) => {
     const applianceId = req.params.applianceId;
     const { updatedAt, updatedData } = req.body; // Extract updatedAt and updatedData from request body
-    const { wattage, usagePatternPerDay, selectedDays } = updatedData;
+    const { applianceName, wattage, usagePatternPerDay, selectedDays } = updatedData;
 
     // Validate input
+    if (!applianceName || typeof applianceName !== 'string') {
+        return res.status(400).json({ error: 'Appliance name is required and must be a string' });
+    }
+
     if (!applianceId || !updatedData || !wattage || !usagePatternPerDay || !selectedDays) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -177,6 +181,7 @@ router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req
     const updatedMonthlyCost = kwhRate * totalEnergyKwh;
 
     // Update the appliance data with the new information
+    appliance.applianceName = applianceName;
     appliance.wattage = wattage;
     appliance.usagePatternPerDay = usagePatternPerDay;
     appliance.selectedDays = selectedDays;

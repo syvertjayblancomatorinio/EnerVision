@@ -642,7 +642,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
 
       // print('Appliance updated successfully: $updatedAppliance');
     } catch (e) {
-      _showSnackBar('Failed to update appliance');
+      _showSnackBar('Appliance can only be updated once a month.');
       print('Error updating appliance: $e');
     }
   }

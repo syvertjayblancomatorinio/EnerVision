@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
 class EditApplianceDialog extends StatefulWidget {
@@ -54,6 +55,15 @@ class _EditApplianceDialogState extends State<EditApplianceDialog> {
       }
       print(selectedDays); // Print to debug the selected days
     });
+  }
+
+  Future<void> _showApplianceErrorDialog(BuildContext context) async {
+    await showCustomDialog(
+      context: context,
+      title: 'Appliance Not Updated',
+      message: 'Appliance can not be updated twice in a month',
+      buttonText: 'OK',
+    );
   }
 
   void _showSnackBar(BuildContext context, String message) {
@@ -256,11 +266,12 @@ class _EditApplianceDialogState extends State<EditApplianceDialog> {
                             widget.fetchDailyCosts();
 
                             Navigator.of(context).pop();
-                            _showSnackBar(
-                                context, 'Appliance updated successfully!');
+                            // _showSnackBar(
+                            //     context, 'Appliance updated successfully!');
                           }).catchError((error) {
-                            _showSnackBar(
-                                context, 'Failed to update appliance');
+                            // _showApplianceErrorDialog(context);
+                            // _showSnackBar(
+                            //     context, 'Failed to update appliance');
                           });
                         }
                       },
