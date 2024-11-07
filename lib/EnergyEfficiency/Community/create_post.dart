@@ -241,20 +241,18 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
           title: const Text('Select or Choose a Tag'),
           content: SingleChildScrollView(
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Allow dialog to shrink to fit
+              mainAxisSize: MainAxisSize.min,
               children: List.generate(tags.length, (index) {
                 return RadioListTile<String>(
                   title: Text(tags[index]),
                   value: tags[index],
-                  groupValue: displayTag, // Group value for the selected tag
+                  groupValue: displayTag,
                   onChanged: (String? value) {
                     setState(() {
-                      displayTag =
-                          value!; // Update display tag with the selected value
-                      finalSelectedTags.clear(); // Clear previous selections
-                      finalSelectedTags.add(value); // Add the new selection
-                      Navigator.of(context)
-                          .pop(); // Close the dialog immediately after selection
+                      displayTag = value!;
+                      finalSelectedTags.clear();
+                      finalSelectedTags.add(value);
+                      Navigator.of(context).pop();
                     });
                   },
                 );
@@ -311,13 +309,12 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
             Map<String, dynamic> postData = {
               'title': _titleController.text,
               'description': _descriptionController.text,
-              'tags': finalSelectedTags, // Include selected tags in postData
+              'tags': finalSelectedTags,
             };
 
             await createPost(userId!, postData);
           } else {
             _validateInputs();
-            // Display error if inputs are invalid
             if (_titleController.text.trim().isEmpty) {
               _titleController.text = 'Please add a title.';
             }
