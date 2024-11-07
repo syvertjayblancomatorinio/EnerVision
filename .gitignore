@@ -42,9 +42,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 # Ignore system files
-*.log
 *.lock
-.DS_Store
 Thumbs.db
 .ntuser.dat*
 *.blf
@@ -65,7 +63,6 @@ Thumbs.db
 /Videos/
 
 # Ignore build files
-/build/
 /.android/
 /.cache/
 /config/
