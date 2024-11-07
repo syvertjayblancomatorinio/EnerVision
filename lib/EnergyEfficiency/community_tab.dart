@@ -57,27 +57,26 @@ class _CommunityTabState extends State<CommunityTab> {
     super.initState();
     getPosts();
     getUsername();
-    fetchSuggestions(postId);
   }
 
-  // void showPostDialog(int index) {
-  //   var post = posts[index];
-  //
-  //   controllers.editApplianceNameController.text = post['applianceName'] ?? '';
-  //   controllers.editWattageController.text = post['wattage']?.toString() ?? '';
-  //   controllers.editUsagePatternController.text =
-  //       post['usagePatternPerDay']?.toString() ?? '';
-  //   controllers.editWeeklyPatternController.text =
-  //       post['selectedDays']?.toString() ?? '';
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return PostViewDialog(
-  //         post: post,
-  //       );
-  //     },
-  //   );
-  // }
+  void showPostDialog(int index) {
+    var post = posts[index];
+
+    controllers.editApplianceNameController.text = post['applianceName'] ?? '';
+    controllers.editWattageController.text = post['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
+        post['usagePatternPerDay']?.toString() ?? '';
+    controllers.editWeeklyPatternController.text =
+        post['selectedDays']?.toString() ?? '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return PostViewDialog(
+          post: post,
+        );
+      },
+    );
+  }
 
   void _confirmDeletePost(int index) {
     if (index < 0 || index >= posts.length) {
@@ -540,15 +539,15 @@ class _CommunityTabState extends State<CommunityTab> {
         const Spacer(),
         ElevatedButton(
           onPressed: () {
-            // showPostDialog(index);
-            setState(() {
-              if (_tappedIndex == index) {
-                _tappedIndex = null;
-              } else {
-                _tappedIndex = index;
-              }
-            });
-            fetchSuggestions(postId);
+            showPostDialog(index);
+            // setState(() {
+            //   if (_tappedIndex == index) {
+            //     _tappedIndex = null;
+            //     fetchSuggestions(postId);
+            //   } else {
+            //     _tappedIndex = index;
+            //   }
+            // });
             // Navigator.push(
             //   context,
             //   MaterialPageRoute(builder: (context) => SuggestionExample()),
@@ -953,5 +952,33 @@ class _CommunityTabState extends State<CommunityTab> {
         );
       }).toList(),
     );
+  }
+}
+// lib/widgets/post_widget.dart
+
+class PostWidget extends StatelessWidget {
+  final String title;
+  final String description;
+  final String timeAgo;
+  final String tags;
+  final String userImageUrl;
+  final String postImageUrl;
+  final String postId;
+
+  PostWidget({
+    required this.title,
+    required this.description,
+    required this.timeAgo,
+    required this.tags,
+    required this.userImageUrl,
+    required this.postImageUrl,
+    required this.postId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+        // UI code for displaying each post
+        );
   }
 }

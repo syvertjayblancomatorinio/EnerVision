@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_project/ConstantTexts/colors.dart';
 import '../../CommonWidgets/box_decorations.dart';
-import '../../ConstantTexts/Theme.dart';
 
 class HomeUsage extends StatelessWidget {
   final String kwh;

@@ -38,20 +38,21 @@ class _CommunityHomePageState extends State<CommunityHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Community',
-          style: TextStyle(fontFamily: 'Montserrat'),
-        ),
-        // actions: [
-        //   IconButton(
-        //     icon: Icon(Icons.close), // X icon
-        //     onPressed: () {
-        //       Navigator.of(context).pop();
-        //     },
-        //   ),
-        // ],
-      ),
+      appBar: AppBar(),
+      // appBar: AppBar(
+      //   title: const Text(
+      //     'Community',
+      //     style: TextStyle(fontFamily: 'Montserrat'),
+      //   ),
+      //   // actions: [
+      //   //   IconButton(
+      //   //     icon: Icon(Icons.close), // X icon
+      //   //     onPressed: () {
+      //   //       Navigator.of(context).pop();
+      //   //     },
+      //   //   ),
+      //   // ],
+      // ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

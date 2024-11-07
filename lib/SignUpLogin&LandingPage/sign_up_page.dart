@@ -74,7 +74,6 @@ class _SignUpPageState extends State<SignUpPage> {
       theme: AppTheme.getAppTheme(),
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: Colors.grey[300],
         body: SafeArea(
           child: Stack(
             children: [
@@ -363,7 +362,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
               Positioned(
-                top: 10,
+                top: 20,
                 right: 15,
                 child: ElevatedButton(
                   onPressed: () {

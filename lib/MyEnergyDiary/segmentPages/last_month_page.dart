@@ -23,17 +23,57 @@ class _LastMonthPageState extends State<LastMonthPage> {
   @override
   void initState() {
     super.initState();
-    // Set selectedDate to the previous month
     DateTime now = DateTime.now();
     selectedDate = DateTime(now.year, now.month - 1, now.day);
-
-    // Adjust for January to December transition
     if (now.month == 1) {
       selectedDate = DateTime(now.year - 1, 12, now.day);
     }
-
     getLastMonth(selectedDate);
-    getUsersApplianceCount(); // Fetching the appliance count during init
+    getUsersApplianceCount();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        DatePickerWidget(
+            initialDate: selectedDate, onDateSelected: onDateSelected),
+        const SizedBox(height: 20),
+        HomeUsage(
+          kwh: monthlyData['totalMonthlyKwhConsumption'] != null
+              ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
+              : 'N/A',
+        ),
+        const SizedBox(height: 40),
+        bottomPart(),
+      ],
+    );
+  }
+
+  Widget bottomPart() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        ApplianceInfoCard(
+          imagePath: 'assets/image (7).png',
+          mainText: applianceCount.toString(), // Number of appliances
+          subText: 'No. of Appliances Added',
+        ),
+        ApplianceInfoCard(
+          imagePath: 'assets/image (9).png',
+          mainText: monthlyData['totalMonthlyConsumption'] != null
+              ? double.parse(monthlyData['totalMonthlyConsumption'].toString())
+                  .toStringAsFixed(2)
+              : 'N/A',
+          subText: 'Estimated Total Cost for the Month',
+        ),
+        const ApplianceInfoCard(
+          imagePath: 'assets/image (8).png',
+          mainText: '10', // You may want to replace this with dynamic data
+          subText: 'Peak Usage Time',
+        ),
+      ],
+    );
   }
 
   Future<void> _showApplianceErrorDialog(BuildContext context) async {
@@ -154,59 +194,10 @@ class _LastMonthPageState extends State<LastMonthPage> {
     }
   }
 
-  Future<void> saveUserKwhRate(double kwhRate) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('kwhRate', kwhRate);
-  }
-
   void onDateSelected(DateTime date) {
     setState(() {
       selectedDate = date;
     });
     getLastMonth(date);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        DatePickerWidget(
-            initialDate: selectedDate, onDateSelected: onDateSelected),
-        const SizedBox(height: 20),
-        HomeUsage(
-          kwh: monthlyData['totalMonthlyKwhConsumption'] != null
-              ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
-              : 'N/A',
-        ),
-        const SizedBox(height: 40),
-        bottomPart(),
-      ],
-    );
-  }
-
-  Widget bottomPart() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        ApplianceInfoCard(
-          imagePath: 'assets/image (7).png',
-          mainText: applianceCount.toString(), // Number of appliances
-          subText: 'No. of Appliances Added',
-        ),
-        ApplianceInfoCard(
-          imagePath: 'assets/image (9).png',
-          mainText: monthlyData['totalMonthlyConsumption'] != null
-              ? double.parse(monthlyData['totalMonthlyConsumption'].toString())
-                  .toStringAsFixed(2)
-              : 'N/A',
-          subText: 'Estimated Total Cost for the Month',
-        ),
-        const ApplianceInfoCard(
-          imagePath: 'assets/image (8).png',
-          mainText: '10', // You may want to replace this with dynamic data
-          subText: 'Peak Usage Time',
-        ),
-      ],
-    );
   }
 }

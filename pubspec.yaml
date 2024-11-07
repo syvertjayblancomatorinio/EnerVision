@@ -94,6 +94,7 @@ flutter:
      - assets/refrigerator.png
      - assets/suggestion.png
      - assets/edit.png
+     - assets/sign-up.png
      - assets/appInfoImage.png
 
   # An image asset can refer to one or more resolution-specific "variants", see

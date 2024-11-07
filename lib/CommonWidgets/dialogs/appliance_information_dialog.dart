@@ -20,13 +20,32 @@ class _ApplianceInformationDialogState
     extends State<ApplianceInformationDialog> {
   final formatter = NumberFormat('#,##0.00', 'en_PHP');
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  // Days mapped to Sunday through Saturday
+  final Map<int, String> dayNames = {
+    1: 'Sunday',
+    2: 'Monday',
+    3: 'Tuesday',
+    4: 'Wednesday',
+    5: 'Thursday',
+    6: 'Friday',
+    7: 'Saturday',
+  };
 
   @override
   Widget build(BuildContext context) {
+    List<int>? selectedDays = widget.appliance['selectedDays'] != null
+        ? (widget.appliance['selectedDays'] as List)
+            .map((day) => int.parse(day.toString()))
+            .toList()
+        : null;
+
+    // Ensure selectedDays are sorted from Sunday to Saturday before converting to names
+    String selectedDaysNames = selectedDays != null
+        ? (selectedDays..sort())
+            .map((day) => dayNames[day] ?? 'Unknown')
+            .join(', ')
+        : 'N/A';
+
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
@@ -54,72 +73,50 @@ class _ApplianceInformationDialogState
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
-                // style: Theme.of(context).textTheme.titleMedium,
               ),
               Column(
                 children: [
                   KeyValueRow(
-                    label: 'Wattage',
-                    value: '${widget.appliance['wattage'] ?? 'N/A'} W',
+                    label: 'Wattage       ',
+                    valueWidget: Text(
+                      '${widget.appliance['wattage'] ?? 'N/A'} W',
+                    ),
                   ),
                   KeyValueRow(
-                    label: 'Hours Used',
-                    value:
-                        '${widget.appliance['usagePatternPerDay'] ?? 'hours'} hours',
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Appliance Added on',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          widget.appliance['createdAt'] != null
-                              ? DateFormat('MM/dd/yyyy').format(
-                                  DateTime.parse(widget.appliance['createdAt']))
-                              : '',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Last Updated',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const Spacer(),
-                        // const Icon(Icons.calendar_month_outlined),
-                        Text(
-                          widget.appliance['updatedAt'] != null
-                              ? DateFormat('MM/dd/yyyy').format(
-                                  DateTime.parse(widget.appliance['createdAt']))
-                              : '',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
+                      label: 'Hours Used',
+                      valueWidget: Text(
+                          ' ${widget.appliance['usagePatternPerDay'] ?? 'hours'} hours')),
                   KeyValueRow(
                     label: 'Monthly Cost',
-                    value:
-                        'PHP ${formatter.format(widget.appliance['monthlyCost'] ?? 0)}',
+                    valueWidget: Text(
+                      'PHP ${formatter.format(widget.appliance['monthlyCost'] ?? 0)}',
+                      // valueWidget: Wrap(),
+                    ),
+                  ),
+                  KeyValueRow(
+                    label: 'Selected Days',
+                    valueWidget: Wrap(
+                      children: [Text(selectedDaysNames)],
+                    ),
+                  ),
+                  updatedAt(
+                    'Appliance Added On',
+                    widget.appliance['createdAt'] != null
+                        ? DateFormat('MM/dd/yyyy').format(
+                            DateTime.parse(widget.appliance['createdAt']),
+                          )
+                        : '',
+                  ),
+                  updatedAt(
+                    'Last Updated',
+                    widget.appliance['updatedAt'] != null
+                        ? DateFormat('MM/dd/yyyy').format(
+                            DateTime.parse(widget.appliance['updatedAt']),
+                          )
+                        : '',
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -136,16 +133,41 @@ class _ApplianceInformationDialogState
       ),
     );
   }
+
+  Widget updatedAt(String title, String dateText) {
+    return Row(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
+            ),
+          ),
+        ),
+        const Spacer(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 10.0),
+          child: Text(
+            dateText,
+            style: const TextStyle(fontSize: 14),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class KeyValueRow extends StatelessWidget {
   final String label;
-  final String value;
+  final Widget valueWidget; // Changed to Widget instead of String
 
   const KeyValueRow({
     Key? key,
     required this.label,
-    required this.value,
+    required this.valueWidget,
   }) : super(key: key);
 
   @override
@@ -153,6 +175,7 @@ class KeyValueRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(10.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
@@ -162,11 +185,9 @@ class KeyValueRow extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-            ),
+          Flexible(
+            child:
+                valueWidget, // Allows the widget to wrap inside available space
           ),
         ],
       ),

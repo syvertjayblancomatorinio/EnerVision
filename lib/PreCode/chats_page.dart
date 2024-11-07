@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
+import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
 class HelpChatPage extends StatefulWidget {
@@ -15,6 +17,7 @@ class _HelpChatPageState extends State<HelpChatPage> {
   final String apiUrl = 'http://10.0.2.2:8080';
   bool isUserLoaded = false;
   String? userId;
+  AppControllers controller = AppControllers();
 
   @override
   void initState() {
@@ -199,7 +202,10 @@ class _HelpChatPageState extends State<HelpChatPage> {
                 prefixIcon: const Icon(Icons.message),
                 suffixIcon: TextButton(
                   onPressed: _sendMessage,
-                  child: const Image(image: AssetImage('assets/image1.png')),
+                  child: const Icon(
+                    Icons.send_rounded,
+                    color: AppColors.primaryColor,
+                  ),
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
