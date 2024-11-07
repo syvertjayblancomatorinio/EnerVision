@@ -7,9 +7,6 @@ class YourEnergyPageTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double calculateDailyCost = 1;
-    double dailyConsumption = 1;
-
     return const Column(
       children: <Widget>[YourEnergyTab()],
     );

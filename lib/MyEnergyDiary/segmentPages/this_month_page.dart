@@ -18,18 +18,49 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
   DateTime selectedDate = DateTime.now();
   late String formattedDate;
   Map<String, dynamic> monthlyData = {};
-  late int totalDevices = 0;
+  late int applianceCount = 0;
   late double co2Emission = 0.0;
   final List<dynamic> devices = [];
   double estimatedEnergy = 0.0;
   bool isLoading = false;
   List<Map<String, dynamic>> appliances = [];
+  // int applianceCount = 0;
 
   @override
   void initState() {
     super.initState();
     fetchAppliances();
     totalMonthlyCostOfUserAppliances();
+    getUsersApplianceCount();
+  }
+
+  Future<void> getUsersApplianceCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      print("User ID is null. Cannot fetch appliance count.");
+      return;
+    }
+
+    // Adjust the URL to match the new endpoint
+    final response = await http.get(
+        Uri.parse('http://10.0.2.2:8080/getUsersCount/$userId/appliances'));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        // Check if the appliances are included in the response
+        if (data['appliances'] != null) {
+          // Update the applianceCount variable based on the length of the appliances list
+          applianceCount = data['appliances'].length;
+        } else {
+          applianceCount = 0; // Set to 0 if no appliances found
+        }
+      });
+    } else {
+      throw Exception('Failed to load appliances');
+    }
   }
 
   Future<void> totalMonthlyCostOfUserAppliances() async {
@@ -115,6 +146,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                headers(),
                 const SizedBox(height: 20),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +155,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                     Expanded(
                       flex: 1,
                       child: deviceUsageSummary(
-                        totalDevices: totalDevices,
+                        applianceCount: applianceCount,
                         co2Emission: co2Emission,
                         estimatedEnergy: estimatedEnergy,
                       ),
@@ -136,11 +168,52 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                     ),
                   ],
                 ),
+                _buildEnergyPowerUsed(),
+                _buildKilowattUsage()
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget headers() {
+    return const Row(
+      children: [
+        Text(
+          'Device Usage Summary',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Spacer(),
+        Text(
+          'Devices',
+          style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryColor),
+        ),
+      ],
+    );
+  }
+
+  Widget applianceContentNew() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        const Text(
+          'Devices',
+          style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryColor),
+        ),
+        const SizedBox(height: 20),
+        appliancesContent(),
+      ],
     );
   }
 
@@ -300,28 +373,45 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
   }
 
   Widget deviceUsageSummary({
-    required int totalDevices,
+    required int applianceCount,
     required double co2Emission,
     required double estimatedEnergy,
   }) {
     return Row(
       children: [
         Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            energyCard(title: "Total Devices", value: totalDevices.toString()),
-            const SizedBox(height: 16),
-            energyCard(
-                title: "CO2 Emission", value: co2Emission.toStringAsFixed(2)),
-            const SizedBox(height: 16),
-            energyCard(
-              title: "Estimated Energy Used",
-              value: "${estimatedEnergy.toStringAsFixed(2)} kW",
-            ),
-            const SizedBox(height: 16),
-            energyCard(
-              title: "Estimated Energy Used",
-              value: "${estimatedEnergy.toStringAsFixed(2)} kW",
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                energyCard(
+                  title: "Total Devices",
+                  value: applianceCount.toString(),
+
+                  // value: totalDevices.toString(),
+                ),
+                const SizedBox(height: 16),
+                energyCard(
+                  title: "CO2 Emission",
+                  value: monthlyData['totalMonthlyCO2Emissions'] != null
+                      ? '${double.parse(monthlyData['totalMonthlyCO2Emissions'].toString()).toStringAsFixed(2)}'
+                      : 'N/A',
+                ),
+                const SizedBox(height: 16),
+                energyCard(
+                  title: "Estimated Energy Used",
+                  value: monthlyData['totalMonthlyKwhConsumption'] != null
+                      ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kWh'
+                      : 'N/A',
+                ),
+                const SizedBox(height: 16),
+                energyCard(
+                  title: "Estimated Energy Used",
+                  value: monthlyData['totalMonthlyKwhConsumption'] != null
+                      ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kWh'
+                      : 'N/A',
+                ),
+              ],
             ),
           ],
         ),

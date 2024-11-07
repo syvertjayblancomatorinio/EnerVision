@@ -1,12 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
-
 import '../StaticPages/energy_efficiency_tab/Electric-Vehicles-Transportation.dart';
 import '../StaticPages/energy_efficiency_tab/energy-effieciency-widget.dart';
 import '../StaticPages/energy_efficiency_tab/energy-storage-systems.dart';
@@ -71,7 +68,7 @@ Widget yourEnergyContent(BuildContext context) {
         child: Text(
           'Welcome to EnerVision,\n ready to save energy?',
           style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.w900, color: Colors.grey),
+              fontSize: 20, fontWeight: FontWeight.w900, color: Colors.grey),
         ),
       ),
       const SizedBox(height: 20),
@@ -108,14 +105,10 @@ Widget searchTextField() {
 Widget title(
   String title,
 ) {
-  return Column(
-    children: [
-      Text(
-        title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        textAlign: TextAlign.center,
-      ),
-    ],
+  return Text(
+    title,
+    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    textAlign: TextAlign.center,
   );
 }
 
@@ -125,7 +118,6 @@ Widget categoryStoryTags(BuildContext context) {
       title('Category Story Tags'),
       const SizedBox(height: 20),
       Center(
-        // Center the Wrap widget
         child: Wrap(
           spacing: 20.0,
           runSpacing: 20.0,
@@ -153,11 +145,10 @@ Widget energyCategories(BuildContext context) {
       title('Energy Categories'),
       const SizedBox(height: 20),
       Center(
-        // Center the Wrap widget
         child: Wrap(
           spacing: 20.0,
           runSpacing: 20.0,
-          alignment: WrapAlignment.center, // Center the children horizontally
+          alignment: WrapAlignment.center,
           children: [
             storyTag('Renewable Energy', context,
                 const RenewableEnergy(selectedIndex: 1)),
@@ -184,9 +175,9 @@ Widget storyTag(String title, BuildContext context, Widget page) {
       );
     },
     child: Container(
-      width: 120, // Width of each tag
-      height: 70, // Height of each tag
-      padding: const EdgeInsets.all(8.0), // Padding inside the container
+      width: 120,
+      height: 70,
+      padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         image: const DecorationImage(
           image: AssetImage('assets/deviceImage.png'),
@@ -224,13 +215,6 @@ Widget optimizeEnergyUsage(BuildContext context) {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // const Text(
-        //   'Optimize Energy Usage',
-        //   style: TextStyle(
-        //     fontSize: 18,
-        //     fontWeight: FontWeight.bold,
-        //   ),
-        // ),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: title('Optimize Energy Usage'),
@@ -245,7 +229,6 @@ Widget optimizeEnergyUsage(BuildContext context) {
         const SizedBox(height: 10),
         ElevatedButton(
           onPressed: () {
-            // Use Navigator to push the new page
             Navigator.push(
               context,
               MaterialPageRoute(
