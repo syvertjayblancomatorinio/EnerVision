@@ -11,15 +11,11 @@ import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dia
 import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
 
 import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kwh.dart';
-// import 'package:supabase_project/CommonWidgets/dialogs/add_appliance_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
-import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
 import '../CommonWidgets/controllers/app_controllers.dart';
-
-const Duration kFakeHttpRequestDuration = Duration(seconds: 3);
 
 class AppliancesContainer extends StatefulWidget {
   const AppliancesContainer({super.key});
@@ -30,18 +26,8 @@ class AppliancesContainer extends StatefulWidget {
 
 class _AppliancesContainerState extends State<AppliancesContainer> {
   final AppControllers controllers = AppControllers();
-
-  late final TextEditingController controller;
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  List<Map<String, dynamic>> appliances = [];
-  Map<String, dynamic> dailyCost = {};
-  bool isLoading = true;
-  String? kwhRate;
-  late String index = '0';
-  List<int> selectedDays = [];
-  String? _selectedProvider;
   final formatter = NumberFormat('#,##0.00', 'en_PHP');
-
   final Map<String, String> _electricProviders = {
     'Cebu Electric Cooperative': '10.5',
     'Visayan Electric Company (VECO) - Residential': '11.2',
@@ -54,6 +40,17 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     'Eyy': '33',
     'Waw': '21',
   };
+
+  List<Map<String, dynamic>> appliances = [];
+  List<int> selectedDays = [];
+  Map<String, dynamic> dailyCost = {};
+
+  bool isLoading = true;
+
+  late String index = '0';
+  String? kwhRate;
+  String? _selectedProvider;
+
   @override
   void initState() {
     super.initState();
@@ -78,169 +75,156 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   }
 
   Widget myAppliancesContent() {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (ScrollNotification notification) {
-        // Check if the scroll notification is of type ScrollUpdateNotification
-        if (notification is ScrollUpdateNotification) {
-          // Check if the scroll position is at the top
-          if (notification.metrics.pixels == 0) {
-            fetchAppliances();
-          }
-        }
-        return true;
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TotalCostDisplay(
-                cost: (dailyCost['totalDailyConsumptionCost'] != null)
-                    ? (double.tryParse(dailyCost['totalDailyConsumptionCost']
-                                    .toString())
-                                ?.isNegative ??
-                            false
-                        ? 'Negative Cost' // or any placeholder for negative values
-                        : '₱ ${formatter.format(double.parse(dailyCost['totalDailyConsumptionCost']))}')
-                    : 'COST',
-              ),
-              const SizedBox(width: 20),
-              TotalCostDisplay(
-                cost: (dailyCost['totalDailyKwhConsumption'] != null)
-                    ? (double.tryParse(dailyCost['totalDailyKwhConsumption']
-                                    .toString())
-                                ?.isNegative ??
-                            false
-                        ? 'Negative Cost' // or any placeholder for negative values
-                        : '${formatter.format(double.parse(dailyCost['totalDailyKwhConsumption']))} KWH')
-                    : 'KWH',
-              ),
-            ],
-          ),
-          const Padding(
-            padding: EdgeInsets.only(
-              left: 20.0,
-              top: 30,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TotalCostDisplay(
+              cost: (dailyCost['totalDailyConsumptionCost'] != null)
+                  ? (double.tryParse(dailyCost['totalDailyConsumptionCost']
+                                  .toString())
+                              ?.isNegative ??
+                          false
+                      ? 'Negative Cost'
+                      : '₱ ${formatter.format(double.parse(dailyCost['totalDailyConsumptionCost']))}')
+                  : 'COST',
             ),
-            child: Text('Appliance',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(width: 20),
+            TotalCostDisplay(
+              cost: (dailyCost['totalDailyKwhConsumption'] != null)
+                  ? (double.tryParse(dailyCost['totalDailyKwhConsumption']
+                                  .toString())
+                              ?.isNegative ??
+                          false
+                      ? 'Negative Cost'
+                      : '${formatter.format(double.parse(dailyCost['totalDailyKwhConsumption']))} KWH')
+                  : 'KWH',
+            ),
+          ],
+        ),
+        const Padding(
+          padding: EdgeInsets.only(
+            left: 20.0,
+            top: 30,
           ),
-          const SizedBox(height: 10),
-          if (isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
-            )
-          else if (appliances.isEmpty)
-            const Center(
-              child: Text(
-                'No appliances added',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            )
-          else
-            ...appliances.asMap().entries.map((entry) {
-              int index = entry.key;
-              var appliance = entry.value;
-              final Map<int, String> dayNames = {
-                1: 'Sunday',
-                2: 'Monday',
-                3: 'Tuesday',
-                4: 'Wednesday',
-                5: 'Thursday',
-                6: 'Friday',
-                7: 'Saturday',
-              };
+          child: Text('Appliance',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(height: 10),
+        if (isLoading)
+          const Center(
+            child: CircularProgressIndicator(),
+          )
+        else if (appliances.isEmpty)
+          const Center(
+            child: Text(
+              'No appliances added',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          )
+        else
+          ...appliances.asMap().entries.map((entry) {
+            int index = entry.key;
+            var appliance = entry.value;
 
-              List<int>? selectedDays = appliance['selectedDays'] != null
-                  ? (appliance['selectedDays'] as List)
-                      .map((day) => int.parse(day.toString()))
-                      .toList()
-                  : null;
-
-              String selectedDaysNames = selectedDays != null
-                  ? (selectedDays..sort())
-                      .map((day) => dayNames[day] ?? 'Unknown')
-                      .join(', ')
-                  : 'N/A';
-
-              return Center(
-                child: GestureDetector(
-                  onTap: () {
-                    showApplianceInformationDialog(index);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    margin: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 16.0),
-                    decoration: greyBoxDecoration(),
-                    child: ListTile(
-                      leading: ClipOval(
-                        child: Image.asset(
-                          appliance['imagePath'] ?? 'assets/deviceImage.png',
-                          height: 50,
-                          width: 50,
-                          fit: BoxFit.cover,
-                        ),
+            return Center(
+              child: GestureDetector(
+                onTap: () {
+                  showApplianceInformationDialog(index);
+                },
+                child: Container(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 16.0),
+                  decoration: greyBoxDecoration(),
+                  child: ListTile(
+                    leading: ClipOval(
+                      child: Image.asset(
+                        appliance['imagePath'] ?? 'assets/deviceImage.png',
+                        height: 50,
+                        width: 50,
+                        fit: BoxFit.cover,
                       ),
-                      title: Text(
-                        appliance['applianceName'] ?? 'Unknown Device',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text('Wattage: ${appliance['wattage'] ?? 'N/A'}'
-                          '     '
-                          'Hours Used: ${appliance['usagePatternPerDay'] ?? 'N/A'}\n'
-                          // 'Selected Days: $selectedDaysNames\n',
-                          ),
-                      trailing: CupertinoButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: () => _showActionSheet(context, index),
-                        child: Image.asset(
-                          'assets/edit.png',
-                          scale: 0.7,
-                          // height: 30,
-                          // width: 30,
-                        ),
+                    ),
+                    title: Text(
+                      appliance['applianceName'] ?? 'Unknown Device',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text('Wattage: ${appliance['wattage'] ?? 'N/A'}'
+                        '     '
+                        'Hours Used: ${appliance['usagePatternPerDay'] ?? 'N/A'}\n'),
+                    trailing: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => _showActionSheet(context, index),
+                      child: Image.asset(
+                        'assets/edit.png',
+                        scale: 0.7,
                       ),
                     ),
                   ),
                 ),
-              );
-            }),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40),
-            child: Center(
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final kwhRate = await getKwhRate();
+              ),
+            );
+          }),
+        const SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40),
+          child: Center(
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final kwhRate = await getKwhRate();
 
-                  if (kwhRate != null) {
-                    _showAddApplianceDialog(
-                      context,
-                    );
-                  } else {
-                    showKwhRateDialog(
-                      context,
-                      controllers.kwhRateController,
-                      saveKwhRate,
-                      fetchAppliances,
-                      fetchDailyCost,
-                    );
-                  }
-                },
-                icon: const Icon(Icons.add, size: 0),
-                label: const Text('Add Appliance'),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                  ),
-                  minimumSize: const Size(double.infinity, 50),
+                if (kwhRate != null) {
+                  _showAddApplianceDialog(
+                    context,
+                  );
+                } else {
+                  showKwhRateDialog(
+                    context,
+                    controllers.kwhRateController,
+                    saveKwhRate,
+                    fetchAppliances,
+                    fetchDailyCost,
+                  );
+                }
+              },
+              icon: const Icon(Icons.add, size: 0),
+              label: const Text('Add Appliance'),
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0),
                 ),
+                minimumSize: const Size(double.infinity, 50),
               ),
             ),
-          )
-        ],
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _popupTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.black,
+        fontFamily: 'Montserrat',
+      ),
+    );
+  }
+
+  Widget _popupDescription(String description) {
+    return Text(
+      description,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 14,
+        color: Colors.grey[500],
+        fontFamily: 'Montserrat',
       ),
     );
   }
@@ -262,7 +246,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  // Icon and Title
                   const Icon(
                     Icons.electrical_services,
                     size: 50,
@@ -278,7 +261,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                     ),
                   ),
                   const SizedBox(height: 15),
-
                   Flexible(
                     child: DropdownButtonFormField<String>(
                       value: _selectedProvider,
@@ -316,7 +298,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                     ),
                   ),
                   const SizedBox(height: 15),
-
                   Flexible(
                     child: TextField(
                       controller: controllers.kwhRateController,
@@ -339,7 +320,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                     ),
                   ),
                   const SizedBox(height: 25.0),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -427,53 +407,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
-  void showApplianceInformationDialog(int index) {
-    var appliance = appliances[index];
-
-    controllers.editApplianceNameController.text =
-        appliance['applianceName'] ?? '';
-    controllers.editWattageController.text =
-        appliance['wattage']?.toString() ?? '';
-    controllers.editUsagePatternController.text =
-        appliance['usagePatternPerDay']?.toString() ?? '';
-    controllers.editWeeklyPatternController.text =
-        appliance['selectedDays']?.toString() ?? '';
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return ApplianceInformationDialog(
-          appliance: appliance,
-        );
-      },
-    );
-  }
-
-  void _showAddApplianceDialog(BuildContext context) {
-    controllers.addApplianceNameController.clear();
-    controllers.addWattageController.clear();
-    controllers.addUsagePatternController.clear();
-    controllers.addApplianceCategoryController.clear();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AddApplianceDialog(
-          addApplianceNameController: controllers.addApplianceNameController,
-          addWattageController: controllers.addWattageController,
-          addUsagePatternController: controllers.addUsagePatternController,
-          addApplianceCategoryController:
-              controllers.addApplianceCategoryController,
-          formKey: formKey,
-          addAppliance: (List<int> selectedDays) {
-            setState(() {
-              this.selectedDays = selectedDays;
-            });
-            addAppliance();
-          },
-        );
-      },
-    );
-  }
-
   Future<double?> getKwhRate() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
@@ -495,38 +428,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     } else {
       throw Exception('Failed to load user kwhRate');
     }
-  }
-
-  void _showActionSheet(BuildContext context, int index) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (BuildContext context) => CupertinoActionSheet(
-        title: const Text('Appliance Actions'),
-        actions: <CupertinoActionSheetAction>[
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              openEditApplianceDialog(index);
-            },
-            child: const Text('Edit Appliance'),
-          ),
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context);
-              _confirmDeleteAppliance(index);
-            },
-            child: const Text('Delete Appliance'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text('Cancel'),
-        ),
-      ),
-    );
   }
 
   Future<void> deleteAppliance(String applianceId) async {
@@ -555,15 +456,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         isLoading = false;
       });
     }
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Center(child: Text(message)),
-        duration: const Duration(seconds: 3),
-      ),
-    );
   }
 
   Future<void> _showApplianceErrorDialog(BuildContext context) async {
@@ -615,6 +507,106 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
+  Future<void> updateAppliance(
+      String applianceId, Map<String, dynamic> updates) async {
+    try {
+      final updatedAppliance =
+          await ApplianceService.updateAppliance(applianceId, updates);
+      _showSnackBar('Update Success');
+    } catch (e) {
+      _showSnackBar('Appliance can only be updated once a month.');
+      print('Error updating appliance: $e');
+    }
+  }
+
+  void showApplianceInformationDialog(int index) {
+    var appliance = appliances[index];
+
+    controllers.editApplianceNameController.text =
+        appliance['applianceName'] ?? '';
+    controllers.editWattageController.text =
+        appliance['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
+        appliance['usagePatternPerDay']?.toString() ?? '';
+    controllers.editWeeklyPatternController.text =
+        appliance['selectedDays']?.toString() ?? '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ApplianceInformationDialog(
+          appliance: appliance,
+        );
+      },
+    );
+  }
+
+  void _showAddApplianceDialog(BuildContext context) {
+    controllers.addApplianceNameController.clear();
+    controllers.addWattageController.clear();
+    controllers.addUsagePatternController.clear();
+    controllers.addApplianceCategoryController.clear();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AddApplianceDialog(
+          addApplianceNameController: controllers.addApplianceNameController,
+          addWattageController: controllers.addWattageController,
+          addUsagePatternController: controllers.addUsagePatternController,
+          addApplianceCategoryController:
+              controllers.addApplianceCategoryController,
+          formKey: formKey,
+          addAppliance: (List<int> selectedDays) {
+            setState(() {
+              this.selectedDays = selectedDays;
+            });
+            addAppliance();
+          },
+        );
+      },
+    );
+  }
+
+  void _showActionSheet(BuildContext context, int index) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Appliance Actions'),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              openEditApplianceDialog(index);
+            },
+            child: const Text('Edit Appliance'),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              _confirmDeleteAppliance(index);
+            },
+            child: const Text('Delete Appliance'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Center(child: Text(message)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   void fetchDailyCost() async {
     ApplianceService applianceService = ApplianceService();
     final result = await applianceService.getDaily();
@@ -630,20 +622,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           'Fetched totalDailyKwhConsumption: ${dailyCost?['totalDailyKwhConsumption']}');
     } else {
       print('Failed to fetch daily cost');
-    }
-  }
-
-  Future<void> updateAppliance(
-      String applianceId, Map<String, dynamic> updates) async {
-    try {
-      final updatedAppliance =
-          await ApplianceService.updateAppliance(applianceId, updates);
-      _showSnackBar('Update Success');
-
-      // print('Appliance updated successfully: $updatedAppliance');
-    } catch (e) {
-      _showSnackBar('Appliance can only be updated once a month.');
-      print('Error updating appliance: $e');
     }
   }
 
@@ -747,30 +725,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           ),
         );
       },
-    );
-  }
-
-  Widget _popupTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.black,
-        fontFamily: 'Montserrat',
-      ),
-    );
-  }
-
-  Widget _popupDescription(String description) {
-    return Text(
-      description,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 14,
-        color: Colors.grey[500],
-        fontFamily: 'Montserrat',
-      ),
     );
   }
 }
