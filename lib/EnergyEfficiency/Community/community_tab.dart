@@ -13,11 +13,11 @@ import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dia
 import 'package:supabase_project/CommonWidgets/dialogs/confirm_delete.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/post_view_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyEfficiency/create_post.dart';
+import 'package:supabase_project/EnergyEfficiency/Community/create_post.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:readmore/readmore.dart';
 import 'package:http/http.dart' as http;
-import 'package:supabase_project/EnergyEfficiency/see_more.dart';
+import 'package:supabase_project/EnergyEfficiency/Community/see_more.dart';
 import 'package:supabase_project/PreCode/addSuggestion.dart';
 import 'package:supabase_project/PreCode/deleteDialog.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
@@ -57,6 +57,132 @@ class _CommunityTabState extends State<CommunityTab> {
     super.initState();
     getPosts();
     getUsername();
+  }
+
+  Future<void> getPosts() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = false;
+    });
+
+    try {
+      final fetchedPosts = await PostsService.getPosts();
+      setState(() {
+        posts = fetchedPosts;
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+      showSnackBar(context, 'Post not fetched');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> deletePost(String postId) async {
+    try {
+      await ApplianceService.deletePost(postId);
+      print('Post deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
+    }
+  }
+
+  Future<String?> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in shared preferences');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/getUsername/$userId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('Username found: ${data['username']}');
+      return data['username'];
+    } else if (response.statusCode == 404) {
+      print('Username not found for user.');
+      return null;
+    } else {
+      throw Exception('Failed to load user kwhRate');
+    }
+  }
+
+  Future<void> getUsersPost() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = true;
+    });
+
+    try {
+      final fetchedPosts = await PostsService.fetchUsersPosts();
+      setState(() {
+        posts = fetchedPosts;
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> fetchSuggestions(String postId) async {
+    setState(() {
+      isLoading = true;
+      error = null; // Reset error before each fetch
+    });
+
+    try {
+      final suggestionsData = await PostsService.getComments(postId);
+      setState(() {
+        suggestions = suggestionsData;
+        print('suggestions data loaded');
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        error = 'Failed to load suggestions. Please try again later.';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> addSuggestion(
+      String postId, Map<String, dynamic> suggestionData) async {
+    final url = Uri.parse('$baseUrl/addSuggestions/$postId');
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'suggestionData': suggestionData,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+      print('Suggestion added: ${responseBody['newSuggestion']}');
+    } else if (response.statusCode == 400) {
+      final responseBody = jsonDecode(response.body);
+      throw Exception('Failed to add suggestion: ${responseBody['message']}');
+    } else if (response.statusCode == 404) {
+      throw Exception('Post not found: ${response.body}');
+    } else {
+      throw Exception('Unexpected error: ${response.body}');
+    }
   }
 
   void showPostDialog(int index) {
@@ -207,132 +333,6 @@ class _CommunityTabState extends State<CommunityTab> {
         );
       },
     );
-  }
-
-  Future<void> getPosts() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = false;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.getPosts();
-      setState(() {
-        posts = fetchedPosts;
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-      showSnackBar(context, 'Post not fetched');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> deletePost(String postId) async {
-    try {
-      await ApplianceService.deletePost(postId);
-      print('Post deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
-  }
-
-  Future<String?> getUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
-    }
-
-    final url = Uri.parse('http://10.0.2.2:8080/getUsername/$userId');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print('Username found: ${data['username']}');
-      return data['username'];
-    } else if (response.statusCode == 404) {
-      print('Username not found for user.');
-      return null;
-    } else {
-      throw Exception('Failed to load user kwhRate');
-    }
-  }
-
-  Future<void> getUsersPost() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = true;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.fetchUsersPosts();
-      setState(() {
-        posts = fetchedPosts;
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> fetchSuggestions(String postId) async {
-    setState(() {
-      isLoading = true;
-      error = null; // Reset error before each fetch
-    });
-
-    try {
-      final suggestionsData = await PostsService.getComments(postId);
-      setState(() {
-        suggestions = suggestionsData;
-        print('suggestions data loaded');
-      });
-    } catch (e) {
-      print('Error: $e');
-      setState(() {
-        error = 'Failed to load suggestions. Please try again later.';
-      });
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> addSuggestion(
-      String postId, Map<String, dynamic> suggestionData) async {
-    final url = Uri.parse('$baseUrl/addSuggestions/$postId');
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    final response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'suggestionData': suggestionData,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      final responseBody = jsonDecode(response.body);
-      print('Suggestion added: ${responseBody['newSuggestion']}');
-    } else if (response.statusCode == 400) {
-      final responseBody = jsonDecode(response.body);
-      throw Exception('Failed to add suggestion: ${responseBody['message']}');
-    } else if (response.statusCode == 404) {
-      throw Exception('Post not found: ${response.body}');
-    } else {
-      throw Exception('Unexpected error: ${response.body}');
-    }
   }
 
   @override
@@ -954,7 +954,6 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 }
-// lib/widgets/post_widget.dart
 
 class PostWidget extends StatelessWidget {
   final String title;

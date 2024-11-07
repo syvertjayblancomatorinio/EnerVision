@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyEfficiency/energy_effieciency_page.dart';
+import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
 import 'package:supabase_project/EnergyPage/EnergyTracker/energy_tracker.dart';
 import 'package:supabase_project/MainFolder/calculator.dart';
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
