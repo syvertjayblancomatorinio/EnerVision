@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyEfficiency/see_more.dart';
+import 'package:supabase_project/EnergyEfficiency/Community/see_more.dart';
 import 'package:supabase_project/EnergyEfficiency/widgets.dart';
 import 'package:supabase_project/PreCode/deleteDialog.dart';
 import '../CommonWidgets/bottom-navigation-bar.dart';

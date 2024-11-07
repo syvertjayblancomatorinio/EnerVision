@@ -8,9 +8,8 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
-import 'package:supabase_project/EnergyEfficiency/energy_effieciency_page.dart';
-import '../CommonWidgets/dialogs/error_dialog.dart';
-import 'community_tab.dart';
+import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
+import '../../CommonWidgets/dialogs/error_dialog.dart';
 
 class ShareYourStoryPage extends StatefulWidget {
   @override
@@ -21,7 +20,7 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
   XFile? _image;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  int _clickCount = 0;
+  final int _clickCount = 0;
   final int _clickLimit = 1;
   final List<String> tags = [
     'Renewable Energy',
@@ -29,13 +28,12 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
     'Green Living',
     'Energy Conservation',
   ];
-  bool isLoading = false;
+
   List<dynamic> posts = [];
-
   List<bool> selectedTags = List.filled(4, false);
-
   List<String> finalSelectedTags = [];
 
+  bool isLoading = false;
   String displayTag = 'Search or Choose a Tag';
   @override
   void initState() {
@@ -50,9 +48,7 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
 
     final url = Uri.parse("http://10.0.2.2:8080/addPost");
 
-    // Convert the selected tags to a string if required
-    String tagsAsString = postData['tags']
-        .join(','); // Join the list into a comma-separated string
+    String tagsAsString = postData['tags'].join(',');
 
     var response = await http.post(
       url,
@@ -75,7 +71,7 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => EnergyEfficiencyPage(selectedIndex: 1)),
+            builder: (context) => const EnergyEfficiencyPage(selectedIndex: 1)),
       );
 
       print('Post added successfully');
@@ -132,14 +128,6 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
     return _titleController.text.trim().isNotEmpty &&
         _descriptionController.text.trim().isNotEmpty;
   }
-
-  // void _handleButtonClick() {
-  //   if (_clickCount < _clickLimit) {
-  //     setState(() {
-  //       _clickCount++;
-  //     });
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {

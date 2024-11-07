@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/welcome_page.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyEfficiency/energy_effieciency_page.dart';
+import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyEfficiency/community_tab.dart';
+import 'package:supabase_project/EnergyEfficiency/Community/community_tab.dart';
 import 'package:supabase_project/PreCode/change_password.dart';
 import 'package:supabase_project/PreCode/community_guidelines.dart';
 import 'package:supabase_project/PreCode/micaella.dart';
