@@ -25,18 +25,8 @@ class AllDevicesPage extends StatefulWidget {
 
 class _AllDevicesPageState extends State<AllDevicesPage> {
   final AppControllers controllers = AppControllers();
-
-  late final TextEditingController controller;
-
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  List<dynamic> appliances = [];
-  Map<String, dynamic> dailyCost = {};
-  List<int> selectedDays = [];
-
-  bool isLoading = false;
-  late String? userId;
-  late String? selectedDeviceId;
-  String? _selectedProvider;
+  late final TextEditingController controller;
   final Map<String, String> _electricProviders = {
     'Cebu Electric Cooperative': '10.5',
     'Visayan Electric Company (VECO) - Residential': '11.2',
@@ -49,6 +39,15 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     'Eyy': '33',
     'Waw': '21',
   };
+
+  Map<String, dynamic> dailyCost = {};
+  List<dynamic> appliances = [];
+  List<int> selectedDays = [];
+
+  bool isLoading = false;
+  late String? userId;
+  late String? selectedDeviceId;
+  late String? _selectedProvider;
 
   @override
   void dispose() {
@@ -64,345 +63,6 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     super.initState();
     fetchAppliances();
     fetchDailyCost();
-  }
-
-  Future<double?> getKwhRate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
-    }
-
-    final url = Uri.parse('http://10.0.2.2:8080/getUserKwhRate/$userId');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print('KwhRate found: ${data['kwhRate']}');
-      return data['kwhRate'];
-    } else if (response.statusCode == 404) {
-      print('KwhRate not found for user.');
-      return null;
-    } else {
-      throw Exception('Failed to load user kwhRate');
-    }
-  }
-
-  Future<void> _showApplianceErrorDialog(BuildContext context) async {
-    ErrorDialogButton errorDialog = const ErrorDialogButton(
-      title: 'Appliance not Added',
-      message:
-          'Invalid Appliance\nOops! The appliance either already exists in your list or the name contains only spaces. Please add a different appliance with a valid name.',
-    );
-    errorDialog.showErrorDialog(context);
-  }
-
-  Future<void> fetchAppliances() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      print("User ID is null. Cannot fetch appliances.");
-      setState(() {
-        isLoading = false;
-      });
-      return;
-    }
-
-    final url = Uri.parse(
-        "http://10.0.2.2:8080/getAllUsersAppliances/$userId/appliances");
-
-    final response = await http.get(url, headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    });
-
-    if (response.statusCode == 200) {
-      setState(() {
-        appliances = List<Map<String, dynamic>>.from(jsonDecode(response.body));
-        isLoading = false;
-      });
-    } else {
-      print('Failed to fetch appliances: ${response.statusCode}');
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> addAppliance() async {
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
-    final Map<String, dynamic> applianceData = {
-      'applianceName': controllers.addApplianceNameController.text.trim(),
-      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
-      'usagePatternPerDay':
-          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
-      'applianceCategory':
-          controllers.addApplianceCategoryController.text.trim(),
-      'selectedDays': selectedDays,
-    };
-
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? userId = prefs.getString('userId');
-
-    if (userId == null) {
-      print('User ID not found in shared preferences');
-      return;
-    }
-
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'applianceData': applianceData,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      fetchAppliances();
-    } else {
-      await _showApplianceErrorDialog(context);
-    }
-  }
-
-  void fetchDailyCost() async {
-    ApplianceService applianceService = ApplianceService();
-    final result = await applianceService.getDaily();
-
-    if (result != null) {
-      setState(() {
-        dailyCost = result;
-      });
-
-      print(
-          'Fetched totalDailyConsumptionCost: ${dailyCost?['totalDailyConsumptionCost']}');
-      print(
-          'Fetched totalDailyKwhConsumption: ${dailyCost?['totalDailyKwhConsumption']}');
-    } else {
-      print('Failed to fetch daily cost');
-    }
-  }
-
-  void _showAddApplianceDialog(BuildContext context) {
-    controllers.addApplianceNameController.clear();
-    controllers.addWattageController.clear();
-    controllers.addUsagePatternController.clear();
-    controllers.addApplianceCategoryController.clear();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AddApplianceDialog(
-          addApplianceNameController: controllers.addApplianceNameController,
-          addWattageController: controllers.addWattageController,
-          addUsagePatternController: controllers.addUsagePatternController,
-          addApplianceCategoryController:
-              controllers.addApplianceCategoryController,
-          formKey: formKey,
-          addAppliance: (List<int> selectedDays) {
-            setState(() {
-              this.selectedDays = selectedDays;
-            });
-            addAppliance();
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> showKwhRateDialog(
-      BuildContext context,
-      TextEditingController kwhRateController,
-      Function saveKwhRate,
-      Function fetchAppliances,
-      Function fetchDailyCost) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Enter kWh Rate'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  // Icon and Title
-                  const Icon(
-                    Icons.electrical_services,
-                    size: 50,
-                    color: Colors.black,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Kilowatt-Hour Rate',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-
-                  Flexible(
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedProvider,
-                      isExpanded: true,
-                      hint: const Text('Select your Electric Service Provider'),
-                      items: _electricProviders.keys.map((String provider) {
-                        return DropdownMenuItem<String>(
-                          value: provider,
-                          child: Text(
-                            provider,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14.0),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedProvider = newValue;
-                          controllers.kwhRateController.text =
-                              _electricProviders[newValue!]!;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.1),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-
-                  Flexible(
-                    child: TextField(
-                      controller: controllers.kwhRateController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: 'Kilowatt Hour Rate (kWh)',
-                        hintStyle: const TextStyle(color: Colors.black),
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.1),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      style: const TextStyle(color: Colors.black),
-                    ),
-                  ),
-                  const SizedBox(height: 25.0),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.black,
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 50, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(
-                                color: Color(0xFFB1B1B1), width: 1),
-                          ),
-                        ),
-                        child: const Text('Cancel',
-                            style: TextStyle(fontSize: 14.0)),
-                      ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          String kwhRate = controllers.kwhRateController.text;
-
-                          try {
-                            await saveKwhRate(kwhRate);
-                            Navigator.of(context).pop();
-                            _showAddApplianceDialog(context);
-                            fetchAppliances();
-                            fetchDailyCost();
-                          } catch (e) {
-                            print('Failed to save kWh rate: $e');
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.black,
-                          backgroundColor: const Color(0xFF1BBC9B),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 50, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Save',
-                          style: TextStyle(fontSize: 14.0, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> saveKwhRate(String kwhRate) async {
-    // Wait for SharedPreferences to initialize
-    final prefs = await SharedPreferences.getInstance();
-
-    // Get userId from SharedPreferences
-    final String? userId = prefs.getString('userId');
-
-    // Check if userId is available
-    if (userId == null) {
-      throw Exception('User ID not found');
-    }
-
-    // Build the request URL
-    final url = Uri.parse('http://10.0.2.2:8080/updateKwh/$userId');
-
-    // Send the HTTP PATCH request to update the kWh rate
-    final response = await http.patch(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({'kwhRate': kwhRate}),
-    );
-
-    // Log the response for debugging
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    // Check if the request was successful
-    if (response.statusCode != 200) {
-      throw Exception('Failed to save kWh rate');
-    }
   }
 
   @override
@@ -617,6 +277,345 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
               : 'N/A',
         ),
       ],
+    );
+  }
+
+  Future<double?> getKwhRate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in shared preferences');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/getUserKwhRate/$userId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('KwhRate found: ${data['kwhRate']}');
+      return data['kwhRate'];
+    } else if (response.statusCode == 404) {
+      print('KwhRate not found for user.');
+      return null;
+    } else {
+      throw Exception('Failed to load user kwhRate');
+    }
+  }
+
+  Future<void> _showApplianceErrorDialog(BuildContext context) async {
+    ErrorDialogButton errorDialog = const ErrorDialogButton(
+      title: 'Appliance not Added',
+      message:
+          'Invalid Appliance\nOops! The appliance either already exists in your list or the name contains only spaces. Please add a different appliance with a valid name.',
+    );
+    errorDialog.showErrorDialog(context);
+  }
+
+  Future<void> fetchAppliances() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      print("User ID is null. Cannot fetch appliances.");
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    final url = Uri.parse(
+        "http://10.0.2.2:8080/getAllUsersAppliances/$userId/appliances");
+
+    final response = await http.get(url, headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    });
+
+    if (response.statusCode == 200) {
+      setState(() {
+        appliances = List<Map<String, dynamic>>.from(jsonDecode(response.body));
+        isLoading = false;
+      });
+    } else {
+      print('Failed to fetch appliances: ${response.statusCode}');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> addAppliance() async {
+    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
+    final Map<String, dynamic> applianceData = {
+      'applianceName': controllers.addApplianceNameController.text.trim(),
+      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
+      'usagePatternPerDay':
+          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
+      'applianceCategory':
+          controllers.addApplianceCategoryController.text.trim(),
+      'selectedDays': selectedDays,
+    };
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? userId = prefs.getString('userId');
+
+    if (userId == null) {
+      print('User ID not found in shared preferences');
+      return;
+    }
+
+    var response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'applianceData': applianceData,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      fetchAppliances();
+    } else {
+      await _showApplianceErrorDialog(context);
+    }
+  }
+
+  Future<void> showKwhRateDialog(
+      BuildContext context,
+      TextEditingController kwhRateController,
+      Function saveKwhRate,
+      Function fetchAppliances,
+      Function fetchDailyCost) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Enter kWh Rate'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  // Icon and Title
+                  const Icon(
+                    Icons.electrical_services,
+                    size: 50,
+                    color: Colors.black,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Kilowatt-Hour Rate',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
+                  Flexible(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedProvider,
+                      isExpanded: true,
+                      hint: const Text('Select your Electric Service Provider'),
+                      items: _electricProviders.keys.map((String provider) {
+                        return DropdownMenuItem<String>(
+                          value: provider,
+                          child: Text(
+                            provider,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14.0),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedProvider = newValue;
+                          controllers.kwhRateController.text =
+                              _electricProviders[newValue!]!;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.1),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+
+                  Flexible(
+                    child: TextField(
+                      controller: controllers.kwhRateController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: 'Kilowatt Hour Rate (kWh)',
+                        hintStyle: const TextStyle(color: Colors.black),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.1),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  const SizedBox(height: 25.0),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 50, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(
+                                color: Color(0xFFB1B1B1), width: 1),
+                          ),
+                        ),
+                        child: const Text('Cancel',
+                            style: TextStyle(fontSize: 14.0)),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          String kwhRate = controllers.kwhRateController.text;
+
+                          try {
+                            await saveKwhRate(kwhRate);
+                            Navigator.of(context).pop();
+                            _showAddApplianceDialog(context);
+                            fetchAppliances();
+                            fetchDailyCost();
+                          } catch (e) {
+                            print('Failed to save kWh rate: $e');
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          backgroundColor: const Color(0xFF1BBC9B),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 50, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'Save',
+                          style: TextStyle(fontSize: 14.0, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> saveKwhRate(String kwhRate) async {
+    // Wait for SharedPreferences to initialize
+    final prefs = await SharedPreferences.getInstance();
+
+    // Get userId from SharedPreferences
+    final String? userId = prefs.getString('userId');
+
+    // Check if userId is available
+    if (userId == null) {
+      throw Exception('User ID not found');
+    }
+
+    // Build the request URL
+    final url = Uri.parse('http://10.0.2.2:8080/updateKwh/$userId');
+
+    // Send the HTTP PATCH request to update the kWh rate
+    final response = await http.patch(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({'kwhRate': kwhRate}),
+    );
+
+    // Log the response for debugging
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    // Check if the request was successful
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save kWh rate');
+    }
+  }
+
+  void fetchDailyCost() async {
+    ApplianceService applianceService = ApplianceService();
+    final result = await applianceService.getDaily();
+
+    if (result != null) {
+      setState(() {
+        dailyCost = result;
+      });
+
+      print(
+          'Fetched totalDailyConsumptionCost: ${dailyCost?['totalDailyConsumptionCost']}');
+      print(
+          'Fetched totalDailyKwhConsumption: ${dailyCost?['totalDailyKwhConsumption']}');
+    } else {
+      print('Failed to fetch daily cost');
+    }
+  }
+
+  void _showAddApplianceDialog(BuildContext context) {
+    controllers.addApplianceNameController.clear();
+    controllers.addWattageController.clear();
+    controllers.addUsagePatternController.clear();
+    controllers.addApplianceCategoryController.clear();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AddApplianceDialog(
+          addApplianceNameController: controllers.addApplianceNameController,
+          addWattageController: controllers.addWattageController,
+          addUsagePatternController: controllers.addUsagePatternController,
+          addApplianceCategoryController:
+              controllers.addApplianceCategoryController,
+          formKey: formKey,
+          addAppliance: (List<int> selectedDays) {
+            setState(() {
+              this.selectedDays = selectedDays;
+            });
+            addAppliance();
+          },
+        );
+      },
     );
   }
 }
