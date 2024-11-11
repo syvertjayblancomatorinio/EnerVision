@@ -47,7 +47,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
   bool isLoading = false;
   late String? userId;
   late String? selectedDeviceId;
-  late String? _selectedProvider;
+  String? _selectedProvider;
 
   @override
   void dispose() {
@@ -399,7 +399,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Enter kWh Rate'),
+              // title: const Text('Enter kWh Rate'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -613,6 +613,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
               this.selectedDays = selectedDays;
             });
             addAppliance();
+            fetchDailyCost();
           },
         );
       },
