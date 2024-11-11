@@ -392,11 +392,18 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                       : 'N/A',
                 ),
                 const SizedBox(height: 16),
-                energyCard(
-                  title: "Estimated Energy Used",
-                  value: monthlyData['totalMonthlyCost'] != null
-                      ? '${double.parse(monthlyData['totalMonthlyCost'].toString()).toStringAsFixed(2)} kWh'
-                      : 'N/A',
+                GestureDetector(
+                  onPanDown: (details) {
+                    // This is triggered when the user touches the screen and starts panning.
+                    print(
+                        'User touched the screen at: ${details.localPosition}');
+                  },
+                  child: energyCard(
+                    title: "Estimated Monthly Cost",
+                    value: monthlyData['totalMonthlyCost'] != null
+                        ? 'PHP ${double.parse(monthlyData['totalMonthlyCost'].toString()).toStringAsFixed(2)}'
+                        : 'N/A',
+                  ),
                 ),
               ],
             ),

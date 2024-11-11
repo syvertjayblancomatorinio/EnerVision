@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/CommonWidgets/dialogs/number_of_appliances_dialog.dart';
 import 'package:supabase_project/MyEnergyDiary/common-widgets.dart';
 
 import '../../../CommonWidgets/appliance_container/total_cost&kwh.dart';
@@ -19,6 +22,45 @@ class _LastMonthPageState extends State<LastMonthPage> {
   Map<String, dynamic> monthlyData = {};
   int applianceCount = 0;
   DateTime selectedDate = DateTime.now();
+  List<Map<String, dynamic>> appliances = [];
+  final AppControllers controllers = AppControllers();
+
+  void showApplianceInformationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ApplianceListDialog(
+          appliances: appliances,
+        );
+      },
+    );
+  }
+
+  Future<void> getUsersApplianceCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      print("User ID is null. Cannot fetch appliance count.");
+      return;
+    }
+
+    final formattedMonth = DateFormat('MM').format(selectedDate);
+    final formattedYear = DateFormat('yyyy').format(selectedDate);
+
+    final response = await http.get(Uri.parse(
+        'http://10.0.2.2:8080/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        applianceCount = data['count'] ?? 0;
+        appliances = List<Map<String, dynamic>>.from(data['appliances'] ?? []);
+      });
+    } else {
+      throw Exception('Failed to load appliances');
+    }
+  }
 
   @override
   void initState() {
@@ -57,10 +99,16 @@ class _LastMonthPageState extends State<LastMonthPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ApplianceInfoCard(
-          imagePath: 'assets/image (7).png',
-          mainText: applianceCount.toString(),
-          subText: 'No. of Appliances Added',
+        GestureDetector(
+          onTap: () {
+            print('Appliances is tapped');
+            showApplianceInformationDialog();
+          },
+          child: ApplianceInfoCard(
+            imagePath: 'assets/image (7).png',
+            mainText: applianceCount.toString(),
+            subText: 'No. of Appliances Added',
+          ),
         ),
         ApplianceInfoCard(
           imagePath: 'assets/image (9).png',
@@ -92,31 +140,31 @@ class _LastMonthPageState extends State<LastMonthPage> {
     );
   }
 
-  Future<void> getUsersApplianceCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      print("User ID is null. Cannot fetch appliance count.");
-      return;
-    }
-
-    // Format month and year from selectedDate
-    final formattedMonth = DateFormat('MM').format(selectedDate);
-    final formattedYear = DateFormat('yyyy').format(selectedDate);
-
-    final response = await http.get(Uri.parse(
-        'http://10.0.2.2:8080/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        applianceCount = data['count'] ?? 0;
-      });
-    } else {
-      throw Exception('Failed to load appliances');
-    }
-  }
+  // Future<void> getUsersApplianceCount() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   final userId = prefs.getString('userId');
+  //
+  //   if (userId == null) {
+  //     print("User ID is null. Cannot fetch appliance count.");
+  //     return;
+  //   }
+  //
+  //   // Format month and year from selectedDate
+  //   final formattedMonth = DateFormat('MM').format(selectedDate);
+  //   final formattedYear = DateFormat('yyyy').format(selectedDate);
+  //
+  //   final response = await http.get(Uri.parse(
+  //       'http://10.0.2.2:8080/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
+  //
+  //   if (response.statusCode == 200) {
+  //     final data = json.decode(response.body);
+  //     setState(() {
+  //       applianceCount = data['count'] ?? 0;
+  //     });
+  //   } else {
+  //     throw Exception('Failed to load appliances');
+  //   }
+  // }
 
   // Future<void> getOldUsersApplianceCount() async {
   //   final prefs = await SharedPreferences.getInstance();
