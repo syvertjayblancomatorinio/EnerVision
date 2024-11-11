@@ -223,7 +223,7 @@ class _AppSettingsState extends State<AppSettings> {
                       onPressed: () async {
                         Navigator.of(context).pop();
                         final prefs = await SharedPreferences.getInstance();
-                        await prefs.clear(); // Clear preferences
+                        await prefs.clear();
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
