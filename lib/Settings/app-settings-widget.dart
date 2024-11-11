@@ -10,6 +10,7 @@ import 'package:supabase_project/PreCode/micaella.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
 import '../ConstantTexts/Theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppSettings extends StatefulWidget {
   const AppSettings({Key? key}) : super(key: key);
@@ -184,7 +185,7 @@ class _AppSettingsState extends State<AppSettings> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
-                  Icons.warning, // You can change the icon to any suitable one.
+                  Icons.warning,
                   color: AppColors.primaryColor,
                   size: 50,
                 ),
@@ -219,12 +220,16 @@ class _AppSettingsState extends State<AppSettings> {
                       child: const Text('Cancel'),
                     ),
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.of(context).pop();
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => LoginPage()));
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.clear(); // Clear preferences
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LoginPage(),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,

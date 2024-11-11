@@ -9,6 +9,7 @@ class AddApplianceDialog extends StatefulWidget {
   final TextEditingController addApplianceCategoryController;
   final GlobalKey<FormState> formKey;
   final Function(List<int>) addAppliance;
+  // final Function(List<int>) addAppliance;
   const AddApplianceDialog({
     super.key,
     required this.addApplianceNameController,

@@ -47,7 +47,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
   bool isLoading = false;
   late String? userId;
   late String? selectedDeviceId;
-  late String? _selectedProvider;
+  String? _selectedProvider;
 
   @override
   void dispose() {
@@ -294,7 +294,8 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       print('KwhRate found: ${data['kwhRate']}');
-      return data['kwhRate'];
+      return (data['kwhRate'] as num)
+          .toDouble(); // Ensures it’s returned as a double
     } else if (response.statusCode == 404) {
       print('KwhRate not found for user.');
       return null;
@@ -399,7 +400,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Enter kWh Rate'),
+              // title: const Text('Enter kWh Rate'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
@@ -613,6 +614,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
               this.selectedDays = selectedDays;
             });
             addAppliance();
+            fetchDailyCost();
           },
         );
       },

@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
+import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
+import 'package:supabase_project/MainFolder/secondaryMain.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:flutter/foundation.dart';
 
@@ -73,7 +75,7 @@ class AuthService {
         await prefs.setString('userId', userId);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => SetupProfile()),
+          MaterialPageRoute(builder: (context) => const SetupProfile()),
         );
       } else if (response.statusCode == 400) {
         final responseBody = jsonDecode(response.body);
@@ -126,19 +128,22 @@ class AuthService {
           if (hasProfile) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => SplashScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const EnergyEfficiencyPage(
+                        selectedIndex: 0,
+                      )),
             );
           } else {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => SetupProfile()),
+              MaterialPageRoute(builder: (context) => const SetupProfile()),
             );
           }
         } else {
           throw Exception('User ID not found in response: ${response.body}');
         }
       } else if (response.statusCode == 401) {
-        return response; // Returning the response for error handling
+        return response;
       } else {
         throw Exception('Failed to Sign in: ${response.body}');
       }

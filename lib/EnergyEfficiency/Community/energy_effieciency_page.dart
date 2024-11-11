@@ -34,12 +34,19 @@ class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
     _currentIndex = widget.selectedIndex >= 0 && widget.selectedIndex <= 2
         ? widget.selectedIndex
         : 0;
+    _printUserIdFromPrefs();
   }
 
   void _onSegmentTapped(int index) {
     setState(() {
       _currentIndex = index;
     });
+  }
+
+  Future<void> _printUserIdFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    print("Current User ID from SharedPreferences: $userId");
   }
 
   @override

@@ -35,13 +35,13 @@ class _SplashScreenState extends State<SplashScreen>
       isUserLoaded = userId != null;
     });
 
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 1));
 
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (context) => isUserLoaded
-          ? const EnergyEfficiencyPage(
-              selectedIndex: 0,
-            )
+          ? const WelcomePage(
+              // selectedIndex: 0,
+              )
           : const LoginPage(),
     ));
   }
