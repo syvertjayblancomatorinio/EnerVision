@@ -69,7 +69,8 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: 40),
+                    Image.asset('assets/dialogImage.png',
+                        height: 100, width: 100),
                     popupTitle(),
                     const SizedBox(height: 20),
                     textFormFields(),
@@ -148,7 +149,6 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
                 ),
               ),
             ),
-            topImage()
           ],
         ),
       ),
@@ -296,23 +296,22 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
     );
   }
 
-  Widget topImage() {
-    return Positioned(
-      top: -70.0,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(100),
-          color: Colors.white,
-        ),
-        width: 140,
-        height: 140,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(100),
-          child: Image.asset('assets/dialogImage.png', fit: BoxFit.cover),
-        ),
-      ),
-    );
-  }
+  // Widget topImage() {
+  //   return Positioned(
+  //     child: Container(
+  //       decoration: BoxDecoration(
+  //         borderRadius: BorderRadius.circular(100),
+  //         color: Colors.white,
+  //       ),
+  //       width: 140,
+  //       height: 140,
+  //       child: ClipRRect(
+  //         borderRadius: BorderRadius.circular(100),
+  //         child: Image.asset('assets/dialogImage.png', fit: BoxFit.cover),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
 
 class DropdownWithIcon extends StatelessWidget {

@@ -185,66 +185,6 @@ class _LoginPageState extends State<LoginPage> {
                         },
                         text: 'Sign In',
                       ),
-                      const SizedBox(height: 25),
-                      const Divider(
-                        thickness: 0.5,
-                        color: Colors.grey,
-                      ),
-                      const Text(
-                        'or login with',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontFamily: 'ProductSans',
-                          fontSize: 12.0,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onTap: () {},
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white),
-                                borderRadius: BorderRadius.circular(30),
-                                color: Colors.grey[200],
-                              ),
-                              height: 50.0,
-                              width: 150.0,
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image(image: AssetImage('assets/google.png')),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          GestureDetector(
-                            onTap: () {},
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white),
-                                borderRadius: BorderRadius.circular(30),
-                                color: Colors.grey[200],
-                              ),
-                              height: 50.0,
-                              width: 150.0,
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image(
-                                      image: AssetImage('assets/facebook.png')),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),

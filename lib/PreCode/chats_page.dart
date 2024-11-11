@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class HelpChatPage extends StatefulWidget {
   @override
@@ -41,20 +43,25 @@ class _HelpChatPageState extends State<HelpChatPage> {
   }
 
   Future<void> _fetchMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
     try {
       final response = await http.get(Uri.parse('$apiUrl/chats'));
       if (response.statusCode == 200) {
         final List<dynamic> chats = jsonDecode(response.body);
         List<Map<String, dynamic>> allMessages = [];
-
+        final String? currentUserId = userId;
         for (var chat in chats) {
           for (var message in chat['messages']) {
-            allMessages.add({
-              'userId': message['userId'],
-              'message': message['message'],
-              'timestamp': DateTime.parse(message['timestamp'])
-            });
+            if (message['userId'] == currentUserId) {
+              allMessages.add({
+                'userId': message['userId'],
+                'message': message['message'],
+                'timestamp': DateTime.parse(message['timestamp'])
+              });
+            }
           }
+          // Add replies from the admin for the user's chat
           for (var reply in chat['adminReplies']) {
             allMessages.add({
               'userId': 'admin',

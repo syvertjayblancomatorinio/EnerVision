@@ -5,7 +5,6 @@ const User = require('../models/user.model');
 
 
 
-// Save a new chat message
 router.post('/chats', async (req, res) => {
   const { user, message } = req.body;
 
@@ -14,15 +13,15 @@ router.post('/chats', async (req, res) => {
   }
 
   try {
-    let chatMessage = await Chat.findOne({ 'messages.userId': user });
+    let chatMessage = await Chat.findOne({ userId: user });
 
     if (!chatMessage) {
       chatMessage = new Chat({
-        messages: [{ userId: user, sender: user, message }],
-        adminReplies: [],
+        userId: user,
+        messages: [{ sender: user, message }]
       });
     } else {
-      chatMessage.messages.push({ userId: user, sender: user, message });
+      chatMessage.messages.push({ sender: user, message });
     }
 
     await chatMessage.save();
@@ -34,9 +33,13 @@ router.post('/chats', async (req, res) => {
 });
 
 // Fetch all chat messages
+// Assuming you are using a middleware like JWT to authenticate and get the user's ID
 router.get('/chats', async (req, res) => {
   try {
-    const chats = await Chat.find();
+    const userId = req.userId;
+
+    const chats = await Chat.find({ userId: userId });
+
     res.json(chats);
   } catch (err) {
     res.status(500).json({ message: 'Server Error' });

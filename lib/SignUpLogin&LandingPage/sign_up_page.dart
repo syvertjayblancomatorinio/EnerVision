@@ -34,19 +34,19 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _showClearPasswordIcon = false;
 
   bool _isLoading = false; // Loading state
-  String? validatePassword(String value) {
-    RegExp regex =
-        RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
-    if (value.isEmpty) {
-      return 'Please enter password';
-    } else {
-      if (!regex.hasMatch(value)) {
-        return 'Enter valid password';
-      } else {
-        return null;
-      }
-    }
-  }
+  // String? validatePassword(String value) {
+  //   RegExp regex =
+  //       RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
+  //   if (value.isEmpty) {
+  //     return 'Please enter password';
+  //   } else {
+  //     if (!regex.hasMatch(value)) {
+  //       return 'Enter valid password';
+  //     } else {
+  //       return null;
+  //     }
+  //   }
+  // }
 
   User user = User('', '', '', 0);
   @override
@@ -91,7 +91,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       const Image(
                         image: AssetImage('assets/login.png'),
                         width: 500.0,
-                        height: 250.0,
+                        height: 300.0,
                       ),
                       const SizedBox(height: 20),
                       Form(
@@ -99,8 +99,21 @@ class _SignUpPageState extends State<SignUpPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Become a member!'),
-                            const Text('Enter your credentials to continue'),
+                            const Text(
+                              'Become a member!',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'Enter your credentials to continue',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[700],
+                              ),
+                            ),
                             const SizedBox(height: 20),
                             CustomTextField(
                               controller: _usernameController,
@@ -192,7 +205,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                     'Invalid Password')
                               ]),
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 50),
                             SignUpButton(
                               onPressed: () async {
                                 if (_formKey.currentState?.validate() ??
@@ -275,85 +288,84 @@ class _SignUpPageState extends State<SignUpPage> {
                             //       }
                             //     },
                             //     text: 'Sign Up'),
-                            const SizedBox(height: 25),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Divider(
-                                    thickness: 0.5,
-                                    color: Colors.grey[400],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10.0),
-                                  child: Text(
-                                    'or sign up with',
-                                    style: TextStyle(
-                                        color: Colors.grey[700],
-                                        fontFamily: 'ProductSans',
-                                        fontSize: 12.0),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Divider(
-                                    thickness: 0.5,
-                                    color: Colors.grey[400],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 25),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                GestureDetector(
-                                  onTap: () {},
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.white),
-                                      borderRadius: BorderRadius.circular(30),
-                                      color: Colors.grey[200],
-                                    ),
-                                    height: 50.0,
-                                    width: 150.0,
-                                    child: const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Image(
-                                            image: AssetImage(
-                                                'assets/google.png')),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                GestureDetector(
-                                  onTap: () {},
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.white),
-                                      borderRadius: BorderRadius.circular(30),
-                                      color: Colors.grey[200],
-                                    ),
-                                    height: 50.0,
-                                    width: 150.0,
-                                    child: const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Image(
-                                            image: AssetImage(
-                                                'assets/facebook.png')),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            // Row(
+                            //   children: [
+                            //     Expanded(
+                            //       child: Divider(
+                            //         thickness: 0.5,
+                            //         color: Colors.grey[400],
+                            //       ),
+                            //     ),
+                            //     Padding(
+                            //       padding: const EdgeInsets.symmetric(
+                            //           horizontal: 10.0),
+                            //       child: Text(
+                            //         'or sign up with',
+                            //         style: TextStyle(
+                            //             color: Colors.grey[700],
+                            //             fontFamily: 'ProductSans',
+                            //             fontSize: 12.0),
+                            //       ),
+                            //     ),
+                            //     Expanded(
+                            //       child: Divider(
+                            //         thickness: 0.5,
+                            //         color: Colors.grey[400],
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
+                            // const SizedBox(height: 25),
+                            // Row(
+                            //   mainAxisAlignment: MainAxisAlignment.center,
+                            //   children: [
+                            //     GestureDetector(
+                            //       onTap: () {},
+                            //       child: Container(
+                            //         padding: const EdgeInsets.all(10),
+                            //         decoration: BoxDecoration(
+                            //           border: Border.all(color: Colors.white),
+                            //           borderRadius: BorderRadius.circular(30),
+                            //           color: Colors.grey[200],
+                            //         ),
+                            //         height: 50.0,
+                            //         width: 150.0,
+                            //         child: const Row(
+                            //           mainAxisAlignment:
+                            //               MainAxisAlignment.center,
+                            //           children: [
+                            //             Image(
+                            //                 image: AssetImage(
+                            //                     'assets/google.png')),
+                            //           ],
+                            //         ),
+                            //       ),
+                            //     ),
+                            //     const SizedBox(width: 20),
+                            //     GestureDetector(
+                            //       onTap: () {},
+                            //       child: Container(
+                            //         padding: const EdgeInsets.all(10),
+                            //         decoration: BoxDecoration(
+                            //           border: Border.all(color: Colors.white),
+                            //           borderRadius: BorderRadius.circular(30),
+                            //           color: Colors.grey[200],
+                            //         ),
+                            //         height: 50.0,
+                            //         width: 150.0,
+                            //         child: const Row(
+                            //           mainAxisAlignment:
+                            //               MainAxisAlignment.center,
+                            //           children: [
+                            //             Image(
+                            //                 image: AssetImage(
+                            //                     'assets/facebook.png')),
+                            //           ],
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
                           ],
                         ),
                       ),
@@ -374,15 +386,15 @@ class _SignUpPageState extends State<SignUpPage> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                         vertical: 5.0, horizontal: 30.0),
-                    backgroundColor: const Color(0xFF75FFBA),
+                    backgroundColor: const Color(0xFF02A676),
                     elevation: 5.0,
                   ),
                   child: const Text(
                     'Login',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: Colors.white,
                       fontSize: 12.0,
-                      fontFamily: 'ProductSans',
+                      fontFamily: 'Montserrat',
                       fontWeight: FontWeight.bold,
                     ),
                   ),
