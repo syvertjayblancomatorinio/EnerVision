@@ -394,8 +394,8 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                 const SizedBox(height: 16),
                 energyCard(
                   title: "Estimated Energy Used",
-                  value: monthlyData['totalMonthlyKwhConsumption'] != null
-                      ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kWh'
+                  value: monthlyData['totalMonthlyCost'] != null
+                      ? '${double.parse(monthlyData['totalMonthlyCost'].toString()).toStringAsFixed(2)} kWh'
                       : 'N/A',
                 ),
               ],
