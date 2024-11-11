@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_project/AuthService/auth_profile.dart';
-import 'package:supabase_project/AuthService/auth_service.dart';
+
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/AuthService/auth_suggestions.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
@@ -227,6 +226,7 @@ class _CommunityTabState extends State<CommunityTab> {
           description:
               'Are you sure you want to delete this Post? This cannot be undone.',
           onDelete: () => deletePost(post['_id']).then((_) {}),
+          postDelete: getUsersPost,
         );
       },
     );
@@ -327,9 +327,10 @@ class _CommunityTabState extends State<CommunityTab> {
         return ConfirmDeleteDialog(
           title: 'Report Post?',
           description: 'Are you sure you want to Report this Post? ',
-          onDelete: () => deletePost(post['_id']).then((_) {
-            getPosts();
-          }),
+          onDelete: () => deletePost(post['_id']).then(
+            (_) {},
+          ),
+          postDelete: getPosts,
         );
       },
     );

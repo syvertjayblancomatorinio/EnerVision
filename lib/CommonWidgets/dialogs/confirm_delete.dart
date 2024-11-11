@@ -7,12 +7,14 @@ class ConfirmDeleteDialog extends StatelessWidget {
   final String title;
   final String description;
   final Future<void> Function() onDelete;
+  final Future<void> Function() postDelete;
 
   const ConfirmDeleteDialog({
     Key? key,
     required this.title,
     required this.description,
     required this.onDelete,
+    required this.postDelete,
   }) : super(key: key);
 
   @override
@@ -67,6 +69,7 @@ class ConfirmDeleteDialog extends StatelessWidget {
                   onPressed: () {
                     onDelete().then((_) {
                       Navigator.of(context).pop();
+                      postDelete();
                     }).catchError((error) {
                       print('Deletion failed: $error');
                       Navigator.of(context).pop(); // Close dialog even on error

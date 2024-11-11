@@ -294,7 +294,8 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       print('KwhRate found: ${data['kwhRate']}');
-      return data['kwhRate'];
+      return (data['kwhRate'] as num)
+          .toDouble(); // Ensures it’s returned as a double
     } else if (response.statusCode == 404) {
       print('KwhRate not found for user.');
       return null;

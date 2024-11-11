@@ -421,7 +421,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       print('KwhRate found: ${data['kwhRate']}');
-      return data['kwhRate'];
+      return (data['kwhRate'] as num).toDouble();
     } else if (response.statusCode == 404) {
       print('KwhRate not found for user.');
       return null;
