@@ -51,8 +51,11 @@ router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
     }
 
-    let totalMonthlyCost = 0;
+    // Define emission factor
+    const emissionFactor = 0.7;
 
+    // Calculate totalMonthlyCost
+    let totalMonthlyCost = 0;
     if (totalMonthlyConsumption) {
         totalMonthlyCost = totalMonthlyConsumption;
     } else {
@@ -62,16 +65,30 @@ router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
         }, 0);
     }
 
+    // Calculate totalMonthlyKwhConsumption
+    const totalMonthlyKwhConsumption = user.kwhRate > 0 ? totalMonthlyCost / user.kwhRate : 0;
+
+    // Calculate totalMonthlyCO2Emissions
+    const totalMonthlyCO2Emissions = totalMonthlyKwhConsumption * emissionFactor;
+
+    // Save monthly consumption data
     const monthlyConsumption = new MonthlyConsumption({
         userId: user._id,
-        month: parseInt(month, 10), // Convert to integer
-        year: parseInt(year, 10),   // Convert to integer
-        totalMonthlyConsumption: totalMonthlyCost
+        month: parseInt(month, 10),
+        year: parseInt(year, 10),
+        totalMonthlyConsumption: totalMonthlyCost,
+        totalMonthlyKwhConsumption,
+        totalMonthlyCO2Emissions
     });
 
     await monthlyConsumption.save();
 
-    res.status(200).json({ message: 'Monthly consumption saved successfully.', totalMonthlyConsumption: totalMonthlyCost });
+    res.status(200).json({
+        message: 'Monthly consumption saved successfully.',
+        totalMonthlyConsumption: totalMonthlyCost,
+        totalMonthlyKwhConsumption,
+        totalMonthlyCO2Emissions
+    });
 }));
 
 
@@ -387,7 +404,38 @@ router.get('/getUsersCount/:userId/appliances', asyncHandler(async (req, res) =>
   }
 }));
 
+router.get('/getNewUsersCount/:userId/appliances', asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { month, year } = req.query;
 
+  if (!month || !year) {
+    return res.status(400).json({ message: 'Month and year are required' });
+  }
+
+  try {
+    const appliances = await Appliance.find({
+      userId,
+      createdAt: {
+        $gte: new Date(`${year}-${month}-01`),
+        $lt: new Date(`${year}-${month}-01`).setMonth(new Date(`${year}-${month}-01`).getMonth() + 1)
+      }
+    });
+
+    if (!appliances) {
+      return res.status(404).json({ message: 'No appliances found for this month and year' });
+    }
+
+    // Respond with the count of appliances for the specified month and year
+    return res.status(200).json({
+      message: 'Appliances retrieved successfully',
+      count: appliances.length,
+      appliances
+    });
+  } catch (error) {
+    console.error(error); // Log the error to the console
+    return res.status(500).json({ message: 'Server error' });
+  }
+}));
 router.get('/monthlyData/:userId', async (req, res) => {
       try {
           const userId = req.params.userId;

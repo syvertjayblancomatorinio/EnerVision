@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/CommonWidgets/dialogs/number_of_appliances_dialog.dart';
 import 'package:supabase_project/MyEnergyDiary/common-widgets.dart';
 
 import '../../../CommonWidgets/appliance_container/total_cost&kwh.dart';
@@ -19,17 +22,56 @@ class _LastMonthPageState extends State<LastMonthPage> {
   Map<String, dynamic> monthlyData = {};
   int applianceCount = 0;
   DateTime selectedDate = DateTime.now();
+  List<Map<String, dynamic>> appliances = [];
+  final AppControllers controllers = AppControllers();
+
+  void showApplianceInformationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ApplianceListDialog(
+          appliances: appliances,
+        );
+      },
+    );
+  }
+
+  Future<void> getUsersApplianceCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      print("User ID is null. Cannot fetch appliance count.");
+      return;
+    }
+
+    final formattedMonth = DateFormat('MM').format(selectedDate);
+    final formattedYear = DateFormat('yyyy').format(selectedDate);
+
+    final response = await http.get(Uri.parse(
+        'http://10.0.2.2:8080/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        applianceCount = data['count'] ?? 0;
+        appliances = List<Map<String, dynamic>>.from(data['appliances'] ?? []);
+      });
+    } else {
+      throw Exception('Failed to load appliances');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    getUsersApplianceCount();
     DateTime now = DateTime.now();
     selectedDate = DateTime(now.year, now.month - 1, now.day);
     if (now.month == 1) {
       selectedDate = DateTime(now.year - 1, 12, now.day);
     }
     getLastMonth(selectedDate);
-    getUsersApplianceCount();
   }
 
   @override
@@ -37,7 +79,10 @@ class _LastMonthPageState extends State<LastMonthPage> {
     return Column(
       children: <Widget>[
         DatePickerWidget(
-            initialDate: selectedDate, onDateSelected: onDateSelected),
+          initialDate: selectedDate,
+          onDateSelected: onDateSelected,
+          getApplianceCount: getUsersApplianceCount,
+        ),
         const SizedBox(height: 20),
         HomeUsage(
           kwh: monthlyData['totalMonthlyKwhConsumption'] != null
@@ -54,10 +99,16 @@ class _LastMonthPageState extends State<LastMonthPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        ApplianceInfoCard(
-          imagePath: 'assets/image (7).png',
-          mainText: applianceCount.toString(), // Number of appliances
-          subText: 'No. of Appliances Added',
+        GestureDetector(
+          onTap: () {
+            print('Appliances is tapped');
+            showApplianceInformationDialog();
+          },
+          child: ApplianceInfoCard(
+            imagePath: 'assets/image (7).png',
+            mainText: applianceCount.toString(),
+            subText: 'No. of Appliances Added',
+          ),
         ),
         ApplianceInfoCard(
           imagePath: 'assets/image (9).png',
@@ -67,10 +118,13 @@ class _LastMonthPageState extends State<LastMonthPage> {
               : 'N/A',
           subText: 'Estimated Total Cost for the Month',
         ),
-        const ApplianceInfoCard(
+        ApplianceInfoCard(
           imagePath: 'assets/image (8).png',
-          mainText: '10', // You may want to replace this with dynamic data
-          subText: 'Peak Usage Time',
+          mainText: monthlyData['totalMonthlyCO2Emission'] != null
+              ? double.parse(monthlyData['totalMonthlyCO2Emission'].toString())
+                  .toStringAsFixed(2)
+              : 'N/A',
+          subText: 'CO2 Emission',
         ),
       ],
     );
@@ -86,34 +140,57 @@ class _LastMonthPageState extends State<LastMonthPage> {
     );
   }
 
-  Future<void> getUsersApplianceCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+  // Future<void> getUsersApplianceCount() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   final userId = prefs.getString('userId');
+  //
+  //   if (userId == null) {
+  //     print("User ID is null. Cannot fetch appliance count.");
+  //     return;
+  //   }
+  //
+  //   // Format month and year from selectedDate
+  //   final formattedMonth = DateFormat('MM').format(selectedDate);
+  //   final formattedYear = DateFormat('yyyy').format(selectedDate);
+  //
+  //   final response = await http.get(Uri.parse(
+  //       'http://10.0.2.2:8080/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
+  //
+  //   if (response.statusCode == 200) {
+  //     final data = json.decode(response.body);
+  //     setState(() {
+  //       applianceCount = data['count'] ?? 0;
+  //     });
+  //   } else {
+  //     throw Exception('Failed to load appliances');
+  //   }
+  // }
 
-    if (userId == null) {
-      print("User ID is null. Cannot fetch appliance count.");
-      return;
-    }
-
-    // Adjust the URL to match the new endpoint
-    final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/getUsersCount/$userId/appliances'));
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        // Check if the appliances are included in the response
-        if (data['appliances'] != null) {
-          // Update the applianceCount variable based on the length of the appliances list
-          applianceCount = data['appliances'].length;
-        } else {
-          applianceCount = 0; // Set to 0 if no appliances found
-        }
-      });
-    } else {
-      throw Exception('Failed to load appliances');
-    }
-  }
+  // Future<void> getOldUsersApplianceCount() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   final userId = prefs.getString('userId');
+  //
+  //   if (userId == null) {
+  //     print("User ID is null. Cannot fetch appliance count.");
+  //     return;
+  //   }
+  //
+  //   final response = await http.get(
+  //       Uri.parse('http://10.0.2.2:8080/getUsersCount/$userId/appliances'));
+  //
+  //   if (response.statusCode == 200) {
+  //     final data = json.decode(response.body);
+  //     setState(() {
+  //       if (data['appliances'] != null) {
+  //         applianceCount = data['appliances'].length;
+  //       } else {
+  //         applianceCount = 0;
+  //       }
+  //     });
+  //   } else {
+  //     throw Exception('Failed to load appliances');
+  //   }
+  // }
 
   Future<void> getLastMonth(DateTime date) async {
     final prefs = await SharedPreferences.getInstance();
@@ -139,7 +216,6 @@ class _LastMonthPageState extends State<LastMonthPage> {
       );
 
       if (response.statusCode == 404) {
-        // Reset monthlyData to default values when 404 occurs
         setState(() {
           monthlyData = {
             'totalMonthlyConsumption': null,
@@ -160,11 +236,12 @@ class _LastMonthPageState extends State<LastMonthPage> {
         // Calculate totalKwhConsumption
         double totalKwhConsumption =
             (kwhRate > 0) ? totalMonthlyConsumption / kwhRate : 0.0;
-
+        double totalCO2Emission = totalKwhConsumption * 0.7;
         setState(() {
           monthlyData = {
             'totalMonthlyConsumption': totalMonthlyConsumption,
             'totalMonthlyKwhConsumption': totalKwhConsumption,
+            'totalMonthlyCO2Emission': totalCO2Emission,
           };
         });
         print("Monthly Data: $monthlyData");

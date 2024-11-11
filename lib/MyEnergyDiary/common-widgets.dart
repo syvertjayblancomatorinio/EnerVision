@@ -39,11 +39,13 @@ class HomeUsage extends StatelessWidget {
 class DatePickerWidget extends StatefulWidget {
   final DateTime initialDate;
   final ValueChanged<DateTime> onDateSelected;
+  final VoidCallback getApplianceCount;
 
   const DatePickerWidget({
     super.key,
     required this.initialDate,
     required this.onDateSelected,
+    required this.getApplianceCount,
   });
 
   @override
@@ -190,6 +192,7 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
                                 DateTime(tempSelectedYear, monthIndex);
 
                             widget.onDateSelected(newDate);
+                            widget.getApplianceCount();
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
