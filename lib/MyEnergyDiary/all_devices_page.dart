@@ -133,9 +133,14 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
         color: AppColors.primaryColor,
       ));
     } else if (appliances.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'No appliances added',
+          'No appliance added.\nTap "+" to start tracking.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey[700],
+          ),
         ),
       );
     } else {

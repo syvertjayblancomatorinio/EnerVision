@@ -137,34 +137,57 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                 const SizedBox(height: 20),
                 headers(),
                 const SizedBox(height: 20),
-                Center(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Device Usage Summary on the left
-                      Expanded(
-                        flex: 1,
-                        child: deviceUsageSummary(
-                          applianceCount: applianceCount,
-                          co2Emission: co2Emission,
-                          estimatedEnergy: estimatedEnergy,
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-
-                      Expanded(
-                        flex: 2,
-                        child: appliancesContent(),
-                      ),
-                    ],
-                  ),
-                ),
+                Center(child: content()),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget content() {
+    if (isLoading) {
+      return const Center(
+          child: LoadingWidget(
+        message: 'Fetching my appliances',
+        color: AppColors.primaryColor,
+      ));
+    } else if (appliances.isEmpty) {
+      return Container(
+        height: 450,
+        width: 300,
+        child: const Center(
+          child: Text(
+            'You haven\'t added any appliances yet. Start by adding appliances to track your energy usage and see estimated costs.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    } else {
+      return Center(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Device Usage Summary on the left
+            Expanded(
+              flex: 1,
+              child: deviceUsageSummary(
+                applianceCount: applianceCount,
+                co2Emission: co2Emission,
+                estimatedEnergy: estimatedEnergy,
+              ),
+            ),
+            const SizedBox(width: 20),
+
+            Expanded(
+              flex: 2,
+              child: appliancesContent(),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget headers() {
