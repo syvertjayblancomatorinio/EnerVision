@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
 
 import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kwh.dart';
@@ -115,8 +116,10 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         const SizedBox(height: 10),
         if (isLoading)
           const Center(
-            child: CircularProgressIndicator(),
-          )
+              child: LoadingWidget(
+            message: 'Fetching Today\'s Appliances...',
+            color: AppColors.primaryColor,
+          ))
         else if (appliances.isEmpty)
           const Center(
             child: Text(

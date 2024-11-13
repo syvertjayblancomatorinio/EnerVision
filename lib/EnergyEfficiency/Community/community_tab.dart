@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/AuthService/auth_suggestions.dart';
@@ -10,6 +11,7 @@ import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/confirm_delete.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/post_view_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/create_post.dart';
@@ -358,31 +360,40 @@ class _CommunityTabState extends State<CommunityTab> {
       return timeAgoB.compareTo(timeAgoA);
     });
 
-    return Column(
-      children: <Widget>[
-        if (isLoading)
-          const Center(
-            child: CircularProgressIndicator(),
-          )
-        else if (sortedPosts.isEmpty)
-          Center(
-            child: _buildBody(),
-          )
-        else
-          ...sortedPosts.asMap().entries.map((entry) {
-            var post = entry.value;
-            int index = entry.key;
-            return _buildUserPost(
-              post['title'] ?? 'No Title',
-              post['description'] ?? 'No Description',
-              post['timeAgo'] ?? 'Some time ago',
-              post['tags'] ?? 'No tags',
-              'https://example.com/user_avatar.jpg',
-              'https://example.com/sample_image.jpg',
-              index,
-            );
-          }),
-      ],
+    return SizedBox(
+      height: 500,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            if (isLoading)
+              const Center(
+                  child: LoadingWidget(
+                message: 'Getting Post',
+                color: AppColors.primaryColor,
+              ))
+            else if (sortedPosts.isEmpty)
+              Center(
+                child: _buildBody(),
+              )
+            else
+              // _loading(),
+              ...sortedPosts.asMap().entries.map((entry) {
+                var post = entry.value;
+                int index = entry.key;
+                return _buildUserPost(
+                  post['title'] ?? 'No Title',
+                  post['description'] ?? 'No Description',
+                  post['timeAgo'] ?? 'Some time ago',
+                  post['tags'] ?? 'No tags',
+                  'https://example.com/user_avatar.jpg',
+                  'https://example.com/sample_image.jpg',
+                  index,
+                );
+              }),
+          ],
+        ),
+      ),
     );
   }
 
@@ -396,6 +407,8 @@ class _CommunityTabState extends State<CommunityTab> {
     int index, // Pass the index
   ) {
     List<dynamic> sortedPosts = List.from(posts);
+    final post = posts[index];
+
     sortedPosts.sort((a, b) {
       String timeAgoA = a['timeAgo'] ?? '';
       String timeAgoB = b['timeAgo'] ?? '';
@@ -427,8 +440,7 @@ class _CommunityTabState extends State<CommunityTab> {
               _buildDescription(description),
               const SizedBox(height: 10.0),
               _buildSuggestionsButton(postImageUrl, index),
-              if (_tappedIndex == index)
-                _buildSuggestionTextField('670a0ef4905db7eb08546014'),
+              if (_tappedIndex == index) _buildSuggestionTextField(index),
             ],
           ),
         ),
@@ -436,7 +448,9 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  Widget _buildSuggestionTextField(String postId) {
+  Widget _buildSuggestionTextField(int index) {
+    final post = posts[index];
+
     return Container(
       margin: const EdgeInsets.all(18.0),
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
@@ -482,7 +496,8 @@ class _CommunityTabState extends State<CommunityTab> {
 
                   if (suggestionText.isNotEmpty) {
                     try {
-                      await addSuggestion(postId, {
+                      await addSuggestion(
+                          post['_id'] ?? '67016b4d8316583c6a0f5767', {
                         'suggestionText': suggestionText,
                       });
                       showSnackBar(context, 'Suggestion added successfully');
@@ -540,15 +555,15 @@ class _CommunityTabState extends State<CommunityTab> {
         const Spacer(),
         ElevatedButton(
           onPressed: () {
-            showPostDialog(index);
-            // setState(() {
-            //   if (_tappedIndex == index) {
-            //     _tappedIndex = null;
-            //     fetchSuggestions(postId);
-            //   } else {
-            //     _tappedIndex = index;
-            //   }
-            // });
+            // showPostDialog(index);
+            setState(() {
+              if (_tappedIndex == index) {
+                _tappedIndex = null;
+                fetchSuggestions(postId);
+              } else {
+                _tappedIndex = index;
+              }
+            });
             // Navigator.push(
             //   context,
             //   MaterialPageRoute(builder: (context) => SuggestionExample()),
@@ -977,7 +992,7 @@ class PostWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return const Card(
         // UI code for displaying each post
         );
   }
