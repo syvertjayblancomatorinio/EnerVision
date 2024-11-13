@@ -656,10 +656,9 @@ class _CommunityTabState extends State<CommunityTab> {
 
   Widget _buildTitleTags(String title, String tags) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         _buildTitle(title),
-        const SizedBox(height: 4.0),
         _buildTags(tags),
       ],
     );
