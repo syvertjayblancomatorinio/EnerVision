@@ -382,6 +382,8 @@ class _CommunityTabState extends State<CommunityTab> {
                 var post = entry.value;
                 int index = entry.key;
                 return _buildUserPost(
+                  // username ?? "Username",
+                  post['username'] ?? 'Username',
                   post['title'] ?? 'No Title',
                   post['description'] ?? 'No Description',
                   post['timeAgo'] ?? 'Some time ago',
@@ -398,6 +400,7 @@ class _CommunityTabState extends State<CommunityTab> {
   }
 
   Widget _buildUserPost(
+    String username,
     String title,
     String description,
     String timeAgo,
@@ -430,13 +433,14 @@ class _CommunityTabState extends State<CommunityTab> {
                     postImageUrl,
                   ),
                   const SizedBox(width: 10.0),
-                  _buildTitleTags(title, tags),
+                  _buildTitleTags(username, tags),
                   const Spacer(),
                   _buildTags(timeAgo),
                   const SizedBox(width: 10.0),
                   _buildIcon(index),
                 ],
               ),
+              _buildTitle(title),
               _buildDescription(description),
               const SizedBox(height: 10.0),
               _buildSuggestionsButton(postImageUrl, index),
@@ -630,12 +634,15 @@ class _CommunityTabState extends State<CommunityTab> {
   }
 
   Widget _buildTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        fontFamily: 'Montserrat',
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'Montserrat',
+        ),
       ),
     );
   }
@@ -649,10 +656,9 @@ class _CommunityTabState extends State<CommunityTab> {
 
   Widget _buildTitleTags(String title, String tags) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         _buildTitle(title),
-        const SizedBox(height: 4.0),
         _buildTags(tags),
       ],
     );
@@ -665,10 +671,10 @@ class _CommunityTabState extends State<CommunityTab> {
       ),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.only(top: 30, left: 10, bottom: 10),
+          padding: const EdgeInsets.only(bottom: 30, left: 10, right: 10),
           child: CustomReadMoreText(
             text: description,
-            trimLines: 2,
+            trimLines: 3,
             trimCollapsedText: 'Show more',
             trimExpandedText: 'Show less',
             moreStyle: const TextStyle(
