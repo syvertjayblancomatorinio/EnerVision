@@ -635,7 +635,7 @@ class _CommunityTabState extends State<CommunityTab> {
 
   Widget _buildTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.all(10.0),
+      padding: const EdgeInsets.only(top: 10.0, left: 10.0, right: 10.0),
       child: Text(
         title,
         style: const TextStyle(
@@ -648,15 +648,18 @@ class _CommunityTabState extends State<CommunityTab> {
   }
 
   Widget _buildTags(String tags) {
-    return Text(
-      tags,
-      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+    return Padding(
+      padding: const EdgeInsets.only(left: 10.0),
+      child: Text(
+        tags,
+        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+      ),
     );
   }
 
   Widget _buildTitleTags(String title, String tags) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildTitle(title),
         _buildTags(tags),
