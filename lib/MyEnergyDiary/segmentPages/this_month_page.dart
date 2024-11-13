@@ -137,25 +137,27 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                 const SizedBox(height: 20),
                 headers(),
                 const SizedBox(height: 20),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Device Usage Summary on the left
-                    Expanded(
-                      flex: 1,
-                      child: deviceUsageSummary(
-                        applianceCount: applianceCount,
-                        co2Emission: co2Emission,
-                        estimatedEnergy: estimatedEnergy,
+                Center(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Device Usage Summary on the left
+                      Expanded(
+                        flex: 1,
+                        child: deviceUsageSummary(
+                          applianceCount: applianceCount,
+                          co2Emission: co2Emission,
+                          estimatedEnergy: estimatedEnergy,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 20),
+                      const SizedBox(width: 20),
 
-                    Expanded(
-                      flex: 2,
-                      child: appliancesContent(),
-                    ),
-                  ],
+                      Expanded(
+                        flex: 2,
+                        child: appliancesContent(),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -212,15 +214,13 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         color: AppColors.primaryColor,
       ));
     } else if (appliances.isEmpty) {
-      return const Center(
-        child: Text(
-          'No appliances added',
-          textAlign: TextAlign.center,
-        ),
+      return const Text(
+        'You haven\'t added any appliances yet. Start by adding appliances to track your energy usage and see estimated costs.',
+        textAlign: TextAlign.center,
       );
     } else {
       return Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 10),
         // decoration: greyBoxDecoration(),
         decoration: BoxDecoration(
           color: Colors.white,
