@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
+import '../../CommonWidgets/dialogs/loading_animation.dart';
+
 class ThisMonthPage extends StatefulWidget {
   const ThisMonthPage({super.key});
 
@@ -205,12 +207,15 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
   Widget appliancesContent() {
     if (isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
-      );
+          child: LoadingWidget(
+        message: 'Fetching my appliances',
+        color: AppColors.primaryColor,
+      ));
     } else if (appliances.isEmpty) {
       return const Center(
         child: Text(
           'No appliances added',
+          textAlign: TextAlign.center,
         ),
       );
     } else {

@@ -9,9 +9,11 @@ import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/micaella.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
+import 'package:supabase_project/ConstantTexts/colors.dart';
 import '../../ConstantTexts/Theme.dart';
 import '../../YourEnergyCalculator&Compare/compare_device.dart';
 
@@ -126,8 +128,10 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
   Widget myAppliancesContent() {
     if (isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
-      );
+          child: LoadingWidget(
+        message: 'Fetching all appliances',
+        color: AppColors.primaryColor,
+      ));
     } else if (appliances.isEmpty) {
       return const Center(
         child: Text(
