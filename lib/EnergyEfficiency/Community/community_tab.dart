@@ -51,6 +51,7 @@ class _CommunityTabState extends State<CommunityTab> {
   List<TextEditingController> editControllers = [];
   List<dynamic> suggestions = [];
   List<Map<String, dynamic>> posts = [];
+
   static const String baseUrl = 'http://10.0.2.2:8080';
 
   @override
@@ -58,284 +59,6 @@ class _CommunityTabState extends State<CommunityTab> {
     super.initState();
     getPosts();
     getUsername();
-  }
-
-  Future<void> getPosts() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = false;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.getPosts();
-      setState(() {
-        posts = fetchedPosts;
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-      showSnackBar(context, 'Post not fetched');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> deletePost(String postId) async {
-    try {
-      await ApplianceService.deletePost(postId);
-      print('Post deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
-  }
-
-  Future<String?> getUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
-    }
-
-    final url = Uri.parse('http://10.0.2.2:8080/getUsername/$userId');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print('Username found: ${data['username']}');
-      return data['username'];
-    } else if (response.statusCode == 404) {
-      print('Username not found for user.');
-      return null;
-    } else {
-      throw Exception('Failed to load user kwhRate');
-    }
-  }
-
-  Future<void> getUsersPost() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = true;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.fetchUsersPosts();
-      setState(() {
-        posts = fetchedPosts;
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> fetchSuggestions(String postId) async {
-    setState(() {
-      isLoading = true;
-      error = null; // Reset error before each fetch
-    });
-
-    try {
-      final suggestionsData = await PostsService.getComments(postId);
-      setState(() {
-        suggestions = suggestionsData;
-        print('suggestions data loaded');
-      });
-    } catch (e) {
-      print('Error: $e');
-      setState(() {
-        error = 'Failed to load suggestions. Please try again later.';
-      });
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> addSuggestion(
-      String postId, Map<String, dynamic> suggestionData) async {
-    final url = Uri.parse('$baseUrl/addSuggestions/$postId');
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    final response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'suggestionData': suggestionData,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      final responseBody = jsonDecode(response.body);
-      print('Suggestion added: ${responseBody['newSuggestion']}');
-    } else if (response.statusCode == 400) {
-      final responseBody = jsonDecode(response.body);
-      throw Exception('Failed to add suggestion: ${responseBody['message']}');
-    } else if (response.statusCode == 404) {
-      throw Exception('Post not found: ${response.body}');
-    } else {
-      throw Exception('Unexpected error: ${response.body}');
-    }
-  }
-
-  void showPostDialog(int index) {
-    var post = posts[index];
-
-    controllers.editApplianceNameController.text = post['applianceName'] ?? '';
-    controllers.editWattageController.text = post['wattage']?.toString() ?? '';
-    controllers.editUsagePatternController.text =
-        post['usagePatternPerDay']?.toString() ?? '';
-    controllers.editWeeklyPatternController.text =
-        post['selectedDays']?.toString() ?? '';
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return PostViewDialog(
-          post: post,
-        );
-      },
-    );
-  }
-
-  void _confirmDeletePost(int index) {
-    if (index < 0 || index >= posts.length) {
-      print('Invalid index for deleting post');
-      return;
-    }
-
-    final post = posts[index];
-
-    if (post['_id'] == null) {
-      print('Post ID is null, cannot delete');
-      return;
-    }
-
-    print('Attempting to delete post with ID: ${post['_id']}');
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return ConfirmDeleteDialog(
-          title: 'Delete Post?',
-          description:
-              'Are you sure you want to delete this Post? This cannot be undone.',
-          onDelete: () => deletePost(post['_id']).then((_) {}),
-          postDelete: getUsersPost,
-        );
-      },
-    );
-  }
-
-  void _togglePostView() {
-    setState(() {
-      showUsersPosts = !showUsersPosts;
-      if (showUsersPosts) {
-        getUsersPost();
-      } else {
-        getPosts();
-      }
-    });
-  }
-
-  void _showActionSheet(BuildContext context) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (BuildContext context) => CupertinoActionSheet(
-        title: const Text('Actions'),
-        actions: <CupertinoActionSheetAction>[
-          CupertinoActionSheetAction(
-            isDestructiveAction: false,
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ShareYourStoryPage()),
-              );
-            },
-            child: const Text('Create a new post'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _togglePostView();
-            },
-            child: const Text('View All My Posts'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text(
-            'Cancel',
-            style: TextStyle(
-              color: Colors.redAccent,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _editPostActionSheet(BuildContext context, int index) {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (BuildContext context) => CupertinoActionSheet(
-        title: const Text('Actions'),
-        actions: <CupertinoActionSheetAction>[
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context);
-              if (isUserPost) {
-                _confirmDeletePost(index);
-              } else {
-                _confirmReportPost(index);
-              }
-            },
-            child: isUserPost
-                ? const Text('Delete Post')
-                : const Text('Report Post'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(context); // Close the action sheet
-          },
-          child: const Text(
-            'Cancel',
-            style: TextStyle(
-                // color: Colors.redAccent,
-                ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _confirmReportPost(int index) {
-    final post = posts[index];
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return ConfirmDeleteDialog(
-          title: 'Report Post?',
-          description: 'Are you sure you want to Report this Post? ',
-          onDelete: () => deletePost(post['_id']).then(
-            (_) {},
-          ),
-          postDelete: getPosts,
-        );
-      },
-    );
   }
 
   @override
@@ -373,16 +96,12 @@ class _CommunityTabState extends State<CommunityTab> {
                 color: AppColors.primaryColor,
               ))
             else if (sortedPosts.isEmpty)
-              Center(
-                child: _buildBody(),
-              )
+              Center(child: _buildBody())
             else
-              // _loading(),
               ...sortedPosts.asMap().entries.map((entry) {
                 var post = entry.value;
                 int index = entry.key;
                 return _buildUserPost(
-                  // username ?? "Username",
                   post['username'] ?? 'Username',
                   post['title'] ?? 'No Title',
                   post['description'] ?? 'No Description',
@@ -407,7 +126,7 @@ class _CommunityTabState extends State<CommunityTab> {
     String tags,
     String profileImageUrl,
     String postImageUrl,
-    int index, // Pass the index
+    int index,
   ) {
     List<dynamic> sortedPosts = List.from(posts);
     final post = posts[index];
@@ -454,6 +173,7 @@ class _CommunityTabState extends State<CommunityTab> {
 
   Widget _buildSuggestionTextField(int index) {
     final post = posts[index];
+    final postId = post['_id'] ?? 'default_post_id';
 
     return Container(
       margin: const EdgeInsets.all(18.0),
@@ -500,8 +220,7 @@ class _CommunityTabState extends State<CommunityTab> {
 
                   if (suggestionText.isNotEmpty) {
                     try {
-                      await addSuggestion(
-                          post['_id'] ?? '67016b4d8316583c6a0f5767', {
+                      await addSuggestion(postId, {
                         'suggestionText': suggestionText,
                       });
                       showSnackBar(context, 'Suggestion added successfully');
@@ -525,6 +244,7 @@ class _CommunityTabState extends State<CommunityTab> {
   Widget _buildSuggestionsButton(String profileImageUrl, int index) {
     final String validProfileImageUrl =
         profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
+    final postId = posts[index]['_id'] ?? 'default_post_id';
     return Row(
       children: [
         Row(
@@ -563,6 +283,8 @@ class _CommunityTabState extends State<CommunityTab> {
             setState(() {
               if (_tappedIndex == index) {
                 _tappedIndex = null;
+                print("Post ID for suggestion: $postId");
+
                 fetchSuggestions(postId);
               } else {
                 _tappedIndex = index;
@@ -971,6 +693,300 @@ class _CommunityTabState extends State<CommunityTab> {
           ],
         );
       }).toList(),
+    );
+  }
+
+  Future<void> getPosts() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = false;
+    });
+
+    try {
+      final fetchedPosts = await PostsService.getPosts();
+      setState(() {
+        posts = fetchedPosts;
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+      showSnackBar(context, 'Post not fetched');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> deletePost(String postId) async {
+    try {
+      await ApplianceService.deletePost(postId);
+      print('Post deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
+    }
+  }
+
+  Future<void> addSuggestionNew(
+      String postId, Map<String, dynamic> suggestionData) async {
+    try {
+      await ApplianceService.addSuggestionToAPost(postId, suggestionData);
+      print('Suggestion added successfully');
+    } catch (e) {
+      print('Error adding suggestion: $e');
+    }
+  }
+
+  Future<String?> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in shared preferences');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/getUsername/$userId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('Username found: ${data['username']}');
+      return data['username'];
+    } else if (response.statusCode == 404) {
+      print('Username not found for user.');
+      return null;
+    } else {
+      throw Exception('Failed to load user kwhRate');
+    }
+  }
+
+  Future<void> getUsersPost() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = true;
+    });
+
+    try {
+      final fetchedPosts = await PostsService.fetchUsersPosts();
+      setState(() {
+        posts = fetchedPosts;
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> fetchSuggestions(String postId) async {
+    setState(() {
+      isLoading = true;
+      error = null; // Reset error before each fetch
+    });
+
+    try {
+      final suggestionsData = await PostsService.getComments(postId);
+      setState(() {
+        suggestions = suggestionsData;
+        print('suggestions data loaded');
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        error = 'Failed to load suggestions. Please try again later.';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void onAddSuggestionButtonPressed(
+      String postId, Map<String, dynamic> suggestionData) {
+    if (postId != null) {
+      print("Adding suggestion for Post ID: $postId");
+      addSuggestion(postId, suggestionData);
+    } else {
+      print("Post ID is null, cannot add suggestion.");
+    }
+  }
+
+  Future<void> addSuggestion(
+      String postId, Map<String, dynamic> suggestionData) async {
+    final url = Uri.parse('$baseUrl/addSuggestions/$postId');
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'suggestionData': suggestionData,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+      print('Suggestion added: ${responseBody['newSuggestion']}');
+    } else {
+      throw Exception('Failed to add suggestion: ${response.body}');
+    }
+  }
+
+  void showPostDialog(int index) {
+    var post = posts[index];
+
+    controllers.editApplianceNameController.text = post['applianceName'] ?? '';
+    controllers.editWattageController.text = post['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
+        post['usagePatternPerDay']?.toString() ?? '';
+    controllers.editWeeklyPatternController.text =
+        post['selectedDays']?.toString() ?? '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return PostViewDialog(
+          post: post,
+        );
+      },
+    );
+  }
+
+  void _confirmDeletePost(int index) {
+    if (index < 0 || index >= posts.length) {
+      print('Invalid index for deleting post');
+      return;
+    }
+
+    final post = posts[index];
+
+    if (post['_id'] == null) {
+      print('Post ID is null, cannot delete');
+      return;
+    }
+
+    print('Attempting to delete post with ID: ${post['_id']}');
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ConfirmDeleteDialog(
+          title: 'Delete Post?',
+          description:
+              'Are you sure you want to delete this Post? This cannot be undone.',
+          onDelete: () => deletePost(post['_id']).then((_) {}),
+          postDelete: getUsersPost,
+        );
+      },
+    );
+  }
+
+  void _togglePostView() {
+    setState(() {
+      showUsersPosts = !showUsersPosts;
+      if (showUsersPosts) {
+        getUsersPost();
+      } else {
+        getPosts();
+      }
+    });
+  }
+
+  void _showActionSheet(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Actions'),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            isDestructiveAction: false,
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ShareYourStoryPage()),
+              );
+            },
+            child: const Text('Create a new post'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _togglePostView();
+            },
+            child: const Text('View All My Posts'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              color: Colors.redAccent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _editPostActionSheet(BuildContext context, int index) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Actions'),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              if (isUserPost) {
+                _confirmDeletePost(index);
+              } else {
+                _confirmReportPost(index);
+              }
+            },
+            child: isUserPost
+                ? const Text('Delete Post')
+                : const Text('Report Post'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () {
+            Navigator.pop(context); // Close the action sheet
+          },
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+                // color: Colors.redAccent,
+                ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmReportPost(int index) {
+    final post = posts[index];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ConfirmDeleteDialog(
+          title: 'Report Post?',
+          description: 'Are you sure you want to Report this Post? ',
+          onDelete: () => deletePost(post['_id']).then(
+            (_) {},
+          ),
+          postDelete: getPosts,
+        );
+      },
     );
   }
 }

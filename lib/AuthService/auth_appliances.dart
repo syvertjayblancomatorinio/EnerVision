@@ -96,26 +96,6 @@ class ApplianceService {
     }
   }
 
-  static Future<void> deletePost(String postId) async {
-    final url = Uri.parse('$baseUrl/deletePost/$postId');
-    print('Sending DELETE request to: $url');
-
-    final response = await http.delete(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      print('Post with ID $postId deleted successfully.');
-    } else {
-      final responseBody = jsonDecode(response.body);
-      print('Failed to delete appliance. Server response: ${response.body}');
-      throw Exception('Failed to delete appliance: ${responseBody['message']}');
-    }
-  }
-
   // Static method to delete an appliance
   static Future<void> deleteAppliance(String applianceId) async {
     final url = Uri.parse('$baseUrl/deleteAppliance/$applianceId');
@@ -175,6 +155,55 @@ class ApplianceService {
       }
     } catch (error) {
       return null;
+    }
+  }
+
+  static Future<void> deletePost(String postId) async {
+    final url = Uri.parse('$baseUrl/deletePost/$postId');
+    print('Sending DELETE request to: $url');
+
+    final response = await http.delete(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Post with ID $postId deleted successfully.');
+    } else {
+      final responseBody = jsonDecode(response.body);
+      print('Failed to delete appliance. Server response: ${response.body}');
+      throw Exception('Failed to delete appliance: ${responseBody['message']}');
+    }
+  }
+
+  static Future<void> addSuggestionToAPost(
+      String postId, Map<String, dynamic> suggestionData) async {
+    final url = Uri.parse('$baseUrl/addSuggestions/$postId');
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'suggestionData': suggestionData,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+      print('Suggestion added: ${responseBody['newSuggestion']}');
+    } else if (response.statusCode == 400) {
+      final responseBody = jsonDecode(response.body);
+      throw Exception('Failed to add suggestion: ${responseBody['message']}');
+    } else if (response.statusCode == 404) {
+      throw Exception('Post not found: ${response.body}');
+    } else {
+      throw Exception('Unexpected error: ${response.body}');
     }
   }
 }
