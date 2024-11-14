@@ -668,24 +668,19 @@ class _CommunityTabState extends State<CommunityTab> {
   }
 
   Widget _buildDescription(String description) {
-    return Container(
-      constraints: const BoxConstraints(
-        maxHeight: 300,
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 30, left: 10, right: 10),
-          child: CustomReadMoreText(
-            text: description,
-            trimLines: 3,
-            trimCollapsedText: 'Show more',
-            trimExpandedText: 'Show less',
-            moreStyle: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryColor,
-            ),
-          ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 30, left: 10, right: 10),
+      child: ReadMoreText(
+        description,
+        trimLines: 3,
+        trimMode: TrimMode.Line,
+        trimCollapsedText: 'Show more',
+        trimExpandedText: 'Show less',
+        colorClickableText: AppColors.primaryColor,
+        moreStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: AppColors.primaryColor,
         ),
       ),
     );

@@ -59,8 +59,8 @@ cron.schedule('0 0 1 * *', async () => {
 
 
 mongoose.connect(
-//"mongodb://localhost:27017/enervision"
-  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
+"mongodb://localhost:27017/enervision"
+//  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
 //  { useNewUrlParser: true, useUnifiedTopology: true }
 ).then(() => {
   console.log('Connected to MongoDB');

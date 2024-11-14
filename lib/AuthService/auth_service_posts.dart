@@ -15,7 +15,6 @@ class PostsService {
     if (response.statusCode == 200) {
       List<dynamic> fetchedPosts = jsonDecode(response.body)['posts'] ?? [];
 
-      // Process the fetched posts to include timeAgo and other transformations
       return fetchedPosts.map<Map<String, dynamic>>((post) {
         DateTime createdAt = DateTime.parse(post['createdAt']);
         String timeAgo = _timeAgo(createdAt);
@@ -23,8 +22,11 @@ class PostsService {
           'title': post['title'] ?? 'No title',
           'description': post['description'] ?? 'No description',
           'tags': post['tags'] ?? 'No tags',
-          'imagePath': 'assets/image (6).png', // Default image path
+          'imagePath': 'assets/image (6).png',
           'timeAgo': timeAgo,
+          'username': post['userId'] != null
+              ? post['userId']['username']
+              : 'Unknown user',
         };
       }).toList();
     } else {
@@ -59,9 +61,6 @@ class PostsService {
   }
 
   static Future<void> deleteAPost(String postId) async {
-    // SharedPreferences preferences = await SharedPreferences.getInstance();
-    // final userId = prefs.getString('userId');
-
     final url = Uri.parse('$baseUrl/posts/$postId');
     final response = await http.delete(
       url,
@@ -70,10 +69,8 @@ class PostsService {
       },
     );
     if (response.statusCode == 200) {
-      // Success - post was deleted
       print('Post deleted successfully');
     } else {
-      // Failure - show the error message returned by the server
       final responseBody = jsonDecode(response.body);
       throw Exception('Failed to delete Post: ${responseBody['message']}');
     }

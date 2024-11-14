@@ -28,9 +28,8 @@ router.post('/addPost', async (req, res) => {
 
 // Get all posts of all users
 router.get('/displayPosts', asyncHandler(async (req, res) => {
-
-    const posts = await Posts.find();
-    res.status(200).json({ message: 'Posts are retrieved', posts });  // Use 'posts' here as well
+    const posts = await Posts.find().populate('userId', 'username'); // Only select 'username' from User
+    res.status(200).json({ message: 'Posts are retrieved', posts });
 }));
 
 // Get all posts of a user
