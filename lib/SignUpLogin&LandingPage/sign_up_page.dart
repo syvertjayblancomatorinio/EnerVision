@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/AuthService/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
+import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/setup_profile.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/textfield.dart';
@@ -79,7 +81,10 @@ class _SignUpPageState extends State<SignUpPage> {
             children: [
               if (_isLoading)
                 const Center(
-                  child: CircularProgressIndicator(),
+                  child: LoadingWidget(
+                    message: 'Logging in...',
+                    color: AppColors.primaryColor,
+                  ),
                 ),
               SingleChildScrollView(
                 child: Padding(
