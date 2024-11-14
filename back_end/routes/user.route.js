@@ -87,14 +87,19 @@ router.post("/signin", async (req, res) => {
   }
 });
 
+function capitalizeWords(str) {
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+}
+
 router.post("/signup", async (req, res) => {
   try {
     const existingUser = await User.findOne({ email: req.body.email });
+     const formattedUsername = capitalizeWords(req.body.username);
     if (!existingUser) {
       const newUser = new User({
         email: req.body.email,
         password: req.body.password,
-        username: req.body.username,
+        username: formattedUsername,
         kwhRate: req.body.kwhRate
       });
 
