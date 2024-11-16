@@ -31,6 +31,37 @@ class ApplianceService {
     }
   }
 
+  static Future<List<Map<String, dynamic>>> fetchTodayAppliance() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in shared preferences');
+    }
+
+    final url = Uri.parse('$baseUrl/getAllTodayAppliances/$userId/appliances');
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      // Decode the response body as a Map
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+      // Check if 'appliances' key exists and is a list
+      if (responseData.containsKey('appliances') &&
+          responseData['appliances'] is List) {
+        // Return the list of appliances
+        return List<Map<String, dynamic>>.from(responseData['appliances']);
+      } else {
+        throw Exception('Appliances data is not in the expected format');
+      }
+    } else if (response.statusCode == 404) {
+      throw Exception('Appliances not found');
+    } else {
+      throw Exception('Failed to load appliances');
+    }
+  }
+
   // Static method to Read appliances
   static Future<List<Map<String, dynamic>>> fetchAppliance() async {
     final prefs = await SharedPreferences.getInstance();
