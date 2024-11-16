@@ -54,6 +54,7 @@ class _CommunityTabState extends State<CommunityTab> {
   void initState() {
     super.initState();
     getPosts();
+    getUsersPost();
   }
 
   @override
@@ -276,9 +277,17 @@ class _CommunityTabState extends State<CommunityTab> {
         const Spacer(),
         ElevatedButton(
           onPressed: () {
-            setState(() {
-              _tappedIndex = (_tappedIndex == index) ? null : index;
-            });
+            if (_tappedIndex == index) {
+              setState(() {
+                _tappedIndex = null;
+              });
+            } else {
+              // Call _confirmDeletePost when "Add Suggestions" is tapped
+              _confirmDeletePost(index);
+              setState(() {
+                _tappedIndex = index;
+              });
+            }
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1BBC9B),
@@ -287,7 +296,8 @@ class _CommunityTabState extends State<CommunityTab> {
             ),
           ),
           child: Text(
-              _tappedIndex == index ? 'Hide Suggestions' : 'Add Suggestions'),
+            _tappedIndex == index ? 'Hide Suggestions' : 'Add Suggestions',
+          ),
         )
       ],
     );
@@ -334,15 +344,6 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
-  Future<void> deletePost(String postId) async {
-    try {
-      await ApplianceService.deletePost(postId);
-      print('Post deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
-  }
-
   Future<void> addSuggestionNew(
       String postId, Map<String, dynamic> suggestionData) async {
     if (postId.isEmpty || suggestionData.isEmpty) {
@@ -358,6 +359,17 @@ class _CommunityTabState extends State<CommunityTab> {
     } catch (e) {
       print('Error adding suggestion: $e');
       showSnackBar(context, 'Failed to add suggestion. Please try again.');
+    }
+  }
+
+  void onAddSuggestionButtonPressed(
+      String postId, Map<String, dynamic> suggestionData) {
+    if (postId != null && postId.isNotEmpty) {
+      print("Adding suggestion for Post ID: $postId");
+      addSuggestionNew(postId, suggestionData);
+    } else {
+      print("Post ID is null or empty, cannot add suggestion.");
+      showSnackBar(context, 'Invalid post ID.');
     }
   }
 
@@ -378,16 +390,6 @@ class _CommunityTabState extends State<CommunityTab> {
       setState(() {
         isLoading = false;
       });
-    }
-  }
-
-  void onAddSuggestionButtonPressed(
-      String postId, Map<String, dynamic> suggestionData) {
-    if (postId != null) {
-      print("Adding suggestion for Post ID: $postId");
-      addSuggestionNew(postId, suggestionData);
-    } else {
-      print("Post ID is null, cannot add suggestion.");
     }
   }
 
@@ -430,6 +432,15 @@ class _CommunityTabState extends State<CommunityTab> {
     //     );
     //   },
     // );
+  }
+
+  Future<void> deletePost(String postId) async {
+    try {
+      await ApplianceService.deletePost(postId);
+      print('Post deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
+    }
   }
 
   void _confirmDeletePost(int index) {

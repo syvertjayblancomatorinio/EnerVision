@@ -75,6 +75,7 @@ class PostsService {
       throw Exception('Failed to delete Post: ${responseBody['message']}');
     }
   }
+  // It's almost 3am and I still couldn't figure out how to add suggestions to the specific post hays kapoy na.
 
   // Helper method to calculate "time ago"
   static String _timeAgo(DateTime dateTime) {
