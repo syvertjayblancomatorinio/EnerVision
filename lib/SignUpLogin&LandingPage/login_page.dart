@@ -5,6 +5,7 @@ import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/user.dart';
 import 'package:supabase_project/buttons/sign_up_button.dart';
+import 'package:supabase_project/buttons/login_signUp.dart';
 import 'package:supabase_project/CommonWidgets/textfield.dart';
 
 class LoginPage extends StatefulWidget {
@@ -29,7 +30,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  User user = User('', '', '', 0.0);
+  User user = User('', '', '');
   Future<void> _showErrorDialog(BuildContext context) async {
     await showCustomDialog(
       context: context,
@@ -65,19 +66,18 @@ class _LoginPageState extends State<LoginPage> {
                       const Text(
                         'Welcome back!',
                         style: TextStyle(
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'ProductSans',
-                          fontSize: 16.0,
+                          color: Colors.black,
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 5),
-                      const Text(
+                      Text(
                         'Enter your email and password',
                         style: TextStyle(
-                          fontFamily: 'ProductSans',
-                          fontSize: 14.0,
-                          color: Colors.black,
+                          fontSize: 18,
+                          color: Colors.grey[700],
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -157,6 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ],
                       ),
+                      SizedBox(height: 20),
                       SignUpButton(
                         onPressed: () async {
                           if (_formKey.currentState?.validate() ?? false) {
@@ -190,32 +191,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-            Positioned(
+            PositionedButton(
               top: 50,
               right: 20,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SignUpPage()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 5.0, horizontal: 30.0),
-                  backgroundColor: const Color(0xFF75FFBA),
-                  elevation: 5.0,
-                ),
-                child: const Text(
-                  'Sign Up',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 12.0,
-                    fontFamily: 'ProductSans',
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              buttonText: 'Sign Up',
+              targetPage: SignUpPage(),
             ),
           ],
         ),

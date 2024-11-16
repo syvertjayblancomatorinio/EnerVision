@@ -14,6 +14,8 @@ import 'package:supabase_project/SignUpLogin&LandingPage/user.dart';
 import 'package:supabase_project/buttons/sign_up_button.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../CommonWidgets/controllers/app_controllers.dart';
+import 'package:supabase_project/buttons/login_signUp.dart';
 
 import 'package:wc_form_validators/wc_form_validators.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -25,38 +27,19 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
+  final AppControllers controllers = AppControllers();
 
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _usernameController = TextEditingController();
-  // final _kwhRateController = TextEditingController();
-  late final TextEditingController controller;
   bool _showClearIcon = false;
   bool _showClearEmailIcon = false;
   bool _showClearPasswordIcon = false;
+  bool _isLoading = false;
 
-  bool _isLoading = false; // Loading state
-  // String? validatePassword(String value) {
-  //   RegExp regex =
-  //       RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
-  //   if (value.isEmpty) {
-  //     return 'Please enter password';
-  //   } else {
-  //     if (!regex.hasMatch(value)) {
-  //       return 'Enter valid password';
-  //     } else {
-  //       return null;
-  //     }
-  //   }
-  // }
-
-  User user = User('', '', '', 0);
+  User user = User('', '', '');
   @override
   void dispose() {
-    _usernameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    // _kwhRateController.dispose();
+    controllers.usernameController.dispose();
+    controllers.emailController.dispose();
+    controllers.passwordController.dispose();
     super.dispose();
   }
 
@@ -121,7 +104,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
-                              controller: _usernameController,
+                              controller: controllers.usernameController,
                               hintText: 'Username',
                               obscureText: false,
                               prefixIcon: const Icon(Icons.person_outlined),
@@ -139,35 +122,8 @@ class _SignUpPageState extends State<SignUpPage> {
                               keyboardType: TextInputType.text,
                             ),
                             const SizedBox(height: 20),
-                            // CustomTextField(
-                            //   keyboardType: TextInputType.number,
-                            //   controller: _kwhRateController,
-                            //   hintText: 'Kwh Rate',
-                            //   obscureText: false,
-                            //   prefixIcon: const Icon(
-                            //       Icons.energy_savings_leaf_outlined),
-                            //   onChanged: (value) {
-                            //     setState(() {
-                            //       _showClearIcon = value.isNotEmpty;
-                            //     });
-                            //
-                            //     final kwhRate = double.tryParse(value);
-                            //     if (kwhRate != null) {
-                            //       user.kwhRate = kwhRate;
-                            //     } else {
-                            //       user.kwhRate = 0;
-                            //     }
-                            //   },
-                            //   validator: (value) {
-                            //     if (value == null || value.isEmpty) {
-                            //       return 'Enter Kwh Rate';
-                            //     } else {
-                            //       return null;
-                            //     }
-                            //   },
-                            // ),
                             CustomTextField(
-                              controller: _emailController,
+                              controller: controllers.emailController,
                               hintText: 'Email',
                               keyboardType: TextInputType.emailAddress,
                               obscureText: false,
@@ -192,11 +148,11 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
-                              controller: _passwordController,
+                              controller: controllers.passwordController,
                               hintText: 'Password',
                               keyboardType: TextInputType.text,
                               prefixIcon: const Icon(Icons.lock_outline),
-                              obscureText: true, // text obscured
+                              obscureText: true,
                               onChanged: (value) {
                                 setState(() {
                                   _showClearPasswordIcon = value.isNotEmpty;
@@ -222,9 +178,12 @@ class _SignUpPageState extends State<SignUpPage> {
                                   try {
                                     final response = await AuthService(
                                       context: context,
-                                      emailController: _emailController,
-                                      passwordController: _passwordController,
-                                      usernameController: _usernameController,
+                                      emailController:
+                                          controllers.emailController,
+                                      passwordController:
+                                          controllers.passwordController,
+                                      usernameController:
+                                          controllers.usernameController,
                                       // kwhRateController: _kwhRateController,
                                     ).signUp();
 
@@ -258,119 +217,6 @@ class _SignUpPageState extends State<SignUpPage> {
                               },
                               text: 'Sign Up',
                             ),
-
-                            // SignUpButton(
-                            //     onPressed: () {
-                            //       if (_formKey.currentState?.validate() ??
-                            //           false) {
-                            //         AuthService(
-                            //           context: context,
-                            //           emailController: _emailController,
-                            //           passwordController: _passwordController,
-                            //           usernameController: _usernameController,
-                            //           kwhRateController: _kwhRateController,
-                            //         ).signUp();
-                            //       } else if (_formKey.currentState
-                            //               ?.validate() ??
-                            //           true) {
-                            //         Fluttertoast.showToast(
-                            //             msg: "Email is not available",
-                            //             toastLength: Toast.LENGTH_SHORT,
-                            //             gravity: ToastGravity.BOTTOM,
-                            //             timeInSecForIosWeb: 1,
-                            //             backgroundColor: Colors.red,
-                            //             textColor: Colors.white,
-                            //             fontSize: 16.0);
-                            //       } else {
-                            //         Fluttertoast.showToast(
-                            //             msg: "Email is not available",
-                            //             toastLength: Toast.LENGTH_SHORT,
-                            //             gravity: ToastGravity.BOTTOM,
-                            //             timeInSecForIosWeb: 1,
-                            //             backgroundColor: Colors.red,
-                            //             textColor: Colors.white,
-                            //             fontSize: 16.0);
-                            //       }
-                            //     },
-                            //     text: 'Sign Up'),
-                            // Row(
-                            //   children: [
-                            //     Expanded(
-                            //       child: Divider(
-                            //         thickness: 0.5,
-                            //         color: Colors.grey[400],
-                            //       ),
-                            //     ),
-                            //     Padding(
-                            //       padding: const EdgeInsets.symmetric(
-                            //           horizontal: 10.0),
-                            //       child: Text(
-                            //         'or sign up with',
-                            //         style: TextStyle(
-                            //             color: Colors.grey[700],
-                            //             fontFamily: 'ProductSans',
-                            //             fontSize: 12.0),
-                            //       ),
-                            //     ),
-                            //     Expanded(
-                            //       child: Divider(
-                            //         thickness: 0.5,
-                            //         color: Colors.grey[400],
-                            //       ),
-                            //     ),
-                            //   ],
-                            // ),
-                            // const SizedBox(height: 25),
-                            // Row(
-                            //   mainAxisAlignment: MainAxisAlignment.center,
-                            //   children: [
-                            //     GestureDetector(
-                            //       onTap: () {},
-                            //       child: Container(
-                            //         padding: const EdgeInsets.all(10),
-                            //         decoration: BoxDecoration(
-                            //           border: Border.all(color: Colors.white),
-                            //           borderRadius: BorderRadius.circular(30),
-                            //           color: Colors.grey[200],
-                            //         ),
-                            //         height: 50.0,
-                            //         width: 150.0,
-                            //         child: const Row(
-                            //           mainAxisAlignment:
-                            //               MainAxisAlignment.center,
-                            //           children: [
-                            //             Image(
-                            //                 image: AssetImage(
-                            //                     'assets/google.png')),
-                            //           ],
-                            //         ),
-                            //       ),
-                            //     ),
-                            //     const SizedBox(width: 20),
-                            //     GestureDetector(
-                            //       onTap: () {},
-                            //       child: Container(
-                            //         padding: const EdgeInsets.all(10),
-                            //         decoration: BoxDecoration(
-                            //           border: Border.all(color: Colors.white),
-                            //           borderRadius: BorderRadius.circular(30),
-                            //           color: Colors.grey[200],
-                            //         ),
-                            //         height: 50.0,
-                            //         width: 150.0,
-                            //         child: const Row(
-                            //           mainAxisAlignment:
-                            //               MainAxisAlignment.center,
-                            //           children: [
-                            //             Image(
-                            //                 image: AssetImage(
-                            //                     'assets/facebook.png')),
-                            //           ],
-                            //         ),
-                            //       ),
-                            //     ),
-                            //   ],
-                            // ),
                           ],
                         ),
                       ),
@@ -378,32 +224,11 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
               ),
-              Positioned(
+              PositionedButton(
                 top: 20,
                 right: 15,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => LoginPage()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 5.0, horizontal: 30.0),
-                    backgroundColor: const Color(0xFF02A676),
-                    elevation: 5.0,
-                  ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12.0,
-                      fontFamily: 'Montserrat',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                buttonText: 'Sign Up',
+                targetPage: LoginPage(),
               ),
             ],
           ),

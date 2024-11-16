@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
@@ -95,12 +96,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         isLoading =
             false; // Set loading state to false after the data is fetched
       });
-
-      print('Fetched totalDailyConsumptionCost: $totalDailyConsumptionCost');
-      print('Fetched totalDailyKwhConsumption: $totalDailyKwhConsumption');
-      print('Fetched totalDailyCO2Emissions: $totalDailyCO2Emissions');
     } catch (e) {
-      print('Error: $e'); // Print the error if any
       setState(() {
         isLoading =
             false; // Set loading state to false even if there is an error
@@ -522,10 +518,9 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     try {
       final updatedAppliance =
           await ApplianceService.updateAppliance(applianceId, updates);
-      _showSnackBar('Update Success');
+      showSnackBar(context, 'Update Success');
     } catch (e) {
-      _showSnackBar('Appliance can only be updated once a month.');
-      print('Error updating appliance: $e');
+      showSnackBar(context, 'Appliance can only be updated once a month.');
     }
   }
 
@@ -604,15 +599,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           },
           child: const Text('Cancel'),
         ),
-      ),
-    );
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Center(child: Text(message)),
-        duration: const Duration(seconds: 3),
       ),
     );
   }
