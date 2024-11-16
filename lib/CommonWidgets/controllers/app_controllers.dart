@@ -24,6 +24,9 @@ class AppControllers {
   final TextEditingController addMonthlyPatternController =
       TextEditingController();
   final TextEditingController suggestionController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
 
   // Dispose all controllers
   void dispose() {
@@ -38,5 +41,8 @@ class AppControllers {
     addApplianceCategoryController.dispose();
     kwhRateController.dispose();
     addMonthlyPatternController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    usernameController.dispose();
   }
 }
