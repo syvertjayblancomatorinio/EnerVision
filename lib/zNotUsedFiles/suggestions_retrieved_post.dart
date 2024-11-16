@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
@@ -77,9 +78,9 @@ class _CommunityTabState extends State<CommunityTab> {
   Widget _content() {
     List<dynamic> sortedPosts = List.from(posts);
     sortedPosts.sort((a, b) {
-      DateTime? timeA = DateTime.tryParse(a['timeAgo'] ?? '');
-      DateTime? timeB = DateTime.tryParse(b['timeAgo'] ?? '');
-      return (timeB ?? DateTime.now()).compareTo(timeA ?? DateTime.now());
+      String timeAgoA = a['timeAgo'] ?? '';
+      String timeAgoB = b['timeAgo'] ?? '';
+      return timeAgoB.compareTo(timeAgoA);
     });
 
     return SizedBox(
@@ -106,8 +107,8 @@ class _CommunityTabState extends State<CommunityTab> {
                   post['description'] ?? 'No Description',
                   post['timeAgo'] ?? 'Some time ago',
                   post['tags'] ?? 'No tags',
-                  '',
-                  '',
+                  'https://example.com/user_avatar.jpg',
+                  'https://example.com/sample_image.jpg',
                   index,
                 );
               }),
@@ -131,11 +132,10 @@ class _CommunityTabState extends State<CommunityTab> {
     final post = posts[index];
 
     sortedPosts.sort((a, b) {
-      DateTime? timeA = DateTime.tryParse(a['timeAgo'] ?? '');
-      DateTime? timeB = DateTime.tryParse(b['timeAgo'] ?? '');
-      return (timeB ?? DateTime.now()).compareTo(timeA ?? DateTime.now());
+      String timeAgoA = a['timeAgo'] ?? '';
+      String timeAgoB = b['timeAgo'] ?? '';
+      return timeAgoB.compareTo(timeAgoA);
     });
-
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
@@ -176,6 +176,9 @@ class _CommunityTabState extends State<CommunityTab> {
   }
 
   Widget _buildSuggestionTextField(int index) {
+    final post = posts[index];
+    final postId = post['_id'] ?? '6735ed7b6957b66f80af5b72';
+
     return Container(
       margin: const EdgeInsets.all(18.0),
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
@@ -221,6 +224,9 @@ class _CommunityTabState extends State<CommunityTab> {
 
                   if (suggestionText.isNotEmpty) {
                     try {
+                      // await addSuggestion(postId, {
+                      //   'suggestionText': suggestionText,
+                      // });
                       showSnackBar(context, 'Suggestion added successfully');
                       controller.suggestionController
                           .clear(); // Clear the text field after successful submission
@@ -242,6 +248,7 @@ class _CommunityTabState extends State<CommunityTab> {
   Widget _buildSuggestionsButton(String profileImageUrl, int index) {
     final String validProfileImageUrl =
         profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
+    final postId = posts[index]['_id'] ?? '6735ed7b6957b66f80af5b72';
     return Row(
       children: [
         Row(
@@ -276,9 +283,20 @@ class _CommunityTabState extends State<CommunityTab> {
         const Spacer(),
         ElevatedButton(
           onPressed: () {
+            // showPostDialog(index);
             setState(() {
-              _tappedIndex = (_tappedIndex == index) ? null : index;
+              if (_tappedIndex == index) {
+                _tappedIndex = index;
+
+                fetchSuggestions(postId);
+              } else {
+                _tappedIndex = index;
+              }
             });
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => SuggestionExample()),
+            // );
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1BBC9B),
@@ -286,9 +304,8 @@ class _CommunityTabState extends State<CommunityTab> {
               borderRadius: BorderRadius.circular(20.0),
             ),
           ),
-          child: Text(
-              _tappedIndex == index ? 'Hide Suggestions' : 'Add Suggestions'),
-        )
+          child: const Text('Add Suggestions'),
+        ),
       ],
     );
   }
@@ -313,20 +330,17 @@ class _CommunityTabState extends State<CommunityTab> {
   Future<void> getPosts() async {
     setState(() {
       isLoading = true;
+      isUserPost = false;
     });
 
     try {
       final fetchedPosts = await PostsService.getPosts();
-      if (fetchedPosts != null && fetchedPosts is List) {
-        setState(() {
-          posts = fetchedPosts;
-        });
-      } else {
-        throw Exception('Invalid post data format.');
-      }
+      setState(() {
+        posts = fetchedPosts;
+      });
     } catch (e) {
       print('Failed to fetch posts: $e');
-      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
+      showSnackBar(context, 'Post not fetched');
     } finally {
       setState(() {
         isLoading = false;
@@ -345,19 +359,11 @@ class _CommunityTabState extends State<CommunityTab> {
 
   Future<void> addSuggestionNew(
       String postId, Map<String, dynamic> suggestionData) async {
-    if (postId.isEmpty || suggestionData.isEmpty) {
-      print('Invalid suggestion data or post ID');
-      showSnackBar(context, 'Cannot add suggestion. Missing data.');
-      return;
-    }
-
     try {
       await ApplianceService.addSuggestionToAPost(postId, suggestionData);
       print('Suggestion added successfully');
-      showSnackBar(context, 'Suggestion added successfully');
     } catch (e) {
       print('Error adding suggestion: $e');
-      showSnackBar(context, 'Failed to add suggestion. Please try again.');
     }
   }
 
@@ -381,11 +387,37 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
+  Future<void> fetchSuggestions(String postId) async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      final suggestionsData = await PostsService.getComments(postId);
+      setState(() {
+        suggestions = suggestionsData;
+        print(
+          'suggestions data loaded $suggestionsData',
+        );
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        error = 'Failed to load suggestions. Please try again later.';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   void onAddSuggestionButtonPressed(
       String postId, Map<String, dynamic> suggestionData) {
     if (postId != null) {
       print("Adding suggestion for Post ID: $postId");
-      addSuggestionNew(postId, suggestionData);
+      // addSuggestion(postId, suggestionData);
     } else {
       print("Post ID is null, cannot add suggestion.");
     }
@@ -393,6 +425,13 @@ class _CommunityTabState extends State<CommunityTab> {
 
   void showPostDialog(int index) {
     var post = posts[index];
+
+    controllers.editApplianceNameController.text = post['applianceName'] ?? '';
+    controllers.editWattageController.text = post['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
+        post['usagePatternPerDay']?.toString() ?? '';
+    controllers.editWeeklyPatternController.text =
+        post['selectedDays']?.toString() ?? '';
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -403,7 +442,7 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  void _confirmAddSuggestion(int index) {
+  void _confirmDeletePost(int index) {
     if (index < 0 || index >= posts.length) {
       print('Invalid index for deleting post');
       return;
@@ -418,36 +457,14 @@ class _CommunityTabState extends State<CommunityTab> {
 
     print('Attempting to delete post with ID: ${post['_id']}');
 
-    // showDialog(
-    //   context: context,
-    //   builder: (BuildContext context) {
-    //     return ConfirmDeleteDialog(
-    //       title: 'Delete Post?',
-    //       description:
-    //           'Are you sure you want to delete this Post? This cannot be undone.',
-    //       onDelete: () => deletePost(post['_id']).then((_) {}),
-    //       postDelete: getUsersPost,
-    //     );
-    //   },
-    // );
-  }
-
-  void _confirmDeletePost(int index) {
-    if (index < 0 || index >= posts.length || posts[index]['_id'] == null) {
-      print('Invalid index or missing post ID for deletion');
-      return;
-    }
-
-    final postId = posts[index]['_id'];
-    print('Attempting to delete post with ID: $postId');
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return ConfirmDeleteDialog(
           title: 'Delete Post?',
-          description: 'Are you sure you want to delete this post?',
-          onDelete: () => deletePost(postId),
+          description:
+              'Are you sure you want to delete this Post? This cannot be undone.',
+          onDelete: () => deletePost(post['_id']).then((_) {}),
           postDelete: getUsersPost,
         );
       },

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 
 class PasswordResetApp extends StatelessWidget {
@@ -7,6 +8,14 @@ class PasswordResetApp extends StatelessWidget {
     return MaterialApp(
       theme: AppTheme.getAppTheme(),
       home: Scaffold(
+        appBar: customAppBar1(
+          showBackArrow: true,
+          showTitle: false,
+          showProfile: false,
+          onBackPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(

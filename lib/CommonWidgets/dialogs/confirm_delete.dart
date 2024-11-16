@@ -1,7 +1,80 @@
 // confirm_delete_dialog.dart
 
 import 'package:flutter/material.dart';
+import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
+import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+
+class SuggestionField extends StatelessWidget {
+  const SuggestionField({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    AppControllers controller = AppControllers();
+
+    return Container(
+      margin: const EdgeInsets.all(18.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(7.0),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 2.0),
+                child: Image(
+                  image: AssetImage('assets/suggestion.png'),
+                  width: 50.0,
+                  height: 50.0,
+                ),
+              ),
+              const SizedBox(width: 5.0),
+              Expanded(
+                child: TextField(
+                  controller: controller.suggestionController,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Suggest changes or additional tips...',
+                    hintStyle: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12.0,
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.send_rounded,
+                  color: Color(0xFF1BBC9B),
+                  size: 24,
+                ),
+                onPressed: () async {
+                  final suggestionText = controller.suggestionController.text;
+
+                  if (suggestionText.isNotEmpty) {
+                    try {
+                      showSnackBar(context, 'Suggestion added successfully');
+                      controller.suggestionController
+                          .clear(); // Clear the text field after successful submission
+                    } catch (e) {
+                      showSnackBar(context, 'Failed to add suggestion: $e');
+                    }
+                  } else {
+                    showSnackBar(context, 'Suggestion text cannot be empty');
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class ConfirmDeleteDialog extends StatelessWidget {
   final String title;
