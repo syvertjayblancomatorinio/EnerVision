@@ -7,31 +7,37 @@ const asyncHandler = require('../centralized_codes/authMiddleware');
 router.post('/addSuggestions/:postId', async (req, res) => {
   try {
     const { postId } = req.params; // Get postId from URL parameters
-    const { suggestionData, userId } = req.body; // Extract suggestionData and userId from request body
+    const { suggestionText, userId } = req.body; // Extract suggestionText and userId from request body
 
-    if (!userId) {
-      return res.status(400).json({ message: 'User ID is required' });
+    // Validate required fields
+    if (!userId || !suggestionText) {
+      return res.status(400).json({ message: 'User ID and suggestion text are required' });
     }
 
-    const newSuggestion = new Suggestion({
-      ...suggestionData,
-      postId: postId,
-      userId: userId,
-    });
-
-    await newSuggestion.save(); // Save the new suggestion
-//    const username = user.username;
-    const post = await Post.findById(postId); // Find the post by ID
+    // Check if the post exists
+    const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    post.suggestions.push(newSuggestion._id); // Add the suggestion to the post's suggestions array
-    await post.save(); // Save the updated post
+    // Create a new suggestion
+    const newSuggestion = new Suggestion({
+      suggestionText,
+      postId,
+      userId,
+    });
 
-    res.status(201).json({ message: 'Suggestion added to Post',newSuggestion });
+    // Save the new suggestion
+    await newSuggestion.save();
+
+    // Add the suggestion to the post's suggestions array
+    post.suggestions.push(newSuggestion._id);
+    await post.save();
+
+    // Respond with success
+    res.status(201).json({ message: 'Suggestion added to Post', suggestion: newSuggestion });
   } catch (err) {
-    console.error(err);
+    console.error('Error adding suggestion:', err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
