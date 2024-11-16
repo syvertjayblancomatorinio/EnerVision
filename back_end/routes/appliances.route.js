@@ -220,16 +220,52 @@ router.get('/getAllTodayAppliances/:userId/appliances', asyncHandler(async (req,
     );
 
     if (filteredAppliances.length === 0) {
-      return res.status(404).json({ message: 'No appliances found for today' });
+      return res.status(404).json({
+        message: 'No appliances found for today',
+        totalDailyConsumptionCost: (0).toFixed(2),
+        totalDailyKwhConsumption: (0).toFixed(2),
+        totalDailyCO2Emissions: (0).toFixed(2)
+      });
     }
 
-    res.status(200).json({ message: 'Appliances retrieved', appliances: filteredAppliances });
+    // Calculate total daily consumption for the filtered appliances
+    const kwhRate = user.kwhRate || 0; // Ensure kWh rate is defined
+    const emissionFactor = 0.7; // kg CO2/kWh for Cebu or the Philippines
+
+    let totalDailyConsumptionCost = 0;
+    let totalDailyKwhConsumption = 0;
+    let totalDailyCO2Emissions = 0;
+
+    for (const appliance of filteredAppliances) {
+      const wattage = appliance.wattage || 0; // Default to 0 if no wattage
+      const usagePatternPerDay = appliance.usagePatternPerDay || 0; // Default to 0 if undefined
+      const kwh = wattage / 1000;
+
+      // Calculate kWh, cost, and CO2 emissions for the day
+      const totalDailyKwh = kwh * usagePatternPerDay;
+      const dailyCost = totalDailyKwh * kwhRate;
+      const dailyCO2Emission = totalDailyKwh * emissionFactor;
+
+      // Add to totals
+      totalDailyKwhConsumption += totalDailyKwh;
+      totalDailyConsumptionCost += dailyCost;
+      totalDailyCO2Emissions += dailyCO2Emission;
+    }
+
+    // Send response with appliances and calculated totals
+    res.status(200).json({
+      message: 'Appliances retrieved for today',
+      appliances: filteredAppliances,
+      totalDailyConsumptionCost: totalDailyConsumptionCost.toFixed(2),
+      totalDailyKwhConsumption: totalDailyKwhConsumption.toFixed(2),
+      totalDailyCO2Emissions: totalDailyCO2Emissions.toFixed(2)
+    });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 }));
-
 
 
 // Get the Daily&Monthly Consumption for cost,kwh and CO2 emissions
