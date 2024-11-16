@@ -5,101 +5,6 @@ const Appliance = require('../models/appliances.model');
 const router = express.Router();
 const MonthlyConsumption = require('../models/monthly_consumption.model');
 
-
-//router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
-//    const { userId, month, year } = req.body;
-//
-//    // Validate month and year
-//    if (!month || !year) {
-//        return res.status(400).json({ message: 'Month and year are required.' });
-//    }
-//
-//    // Fetch user
-//    const user = await User.findById(userId);
-//    if (!user) {
-//        return res.status(404).json({ message: 'User not found' });
-//    }
-//
-//    // Fetch appliances for the user
-//    const appliances = await Appliance.find({ userId });
-//    const totalMonthlyCost = appliances.reduce((total, appliance) => {
-//        return total + (appliance.monthlyCost || 0);
-//    }, 0);
-//
-//    // Create a new MonthlyConsumption record
-//    const monthlyConsumption = new MonthlyConsumption({
-//        userId: user._id,
-//        month: parseInt(month, 10), // Convert to integer
-//        year: parseInt(year, 10),   // Convert to integer
-//        totalMonthlyConsumption: totalMonthlyCost
-//    });
-//
-//    // Save to database
-//    await monthlyConsumption.save();
-//
-//    res.status(200).json({ message: 'Monthly consumption saved successfully.' });
-//}));
-router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
-    const { userId, month, year, totalMonthlyConsumption } = req.body;
-
-    if (!month || !year) {
-        return res.status(400).json({ message: 'Month and year are required.' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Define emission factor
-    const emissionFactor = 0.7;
-
-    // Calculate totalMonthlyCost
-    let totalMonthlyCost = 0;
-    if (totalMonthlyConsumption) {
-        totalMonthlyCost = totalMonthlyConsumption;
-    } else {
-        const appliances = await Appliance.find({ userId });
-        totalMonthlyCost = appliances.reduce((total, appliance) => {
-            return total + (appliance.monthlyCost || 0);
-        }, 0);
-    }
-
-    // Calculate totalMonthlyKwhConsumption
-    const totalMonthlyKwhConsumption = user.kwhRate > 0 ? totalMonthlyCost / user.kwhRate : 0;
-
-    // Calculate totalMonthlyCO2Emissions
-    const totalMonthlyCO2Emissions = totalMonthlyKwhConsumption * emissionFactor;
-
-    // Save monthly consumption data
-    const monthlyConsumption = new MonthlyConsumption({
-        userId: user._id,
-        month: parseInt(month, 10),
-        year: parseInt(year, 10),
-        totalMonthlyConsumption: totalMonthlyCost,
-        totalMonthlyKwhConsumption,
-        totalMonthlyCO2Emissions
-    });
-
-    await monthlyConsumption.save();
-
-    res.status(200).json({
-        message: 'Monthly consumption saved successfully.',
-        totalMonthlyConsumption: totalMonthlyCost,
-        totalMonthlyKwhConsumption,
-        totalMonthlyCO2Emissions
-    });
-}));
-
-
-
-
-
-
-
-
-
-
 router.post('/addApplianceToUser', asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
 
@@ -436,6 +341,8 @@ router.get('/getNewUsersCount/:userId/appliances', asyncHandler(async (req, res)
     return res.status(500).json({ message: 'Server error' });
   }
 }));
+
+
 router.get('/monthlyData/:userId', async (req, res) => {
       try {
           const userId = req.params.userId;
