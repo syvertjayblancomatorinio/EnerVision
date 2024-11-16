@@ -31,7 +31,7 @@ class ApplianceService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> fetchTodayAppliance() async {
+  static Future<Map<String, dynamic>> fetchTodayAppliance() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
@@ -47,14 +47,20 @@ class ApplianceService {
       // Decode the response body as a Map
       final Map<String, dynamic> responseData = jsonDecode(response.body);
 
-      // Check if 'appliances' key exists and is a list
-      if (responseData.containsKey('appliances') &&
-          responseData['appliances'] is List) {
-        // Return the list of appliances
-        return List<Map<String, dynamic>>.from(responseData['appliances']);
-      } else {
-        throw Exception('Appliances data is not in the expected format');
-      }
+      // Ensure data types are correctly parsed
+      return {
+        'appliances':
+            List<Map<String, dynamic>>.from(responseData['appliances'] ?? []),
+        'totalDailyConsumptionCost': double.tryParse(
+                responseData['totalDailyConsumptionCost']?.toString() ?? '0') ??
+            0.0,
+        'totalDailyKwhConsumption': double.tryParse(
+                responseData['totalDailyKwhConsumption']?.toString() ?? '0') ??
+            0.0,
+        'totalDailyCO2Emissions': double.tryParse(
+                responseData['totalDailyCO2Emissions']?.toString() ?? '0') ??
+            0.0,
+      };
     } else if (response.statusCode == 404) {
       throw Exception('Appliances not found');
     } else {
@@ -84,20 +90,6 @@ class ApplianceService {
       throw Exception('Failed to load appliances');
     }
   }
-
-  static Future<List<dynamic>> fetchAppliances(String userId) async {
-    final url = Uri.parse('$baseUrl/user/$userId/appliances');
-
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load appliances');
-    }
-  }
-
-  // Static method to Update an appliance
 
   static Future<void> updateAppliance(
       String applianceId, Map<String, dynamic> updatedData) async {

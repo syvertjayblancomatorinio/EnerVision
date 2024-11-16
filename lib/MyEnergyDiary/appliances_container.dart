@@ -52,6 +52,10 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   String? kwhRate;
   String? _selectedProvider;
 
+  double totalDailyConsumptionCost = 0.0;
+  double totalDailyKwhConsumption = 0.0;
+  double totalDailyCO2Emissions = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +79,38 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
   }
 
+  Future<void> fetchTodayAppliances() async {
+    setState(() {
+      isLoading = true; // Set loading state to true before the fetch
+    });
+
+    try {
+      final todayData = await ApplianceService.fetchTodayAppliance();
+
+      setState(() {
+        appliances = todayData['appliances'];
+        totalDailyConsumptionCost = todayData['totalDailyConsumptionCost'];
+        totalDailyKwhConsumption = todayData['totalDailyKwhConsumption'];
+        totalDailyCO2Emissions = todayData['totalDailyCO2Emissions'];
+        isLoading =
+            false; // Set loading state to false after the data is fetched
+      });
+
+      print('Fetched totalDailyConsumptionCost: $totalDailyConsumptionCost');
+      print('Fetched totalDailyKwhConsumption: $totalDailyKwhConsumption');
+      print('Fetched totalDailyCO2Emissions: $totalDailyCO2Emissions');
+    } catch (e) {
+      print('Error: $e'); // Print the error if any
+      setState(() {
+        isLoading =
+            false; // Set loading state to false even if there is an error
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load appliances')),
+      );
+    }
+  }
+
   Widget myAppliancesContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,24 +119,14 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TotalCostDisplay(
-              cost: (dailyCost['totalDailyConsumptionCost'] != null)
-                  ? (double.tryParse(dailyCost['totalDailyConsumptionCost']
-                                  .toString())
-                              ?.isNegative ??
-                          false
-                      ? 'Negative Cost'
-                      : '₱ ${formatter.format(double.parse(dailyCost['totalDailyConsumptionCost']))}')
-                  : 'COST',
+              cost: totalDailyConsumptionCost != null
+                  ? '₱ ${totalDailyConsumptionCost.toStringAsFixed(2)}'
+                  : 'Cost',
             ),
             const SizedBox(width: 20),
             TotalCostDisplay(
-              cost: (dailyCost['totalDailyKwhConsumption'] != null)
-                  ? (double.tryParse(dailyCost['totalDailyKwhConsumption']
-                                  .toString())
-                              ?.isNegative ??
-                          false
-                      ? 'Negative Cost'
-                      : '${formatter.format(double.parse(dailyCost['totalDailyKwhConsumption']))} KWH')
+              cost: totalDailyKwhConsumption != null
+                  ? '${totalDailyKwhConsumption.toStringAsFixed(2)} KWH'
                   : 'KWH',
             ),
           ],
@@ -442,31 +468,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
-  Future<void> fetchTodayAppliances() async {
-    setState(() {
-      isLoading = true; // Set loading state to true before the fetch
-    });
-
-    try {
-      final appliancesData =
-          await ApplianceService.fetchTodayAppliance(); // Fetch appliances
-      setState(() {
-        appliances = appliancesData; // Update the appliances state
-        isLoading =
-            false; // Set loading state to false after the data is fetched
-      });
-    } catch (e) {
-      print('Error: $e'); // Print the error if any
-      setState(() {
-        isLoading =
-            false; // Set loading state to false even if there is an error
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load appliances')),
-      );
-    }
-  }
-
   Future<void> _showApplianceErrorDialog(BuildContext context) async {
     await showCustomDialog(
       context: context,
@@ -628,7 +629,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       print(
           'Fetched totalDailyConsumptionCost: ${dailyCost?['totalDailyConsumptionCost']}');
       print(
-          'Fetched totalDailyKwhConsumption: ${dailyCost?['totalDailyKwhConsumption']}');
+          'Fetched oldtotalDailyKwhConsumption: ${dailyCost?['totalDailyKwhConsumption']}');
     } else {
       print('Failed to fetch daily cost');
     }
