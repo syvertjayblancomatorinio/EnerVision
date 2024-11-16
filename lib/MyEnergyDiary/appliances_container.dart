@@ -55,7 +55,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   @override
   void initState() {
     super.initState();
-    fetchAppliances();
+    fetchTodayAppliances();
     fetchDailyCost();
     getKwhRate();
   }
@@ -188,7 +188,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                     context,
                     controllers.kwhRateController,
                     saveKwhRate,
-                    fetchAppliances,
+                    fetchTodayAppliances,
                     fetchDailyCost,
                   );
                 }
@@ -442,22 +442,28 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
-  Future<void> fetchAppliances() async {
+  Future<void> fetchTodayAppliances() async {
     setState(() {
-      isLoading = true;
+      isLoading = true; // Set loading state to true before the fetch
     });
 
     try {
-      final appliancesData = await ApplianceService.fetchAppliance();
+      final appliancesData =
+          await ApplianceService.fetchTodayAppliance(); // Fetch appliances
       setState(() {
-        appliances = appliancesData;
-        isLoading = false;
+        appliances = appliancesData; // Update the appliances state
+        isLoading =
+            false; // Set loading state to false after the data is fetched
       });
     } catch (e) {
-      print('Error: $e');
+      print('Error: $e'); // Print the error if any
       setState(() {
-        isLoading = false;
+        isLoading =
+            false; // Set loading state to false even if there is an error
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load appliances')),
+      );
     }
   }
 
@@ -503,7 +509,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
 
     if (response.statusCode == 201) {
-      fetchAppliances();
+      fetchTodayAppliances();
       fetchDailyCost();
     } else {
       await _showApplianceErrorDialog(context);
@@ -651,7 +657,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           editAppliance: () {},
           appliance: appliance,
           updateAppliance: updateAppliance,
-          fetchAppliances: fetchAppliances,
+          fetchAppliances: fetchTodayAppliances,
           fetchDailyCosts: fetchDailyCost,
         );
       },
@@ -699,7 +705,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                     ElevatedButton(
                       onPressed: () {
                         deleteAppliance(appliance['_id']).then((_) {
-                          fetchAppliances();
+                          fetchTodayAppliances();
                           fetchDailyCost();
                           Navigator.of(context).pop();
                         });

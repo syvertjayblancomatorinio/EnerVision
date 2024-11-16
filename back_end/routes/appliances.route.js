@@ -203,6 +203,32 @@ router.get('/getAllUsersAppliances/:userId/appliances', asyncHandler (async (req
 
 }));
 
+router.get('/getAllTodayAppliances/:userId/appliances', asyncHandler(async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).populate('appliances');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get today's day of the week (0-6: Sunday to Saturday)
+    const today = new Date();
+    const todayDay = today.getDay() + 1; // Convert 0-6 (Sunday-Saturday) to 1-7 (Sunday-Saturday)
+
+    // Filter appliances based on whether their selectedDays include todayDay
+    const filteredAppliances = user.appliances.filter(appliance =>
+      appliance.selectedDays.includes(todayDay)
+    );
+
+    if (filteredAppliances.length === 0) {
+      return res.status(404).json({ message: 'No appliances found for today' });
+    }
+
+    res.status(200).json({ message: 'Appliances retrieved', appliances: filteredAppliances });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}));
 
 
 
