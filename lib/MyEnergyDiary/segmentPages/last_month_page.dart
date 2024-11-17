@@ -140,58 +140,6 @@ class _LastMonthPageState extends State<LastMonthPage> {
     );
   }
 
-  // Future<void> getUsersApplianceCount() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final userId = prefs.getString('userId');
-  //
-  //   if (userId == null) {
-  //     print("User ID is null. Cannot fetch appliance count.");
-  //     return;
-  //   }
-  //
-  //   // Format month and year from selectedDate
-  //   final formattedMonth = DateFormat('MM').format(selectedDate);
-  //   final formattedYear = DateFormat('yyyy').format(selectedDate);
-  //
-  //   final response = await http.get(Uri.parse(
-  //       'http://10.0.2.2:8080/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
-  //
-  //   if (response.statusCode == 200) {
-  //     final data = json.decode(response.body);
-  //     setState(() {
-  //       applianceCount = data['count'] ?? 0;
-  //     });
-  //   } else {
-  //     throw Exception('Failed to load appliances');
-  //   }
-  // }
-
-  // Future<void> getOldUsersApplianceCount() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   final userId = prefs.getString('userId');
-  //
-  //   if (userId == null) {
-  //     print("User ID is null. Cannot fetch appliance count.");
-  //     return;
-  //   }
-  //
-  //   final response = await http.get(
-  //       Uri.parse('http://10.0.2.2:8080/getUsersCount/$userId/appliances'));
-  //
-  //   if (response.statusCode == 200) {
-  //     final data = json.decode(response.body);
-  //     setState(() {
-  //       if (data['appliances'] != null) {
-  //         applianceCount = data['appliances'].length;
-  //       } else {
-  //         applianceCount = 0;
-  //       }
-  //     });
-  //   } else {
-  //     throw Exception('Failed to load appliances');
-  //   }
-  // }
-
   Future<void> getLastMonth(DateTime date) async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');

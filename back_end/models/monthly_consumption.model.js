@@ -21,6 +21,13 @@ const monthlyConsumptionSchema = new mongoose.Schema({
         required: true
     },
 
+    appliances: [{
+           applianceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Appliance' },
+           applianceName: { type: String },
+           wattage:  { type: String },
+           monthlyCost: { type: Number }
+       }],
+
     createdAt: {
         type: Date,
         default: Date.now

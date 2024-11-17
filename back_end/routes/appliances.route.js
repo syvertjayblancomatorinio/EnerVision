@@ -188,11 +188,6 @@ router.get('/totalMonthlyCostOfUserAppliances/:userId', asyncHandler(async (req,
     res.status(200).json({ userId, totalMonthlyCost, totalMonthlyKwhConsumption,totalMonthlyCO2Emissions ,appliances });
 }));
 
-
-
-
-
-
 router.get('/getAllUsersAppliances/:userId/appliances', asyncHandler (async (req, res) => {
       const user = await User.findById(req.params.userId).populate('appliances');
     if (!user) {
@@ -266,7 +261,6 @@ router.get('/getAllTodayAppliances/:userId/appliances', asyncHandler(async (req,
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 }));
-
 
 // Get the Daily&Monthly Consumption for cost,kwh and CO2 emissions
 router.get('/totalDailyData/:userId', async (req, res) => {
@@ -372,6 +366,7 @@ router.get('/getUsersCount/:userId/appliances', asyncHandler(async (req, res) =>
 }));
 
 router.get('/getNewUsersCount/:userId/appliances', asyncHandler(async (req, res) => {
+
   const { userId } = req.params;
   const { month, year } = req.query;
 
@@ -380,19 +375,27 @@ router.get('/getNewUsersCount/:userId/appliances', asyncHandler(async (req, res)
   }
 
   try {
+    // Start date: January 1st of the specified year
+    const startDate = new Date(`${year}-01-01`);
+
+    // End date: First day of the next month after the specified month
+    const endDate = new Date(`${year}-${month}-01`);
+    endDate.setMonth(endDate.getMonth() + 1);
+
     const appliances = await Appliance.find({
       userId,
       createdAt: {
-        $gte: new Date(`${year}-${month}-01`),
-        $lt: new Date(`${year}-${month}-01`).setMonth(new Date(`${year}-${month}-01`).getMonth() + 1)
+        $gte: startDate,
+        $lt: endDate
       }
     });
 
-    if (!appliances) {
-      return res.status(404).json({ message: 'No appliances found for this month and year' });
+    // If no appliances found
+    if (!appliances.length) {
+      return res.status(404).json({ message: 'No appliances found for the specified period' });
     }
 
-    // Respond with the count of appliances for the specified month and year
+    // Respond with the count of appliances for the period
     return res.status(200).json({
       message: 'Appliances retrieved successfully',
       count: appliances.length,
@@ -403,7 +406,6 @@ router.get('/getNewUsersCount/:userId/appliances', asyncHandler(async (req, res)
     return res.status(500).json({ message: 'Server error' });
   }
 }));
-
 
 router.get('/monthlyData/:userId', async (req, res) => {
       try {
@@ -430,7 +432,7 @@ router.get('/monthlyData/:userId', async (req, res) => {
 router.get('/monthlyDataNew/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        const { month, year } = req.query; // Use query parameters for month and year
+        const { month, year } = req.query;
 
         // Validate that both month and year are provided
         if (!month || !year) {
@@ -438,14 +440,14 @@ router.get('/monthlyDataNew/:userId', async (req, res) => {
         }
 
         // Find the monthly data for the specified user, month, and year
-        const monthlyData = await MonthlyConsumption.findOne({ userId, month, year });
+          const monthlyData = await MonthlyConsumption.findOne({ userId, month, year })
+                  .populate('appliances.applianceId', 'applianceName wattage monthlyCost');
 
         // If no data found, return 404
         if (!monthlyData) {
             return res.status(404).json({ message: 'No monthly data found for this user, month, and year' });
         }
 
-        // Return the monthly data
         res.json({
             message: 'Monthly consumption data retrieved successfully',
             data: monthlyData,
@@ -484,89 +486,3 @@ router.delete('/deleteAppliance/:applianceId', async (req, res) => {
 
 
 module.exports = router;
-
-/*
-router.get('/totalConsumption/:applianceId', async (req, res) => {
-    try {
-        const applianceId = req.params.applianceId;
-
-        // Find the appliance by ID
-        const appliance = await Appliance.findById(applianceId);
-        if (!appliance) {
-            return res.status(404).json({ message: 'Appliance not found' });
-        }
-
-        // Assuming the user ID is stored in the appliance document
-        const user = await User.findById(appliance.userId);
-        if (!user || !user.kwhRate) {
-            return res.status(404).json({ message: 'User or kWh rate not found' });
-        }
-
-        const kwhRate = user.kwhRate;
-
-        // Calculate daily  consumption
-        const kwh = appliance.wattage / 1000;
-        totalDailyKwh = kwh * appliance.usagePatternPerDay;
-        const totalDailyConsumption = totalDailyKwh * kwhRate;
-
-
-        // get the monthly consumption
-        const hoursUsedPerWeek = appliance.usagePatternPerDay * appliance.usagePatternPerWeek;
-        const kwhUsedPerWeek = hoursUsedPerWeek * kwh;
-        const  costPerWeek = kwhUsedPerWeek *  kwhRate;
-
-        const monthlyConsumption = costPerWeek * 4.345;
-        res.json({ message: 'Monthly consumption', monthlyConsumption });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error', error: err.message });
-    }
-});
-
-router.get('/totalMonthlyConsumption/:userId', async (req, res) => {
-    try {
-        const userId = req.params.userId;
-
-        // Find all appliances for the user
-        const appliances = await Appliance.find({ userId });
-        if (!appliances || appliances.length === 0) {
-            return res.status(404).json({ message: 'No appliances found for this user' });
-        }
-
-        // Find the user to get the kWh rate
-        const user = await User.findById(userId);
-        if (!user || !user.kwhRate) {
-            return res.status(404).json({ message: 'User or kWh rate not found' });
-        }
-
-        const kwhRate = user.kwhRate;
-
-        let totalMonthlyConsumption = 0;
-
-        for (const appliance of appliances) {
-            // Calculate daily consumption
-            const kwh = appliance.wattage / 1000;
-            const totalDailyKwh = kwh * appliance.usagePatternPerDay;
-            const dailyConsumption = totalDailyKwh * kwhRate;
-
-            // Calculate weekly consumption
-            const hoursUsedPerWeek = appliance.usagePatternPerDay * appliance.usagePatternPerWeek;
-            const kwhUsedPerWeek = hoursUsedPerWeek * kwh;
-            const costPerWeek = kwhUsedPerWeek * kwhRate;
-
-            // Assume 4.345 weeks in a month
-            const monthlyConsumption = costPerWeek * 4.345;
-
-            // Add to total monthly consumption
-            totalMonthlyConsumption += monthlyConsumption;
-        }
-
-        res.json({ message: 'Total monthly consumption for all appliances', totalMonthlyConsumption });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error', error: err.message });
-    }
-});
-*/

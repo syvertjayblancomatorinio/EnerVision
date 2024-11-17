@@ -54,7 +54,6 @@ class _CommunityTabState extends State<CommunityTab> {
   void initState() {
     super.initState();
     getPosts();
-    getUsersPost();
   }
 
   @override
@@ -136,6 +135,8 @@ class _CommunityTabState extends State<CommunityTab> {
       DateTime? timeB = DateTime.tryParse(b['timeAgo'] ?? '');
       return (timeB ?? DateTime.now()).compareTo(timeA ?? DateTime.now());
     });
+    final String validProfileImageUrl =
+        profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
 
     return SingleChildScrollView(
       child: Padding(
@@ -167,7 +168,61 @@ class _CommunityTabState extends State<CommunityTab> {
               BuildTitle(title: title),
               BuildDescription(description: description),
               const SizedBox(height: 10.0),
-              _buildSuggestionsButton(postImageUrl, index),
+              Row(
+                children: [
+                  Row(
+                    children: List.generate(3, (index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                        child: CircleAvatar(
+                          radius: 10.0,
+                          backgroundImage: NetworkImage(validProfileImageUrl),
+                          child: ClipOval(
+                            child: Image.network(
+                              validProfileImageUrl,
+                              width: 20.0,
+                              height: 20.0,
+                              fit: BoxFit.cover,
+                              errorBuilder: (BuildContext context, Object error,
+                                  StackTrace? stackTrace) {
+                                return Image.asset(
+                                  placeholderImage,
+                                  fit: BoxFit.cover,
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  const Spacer(),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_tappedIndex == index) {
+                        setState(() {
+                          _tappedIndex = null;
+                        });
+                      } else {
+                        setState(() {
+                          _tappedIndex = index;
+                        });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1BBC9B),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                    ),
+                    child: Text(
+                      _tappedIndex == index
+                          ? 'Hide Suggestions'
+                          : 'Add Suggestions',
+                    ),
+                  )
+                ],
+              ),
               if (_tappedIndex == index) _buildSuggestionTextField(index),
             ],
           ),
@@ -435,7 +490,7 @@ class _CommunityTabState extends State<CommunityTab> {
 
   Future<void> deletePost(String postId) async {
     try {
-      await ApplianceService.deletePost(postId);
+      await PostsService.deleteAPost(postId);
       print('Post deleted successfully');
     } catch (e) {
       print('Error deleting appliance: $e');
