@@ -61,6 +61,26 @@ class PostsService {
   }
 
   static Future<void> deleteAPost(String postId) async {
+    final url = Uri.parse('$baseUrl/deletePost/$postId');
+    print('Sending DELETE request to: $url');
+
+    final response = await http.delete(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Post with ID $postId deleted successfully.');
+    } else {
+      final responseBody = jsonDecode(response.body);
+      print('Failed to delete appliance. Server response: ${response.body}');
+      throw Exception('Failed to delete appliance: ${responseBody['message']}');
+    }
+  }
+
+  static Future<void> deletePost(String postId) async {
     final url = Uri.parse('$baseUrl/posts/$postId');
     final response = await http.delete(
       url,
@@ -75,6 +95,7 @@ class PostsService {
       throw Exception('Failed to delete Post: ${responseBody['message']}');
     }
   }
+  // It's almost 3am and I still couldn't figure out how to add suggestions to the specific post hays kapoy na.
 
   // Helper method to calculate "time ago"
   static String _timeAgo(DateTime dateTime) {

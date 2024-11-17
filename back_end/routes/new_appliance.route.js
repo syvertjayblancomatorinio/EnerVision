@@ -38,51 +38,6 @@ function getOccurrencesBetweenDates(startDate, endDate, selectedDays) {
 
     return dayOccurrences;
 }
-const saveMonthlyConsumption = async (userId, month, year) => {
-    const user = await User.findById(userId);
-    if (!user) {
-        throw new Error('User not found');
-    }
-
-    const emissionFactor = 0.7;
-
-    // Calculate totalMonthlyCost
-    let totalMonthlyCost = 0;
-    const appliances = await Appliance.find({ userId });
-    totalMonthlyCost = appliances.reduce((total, appliance) => {
-        return total + (appliance.monthlyCost || 0);
-    }, 0);
-
-    // Calculate totalMonthlyKwhConsumption
-    const totalMonthlyKwhConsumption = user.kwhRate > 0 ? totalMonthlyCost / user.kwhRate : 0;
-
-    // Calculate totalMonthlyCO2Emissions
-    const totalMonthlyCO2Emissions = totalMonthlyKwhConsumption * emissionFactor;
-
-    // Check if a record for the given month and year already exists
-    const existingRecord = await MonthlyConsumption.findOne({ userId, month, year });
-
-    if (existingRecord) {
-        // Update the existing record
-        existingRecord.totalMonthlyConsumption = totalMonthlyCost;
-        existingRecord.totalMonthlyKwhConsumption = totalMonthlyKwhConsumption;
-        existingRecord.totalMonthlyCO2Emissions = totalMonthlyCO2Emissions;
-
-        await existingRecord.save();
-    } else {
-        // Create a new record if none exists
-        const monthlyConsumption = new MonthlyConsumption({
-            userId: user._id,
-            month: parseInt(month, 10),
-            year: parseInt(year, 10),
-            totalMonthlyConsumption: totalMonthlyCost,
-            totalMonthlyKwhConsumption,
-            totalMonthlyCO2Emissions
-        });
-
-        await monthlyConsumption.save();
-    }
-};
 
 router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
     const { userId, month, year, totalMonthlyConsumption } = req.body;
@@ -135,6 +90,62 @@ router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
         totalMonthlyCO2Emissions
     });
 }));
+
+
+const saveMonthlyConsumption = async (userId, month, year) => {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    const emissionFactor = 0.7;
+
+    // Calculate totalMonthlyCost and gather appliance details
+    const appliances = await Appliance.find({ userId });
+    let totalMonthlyCost = 0;
+    const applianceDetails = appliances.map(appliance => {
+        totalMonthlyCost += appliance.monthlyCost || 0;
+        return {
+            applianceId: appliance._id,
+            applianceName: appliance.applianceName,
+            monthlyCost: appliance.monthlyCost || 0.0,
+            wattage: appliance.wattage || 0.0
+        };
+    });
+
+    // Calculate totalMonthlyKwhConsumption
+    const totalMonthlyKwhConsumption = user.kwhRate > 0 ? totalMonthlyCost / user.kwhRate : 0;
+
+    // Calculate totalMonthlyCO2Emissions
+    const totalMonthlyCO2Emissions = totalMonthlyKwhConsumption * emissionFactor;
+
+    // Check if a record for the given month and year already exists
+    const existingRecord = await MonthlyConsumption.findOne({ userId, month, year });
+
+    if (existingRecord) {
+        // Update the existing record
+        existingRecord.totalMonthlyConsumption = totalMonthlyCost;
+        existingRecord.totalMonthlyKwhConsumption = totalMonthlyKwhConsumption;
+        existingRecord.totalMonthlyCO2Emissions = totalMonthlyCO2Emissions;
+        existingRecord.appliances = applianceDetails;
+
+        await existingRecord.save();
+    } else {
+        // Create a new record if none exists
+        const monthlyConsumption = new MonthlyConsumption({
+            userId: user._id,
+            month: parseInt(month, 10),
+            year: parseInt(year, 10),
+            totalMonthlyConsumption: totalMonthlyCost,
+            totalMonthlyKwhConsumption,
+            totalMonthlyCO2Emissions,
+            appliances: applianceDetails
+        });
+
+        await monthlyConsumption.save();
+    }
+};
+
 router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
     const { applianceName, applianceCategory, wattage, usagePatternPerDay, createdAt, selectedDays } = applianceData;
@@ -195,11 +206,11 @@ router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
     const currentMonth = createdDate.getMonth() + 1;
     const currentYear = createdDate.getFullYear();
 
- try {
-     await saveMonthlyConsumption(userId, currentMonth, currentYear);
- } catch (error) {
-     return res.status(500).json({ message: 'Error updating monthly consumption', error: error.message });
- }
+try {
+    await saveMonthlyConsumption(userId, currentMonth, currentYear);
+} catch (error) {
+    return res.status(500).json({ message: 'Error updating monthly consumption', error: error.message });
+}
 
 
     res.status(201).json({ message: 'Appliance added to user', appliance: newAppliance });

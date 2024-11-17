@@ -53,22 +53,8 @@ class DatePickerWidget extends StatefulWidget {
 }
 
 class _DatePickerWidgetState extends State<DatePickerWidget> {
-  List<String> months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  List<int> years = List.generate(101, (index) => DateTime.now().year - index);
+  late List<String> months;
+  late List<int> years;
 
   String? selectedMonth;
   int? selectedYear;
@@ -76,6 +62,13 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
   @override
   void initState() {
     super.initState();
+
+    int currentMonthIndex = DateTime.now().month;
+    months = List.generate(currentMonthIndex - 1,
+        (index) => DateFormat.MMMM().format(DateTime(0, index + 1)));
+
+    years = List.generate(01, (index) => DateTime.now().year - index);
+
     selectedMonth = DateFormat('MMMM').format(widget.initialDate);
     selectedYear = widget.initialDate.year;
   }
