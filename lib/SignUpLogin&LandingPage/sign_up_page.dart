@@ -106,20 +106,18 @@ class _SignUpPageState extends State<SignUpPage> {
                             CustomTextField(
                               controller: controllers.usernameController,
                               hintText: 'Username',
-                              obscureText: false,
+                              keyboardType: TextInputType.text,
                               prefixIcon: const Icon(Icons.person_outlined),
+                              obscureText: false,
                               onChanged: (value) {
                                 setState(() {
-                                  user.username = value;
+                                  _showClearIcon = value.isNotEmpty;
                                 });
+                                user.password = value;
                               },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Enter Username';
-                                }
-                                return null;
-                              },
-                              keyboardType: TextInputType.text,
+                              validator: Validators.compose([
+                                Validators.required('Username is required'),
+                              ]),
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
@@ -134,43 +132,41 @@ class _SignUpPageState extends State<SignUpPage> {
                                 });
                                 user.email = value;
                               },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Enter Email';
-                                } else if (RegExp(
-                                        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-                                    .hasMatch(value)) {
-                                  return null;
-                                } else {
-                                  return 'Enter Valid Email';
-                                }
-                              },
+                              validator: Validators.compose([
+                                Validators.required('Email is required'),
+                                Validators.patternString(
+                                    r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+                                    'Enter Valid Email')
+                              ]),
                             ),
                             const SizedBox(height: 20),
-                            CustomTextField(
+                            PasswordField(
                               controller: controllers.passwordController,
                               hintText: 'Password',
-                              keyboardType: TextInputType.text,
+                              // keyboardType: TextInputType.text,
                               prefixIcon: const Icon(Icons.lock_outline),
-                              obscureText: true,
+                              // obscureText: true,
                               onChanged: (value) {
                                 setState(() {
                                   _showClearPasswordIcon = value.isNotEmpty;
                                 });
                                 user.password = value;
                               },
-                              validator: Validators.compose([
-                                Validators.required('Password is required'),
-                                Validators.patternString(
-                                    r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$',
-                                    'Invalid Password')
-                              ]),
+                              // validator: Validators.compose([
+                              //   Validators.required('Password is required'),
+                              //   Validators.patternString(
+                              //       r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$',
+                              //       'Password must be at least 8 characters long \n Must have at least one special character\n Must have at least one Uppercase character')
+                              // ]),
                             ),
                             const SizedBox(height: 50),
                             SignUpButton(
                               onPressed: () async {
-                                if (_formKey.currentState?.validate() ??
-                                    false) {
+                                // Trigger field validation
+                                bool isFormValid =
+                                    _formKey.currentState?.validate() ?? false;
+
+                                if (isFormValid) {
                                   setState(() {
                                     _isLoading = true;
                                   });
@@ -184,7 +180,6 @@ class _SignUpPageState extends State<SignUpPage> {
                                           controllers.passwordController,
                                       usernameController:
                                           controllers.usernameController,
-                                      // kwhRateController: _kwhRateController,
                                     ).signUp();
 
                                     if (response != null) {
@@ -195,7 +190,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) =>
-                                                  SetupProfile()),
+                                                  const SetupProfile()),
                                         );
                                       }
                                     } else {
@@ -211,6 +206,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                     });
                                   }
                                 } else {
+                                  // Display error snack bar
                                   SnackBarHelper.showSnackBar(
                                       context, 'Please fill in all fields.');
                                 }
@@ -224,10 +220,10 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
               ),
-              PositionedButton(
+              const PositionedButton(
                 top: 20,
                 right: 15,
-                buttonText: 'Sign Up',
+                buttonText: 'Login',
                 targetPage: LoginPage(),
               ),
             ],

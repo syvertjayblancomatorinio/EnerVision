@@ -362,17 +362,6 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
-  void onAddSuggestionButtonPressed(
-      String postId, Map<String, dynamic> suggestionData) {
-    if (postId != null && postId.isNotEmpty) {
-      print("Adding suggestion for Post ID: $postId");
-      addSuggestionNew(postId, suggestionData);
-    } else {
-      print("Post ID is null or empty, cannot add suggestion.");
-      showSnackBar(context, 'Invalid post ID.');
-    }
-  }
-
   Future<void> getUsersPost() async {
     setState(() {
       isLoading = true;
@@ -390,6 +379,16 @@ class _CommunityTabState extends State<CommunityTab> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  void onAddSuggestionButtonPressed(
+      String postId, Map<String, dynamic> suggestionData) {
+    if (postId != null) {
+      print("Adding suggestion for Post ID: $postId");
+      addSuggestionNew(postId, suggestionData);
+    } else {
+      print("Post ID is null, cannot add suggestion.");
     }
   }
 
