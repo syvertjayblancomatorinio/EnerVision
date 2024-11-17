@@ -402,11 +402,43 @@ router.get('/getNewUsersCount/:userId/appliances', asyncHandler(async (req, res)
       appliances
     });
   } catch (error) {
-    console.error(error); // Log the error to the console
+    console.error(error);
     return res.status(500).json({ message: 'Server error' });
   }
 }));
+router.get('/getMonthlyConsumption/:userId', asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { month, year } = req.query;
 
+  // Validate query parameters
+  if (!month || !year) {
+    return res.status(400).json({ message: 'Month and year are required' });
+  }
+
+  try {
+    // Find monthly consumption data for the specified user, month, and year
+    const monthlyConsumption = await MonthlyConsumption.findOne({
+      userId,
+      month: parseInt(month, 10),
+      year: parseInt(year, 10),
+    });
+
+    // If no data is found for the specified criteria
+    if (!monthlyConsumption) {
+      return res.status(404).json({ message: 'No monthly consumption data found for the specified period' });
+    }
+
+    // Respond with the monthly consumption data
+    return res.status(200).json({
+      message: 'Monthly consumption data retrieved successfully',
+      totalMonthlyConsumption: monthlyConsumption.totalMonthlyConsumption,
+      appliances: monthlyConsumption.appliances
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+}));
 router.get('/monthlyData/:userId', async (req, res) => {
       try {
           const userId = req.params.userId;

@@ -109,7 +109,8 @@ const saveMonthlyConsumption = async (userId, month, year) => {
             applianceId: appliance._id,
             applianceName: appliance.applianceName,
             monthlyCost: appliance.monthlyCost || 0.0,
-            wattage: appliance.wattage || 0.0
+            wattage: appliance.wattage || 0.0,
+            createdAt: appliance.createdAt
         };
     });
 
