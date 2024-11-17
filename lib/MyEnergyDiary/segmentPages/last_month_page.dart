@@ -25,18 +25,66 @@ class _LastMonthPageState extends State<LastMonthPage> {
   List<Map<String, dynamic>> appliances = [];
   final AppControllers controllers = AppControllers();
 
-  void showApplianceInformationDialog() {
+  void showApplianceInformationDialog(BuildContext context) {
+    if (appliances.isEmpty) {
+      print('No appliances to show.');
+    }
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return ApplianceListDialog(
-          appliances: appliances,
-        );
+      builder: (context) {
+        return ApplianceListDialog(appliances: appliances);
       },
     );
   }
 
   Future<void> getUsersApplianceCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      print("User ID is null. Cannot fetch monthly consumption.");
+      return;
+    }
+
+    final formattedMonth =
+        DateFormat('MM').format(selectedDate); // Extract month
+    final formattedYear =
+        DateFormat('yyyy').format(selectedDate); // Extract year
+
+    final url = Uri.parse(
+        'http://10.0.2.2:8080/getMonthlyConsumption/$userId?month=$formattedMonth&year=$formattedYear');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        setState(() {
+          applianceCount = data['appliances']?.length ?? 0; // Total appliances
+          appliances =
+              List<Map<String, dynamic>>.from(data['appliances'] ?? []);
+        });
+
+        print("Total Appliances: $applianceCount");
+        print("Appliances: $appliances");
+      } else if (response.statusCode == 404) {
+        setState(() {
+          applianceCount = 0;
+          appliances = [];
+        });
+        print("No monthly consumption data found for the specified period.");
+      } else {
+        print(
+            "Failed to load monthly consumption. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error fetching monthly consumption: $e");
+    }
+  }
+
+  Future<void> getUsersApplianceCount1() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
@@ -101,8 +149,8 @@ class _LastMonthPageState extends State<LastMonthPage> {
       children: [
         GestureDetector(
           onTap: () {
-            print('Appliances is tapped');
-            showApplianceInformationDialog();
+            print('Appliances tapped');
+            showApplianceInformationDialog(context);
           },
           child: ApplianceInfoCard(
             imagePath: 'assets/image (7).png',

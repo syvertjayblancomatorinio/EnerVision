@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 
 class ApplianceListDialog extends StatelessWidget {
@@ -84,13 +85,20 @@ class ApplianceListDialog extends StatelessWidget {
                                 children: [
                                   ApplianceDetail(
                                     label: 'Wattage: ',
-                                    value:
-                                        '${appliance['wattage']?.toStringAsFixed(2) ?? 'N/A'} W',
+                                    value: '${appliance['wattage'] ?? 'N/A'} W',
                                   ),
                                   ApplianceDetail(
                                       label: 'Monthly Cost ',
                                       value:
-                                          '${appliance['monthlyCost']?.toStringAsFixed(2) ?? 'N/A'}'),
+                                          '${appliance['monthlyCost'].toStringAsFixed(2) ?? 'N/A'}'),
+                                  ApplianceDetail(
+                                    label: 'Created: ',
+                                    value: appliance['createdAt'] != null
+                                        ? DateFormat('MM/dd').format(
+                                            DateTime.parse(
+                                                appliance['createdAt']))
+                                        : 'null',
+                                  ),
                                 ],
                               ),
                             ),
