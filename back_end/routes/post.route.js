@@ -28,20 +28,26 @@ router.post('/addPost', async (req, res) => {
 
 // Get all posts of all users
 router.get('/displayPosts', asyncHandler(async (req, res) => {
-    const posts = await Posts.find().populate('userId', 'username'); // Only select 'username' from User
+    const posts = await Posts.find().populate('userId', 'username');
     res.status(200).json({ message: 'Posts are retrieved', posts });
 }));
 
 // Get all posts of a user
 router.get('/getAllPosts/:userId/posts', asyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.userId).populate('posts');
+    const user = await User.findById(req.params.userId)
+        .select('username posts') // Select only the username and posts fields
+        .populate('posts'); // Populate the posts field
 
     if (!user) {
         return res.status(404).json({ message: 'User not found' });
     }
 
-    // Respond with the user's posts
-    res.status(200).json({ message: 'Posts retrieved successfully', posts: user.posts });
+    // Respond with the user's username and posts
+    res.status(200).json({
+        message: 'Posts retrieved successfully',
+        username: user.username,
+        posts: user.posts,
+    });
 }));
 
 // Get a specific post of a user
@@ -108,17 +114,4 @@ router.delete('/deletePost/:postId', async (req, res) => {
   }
 });
 
-
-
-// Update a specific posts of a user
-router.put('/posts/:userId/:postId', async (req, res) => {
-});
-
-// Update a specific posts of a user (with partial update)
-router.patch('/posts/:userId/:postId', async (req, res) => {
-});
-
-// Delete all posts of a user
-router.delete('/posts/:userId', async (req, res) => {
-});
 module.exports = router;
