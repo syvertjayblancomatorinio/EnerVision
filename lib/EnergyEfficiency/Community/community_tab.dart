@@ -56,6 +56,27 @@ class _CommunityTabState extends State<CommunityTab> {
     getPosts();
   }
 
+  Future<void> getUsersPost() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = true;
+    });
+
+    try {
+      final fetchedData = await PostsService.fetchUsersPosts();
+      setState(() {
+        posts = List<Map<String, dynamic>>.from(fetchedData['posts']);
+        username = fetchedData['username'];
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -101,13 +122,13 @@ class _CommunityTabState extends State<CommunityTab> {
                 var post = entry.value;
                 int index = entry.key;
                 return _buildUserPost(
-                  post['username'] ?? 'Username',
+                  post['username'] ?? username ?? 'Unknown User',
                   post['title'] ?? 'No Title',
                   post['description'] ?? 'No Description',
                   post['timeAgo'] ?? 'Some time ago',
                   post['tags'] ?? 'No tags',
-                  '',
-                  '',
+                  '', // Placeholder for profileImageUrl
+                  '', // Placeholder for postImageUrl
                   index,
                 );
               }),
@@ -378,6 +399,7 @@ class _CommunityTabState extends State<CommunityTab> {
   Future<void> getPosts() async {
     setState(() {
       isLoading = true;
+      isUserPost = false;
     });
 
     try {
@@ -417,26 +439,6 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
-  Future<void> getUsersPost() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = true;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.fetchUsersPosts();
-      setState(() {
-        posts = fetchedPosts;
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
   void onAddSuggestionButtonPressed(
       String postId, Map<String, dynamic> suggestionData) {
     if (postId != null) {
@@ -473,19 +475,6 @@ class _CommunityTabState extends State<CommunityTab> {
     }
 
     print('Attempting to delete post with ID: ${post['_id']}');
-
-    // showDialog(
-    //   context: context,
-    //   builder: (BuildContext context) {
-    //     return ConfirmDeleteDialog(
-    //       title: 'Delete Post?',
-    //       description:
-    //           'Are you sure you want to delete this Post? This cannot be undone.',
-    //       onDelete: () => deletePost(post['_id']).then((_) {}),
-    //       postDelete: getUsersPost,
-    //     );
-    //   },
-    // );
   }
 
   Future<void> deletePost(String postId) async {

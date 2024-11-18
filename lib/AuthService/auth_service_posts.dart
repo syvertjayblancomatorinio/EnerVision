@@ -34,7 +34,7 @@ class PostsService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> fetchUsersPosts() async {
+  static Future<Map<String, dynamic>> fetchUsersPosts() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
     if (userId == null) {
@@ -45,18 +45,51 @@ class PostsService {
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      // Change this line to check if the response is a Map or List
       final data = jsonDecode(response.body);
-      // If 'posts' is a key in the response, extract it
-      if (data is Map<String, dynamic> && data.containsKey('posts')) {
-        return List<Map<String, dynamic>>.from(data['posts']);
+
+      // Ensure the response contains both 'username' and 'posts'
+      if (data is Map<String, dynamic> &&
+          data.containsKey('username') &&
+          data.containsKey('posts')) {
+        List<Map<String, dynamic>> posts =
+            List<Map<String, dynamic>>.from(data['posts']);
+
+        // Add 'timeAgo' to each post
+        posts = posts.map((post) {
+          if (post.containsKey('createdAt')) {
+            final DateTime postDate = DateTime.parse(post['createdAt']);
+            post['timeAgo'] = _timeAgo(postDate);
+          } else {
+            post['timeAgo'] = 'Unknown time';
+          }
+          return post;
+        }).toList();
+
+        return {
+          'username': data['username'],
+          'posts': posts,
+        };
       } else {
-        return List<Map<String, dynamic>>.from(data);
+        throw Exception('Unexpected response structure');
       }
     } else if (response.statusCode == 404) {
-      throw Exception('User\'s post not found');
+      throw Exception('User not found');
     } else {
-      throw Exception('Failed to load appliances');
+      throw Exception('Failed to load posts');
+    }
+  }
+
+  static String _timeAgo(DateTime dateTime) {
+    final Duration difference = DateTime.now().difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+    } else {
+      return 'Just now';
     }
   }
 
@@ -98,19 +131,6 @@ class PostsService {
   // It's almost 3am and I still couldn't figure out how to add suggestions to the specific post hays kapoy na.
 
   // Helper method to calculate "time ago"
-  static String _timeAgo(DateTime dateTime) {
-    final Duration difference = DateTime.now().difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
-    } else {
-      return 'Just now';
-    }
-  }
 
   static Future<List<Map<String, dynamic>>> getComments(String postId) async {
     final url = Uri.parse('$baseUrl/getAllPostsSuggestions/$postId');
