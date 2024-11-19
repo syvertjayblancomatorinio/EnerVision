@@ -302,7 +302,6 @@ class _CommunityTabState extends State<CommunityTab> {
                   }
 
                   try {
-                    // Retrieve user ID from SharedPreferences
                     final prefs = await SharedPreferences.getInstance();
                     final userId = prefs.getString('userId');
 
@@ -311,7 +310,6 @@ class _CommunityTabState extends State<CommunityTab> {
                       return;
                     }
 
-                    // Get postId (assume posts[index] contains the postId)
                     final postId = posts[index]['_id'];
 
                     // Construct the API URL
