@@ -21,7 +21,7 @@ class EnergyCalculator {
     for (var appliance in appliances) {
       double wattage = appliance['wattage'];
       int usagePattern = appliance['usagePattern'];
-      totalDailyKWh += (wattage * usagePattern) / 1000; // kWh for 1 day
+      totalDailyKWh += (wattage * usagePattern) / 1000;
     }
     return totalDailyKWh;
   }

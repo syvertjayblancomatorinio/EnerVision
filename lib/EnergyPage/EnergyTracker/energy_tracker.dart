@@ -13,7 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 
 import '../../Buttons/sign_up_button.dart';
-import '../../zNotUsedFiles/show_all_your_device.dart';
 
 class EnergyTracker extends StatefulWidget {
   const EnergyTracker({super.key});

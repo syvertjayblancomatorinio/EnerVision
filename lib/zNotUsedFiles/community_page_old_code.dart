@@ -768,7 +768,7 @@ class _CommunityTabState extends State<CommunityTab> {
     try {
       final fetchedPosts = await PostsService.fetchUsersPosts();
       setState(() {
-        posts = fetchedPosts;
+        posts = fetchedPosts as List<Map<String, dynamic>>;
       });
     } catch (e) {
       print('Failed to fetch posts: $e');

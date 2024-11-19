@@ -20,15 +20,15 @@ Future<void> showDeleteConfirmationDialog({
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.warning,
                 color: Color(0xFF1BBC9B),
                 size: 50,
               ),
               const SizedBox(height: 20),
-              Text(
+              const Text(
                 'Confirm Deletion',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -53,14 +53,14 @@ Future<void> showDeleteConfirmationDialog({
                         Navigator.of(context).pop();
                       },
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.grey),
+                        side: const BorderSide(color: Colors.grey),
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Cancel',
                         style: TextStyle(
                             color: Colors.black, fontFamily: 'Montserrat'),
@@ -75,7 +75,7 @@ Future<void> showDeleteConfirmationDialog({
                         Navigator.of(context).pop();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF1BBC9B),
+                        backgroundColor: const Color(0xFF1BBC9B),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),

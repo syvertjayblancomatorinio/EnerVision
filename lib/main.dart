@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
-import 'package:supabase_project/zNotUsedFiles/sign_up_page2.dart';
 
 void main() async {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
