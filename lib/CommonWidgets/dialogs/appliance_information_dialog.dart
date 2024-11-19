@@ -16,8 +16,8 @@ class ApplianceInformationDialog extends StatefulWidget {
       _ApplianceInformationDialogState();
 }
 
-class _ApplianceInformationDialogState
-    extends State<ApplianceInformationDialog> {
+class _ApplianceInformationDialogState extends State<ApplianceInformationDialog>
+    with SingleTickerProviderStateMixin {
   final formatter = NumberFormat('#,##0.00', 'en_PHP');
 
   // Days mapped to Sunday through Saturday
@@ -30,6 +30,24 @@ class _ApplianceInformationDialogState
     6: 'Friday',
     7: 'Saturday',
   };
+
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 300), // Adjust the duration as needed
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(_controller);
+
+    // Start the animation when the dialog is displayed
+    _controller.forward();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,91 +64,98 @@ class _ApplianceInformationDialogState
             .join(', ')
         : 'N/A';
 
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.asset(
-                  'assets/appInfoImage.png',
-                  fit: BoxFit.cover,
-                  scale: 0.7,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                '${widget.appliance['applianceName']}',
-                style: const TextStyle(
-                  color: AppColors.primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-              Column(
-                children: [
-                  KeyValueRow(
-                    label: 'Wattage       ',
-                    valueWidget: Text(
-                      '${widget.appliance['wattage'] ?? 'N/A'} W',
-                    ),
-                  ),
-                  KeyValueRow(
-                      label: 'Hours Used',
-                      valueWidget: Text(
-                          ' ${widget.appliance['usagePatternPerDay'] ?? 'hours'} hours')),
-                  KeyValueRow(
-                    label: 'Monthly Cost',
-                    valueWidget: Text(
-                      'PHP ${formatter.format(widget.appliance['monthlyCost'] ?? 0)}',
-                      // valueWidget: Wrap(),
-                    ),
-                  ),
-                  KeyValueRow(
-                    label: 'Selected Days',
-                    valueWidget: Wrap(
-                      children: [Text(selectedDaysNames)],
-                    ),
-                  ),
-                  updatedAt(
-                    'Appliance Added On',
-                    widget.appliance['createdAt'] != null
-                        ? DateFormat('MM/dd/yyyy').format(
-                            DateTime.parse(widget.appliance['createdAt']),
-                          )
-                        : '',
-                  ),
-                  updatedAt(
-                    'Last Updated',
-                    widget.appliance['updatedAt'] != null
-                        ? DateFormat('MM/dd/yyyy').format(
-                            DateTime.parse(widget.appliance['updatedAt']),
-                          )
-                        : '',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ],
-              ),
-            ],
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
           ),
-        ),
-      ),
+          child: Transform.scale(
+            scale: _scaleAnimation.value,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/appInfoImage.png',
+                        fit: BoxFit.cover,
+                        scale: 0.7,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      '${widget.appliance['applianceName']}',
+                      style: const TextStyle(
+                        color: AppColors.primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                    Column(
+                      children: [
+                        KeyValueRow(
+                          label: 'Wattage       ',
+                          valueWidget: Text(
+                            '${widget.appliance['wattage'] ?? 'N/A'} W',
+                          ),
+                        ),
+                        KeyValueRow(
+                            label: 'Hours Used',
+                            valueWidget: Text(
+                                ' ${widget.appliance['usagePatternPerDay'] ?? 'hours'} hours')),
+                        KeyValueRow(
+                          label: 'Monthly Cost',
+                          valueWidget: Text(
+                            'PHP ${formatter.format(widget.appliance['monthlyCost'] ?? 0)}',
+                          ),
+                        ),
+                        KeyValueRow(
+                          label: 'Selected Days',
+                          valueWidget: Wrap(
+                            children: [Text(selectedDaysNames)],
+                          ),
+                        ),
+                        updatedAt(
+                          'Appliance Added On',
+                          widget.appliance['createdAt'] != null
+                              ? DateFormat('MM/dd/yyyy').format(
+                                  DateTime.parse(widget.appliance['createdAt']),
+                                )
+                              : '',
+                        ),
+                        updatedAt(
+                          'Last Updated',
+                          widget.appliance['updatedAt'] != null
+                              ? DateFormat('MM/dd/yyyy').format(
+                                  DateTime.parse(widget.appliance['updatedAt']),
+                                )
+                              : '',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Close'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -162,7 +187,7 @@ class _ApplianceInformationDialogState
 
 class KeyValueRow extends StatelessWidget {
   final String label;
-  final Widget valueWidget; // Changed to Widget instead of String
+  final Widget valueWidget;
 
   const KeyValueRow({
     Key? key,
@@ -186,8 +211,7 @@ class KeyValueRow extends StatelessWidget {
           ),
           const Spacer(),
           Flexible(
-            child:
-                valueWidget, // Allows the widget to wrap inside available space
+            child: valueWidget,
           ),
         ],
       ),
