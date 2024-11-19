@@ -61,6 +61,7 @@ dev_dependencies:
   readmore: ^3.0.0
   loading_animation_widget: ^1.3.0
   timeago: ^3.7.0
+  web_socket_channel: ^2.1.0
 
 
 # For information on the generic Dart part of this file, see the

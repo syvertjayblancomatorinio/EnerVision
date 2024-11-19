@@ -37,6 +37,7 @@ class _AppSettingsState extends State<AppSettings> {
           color: Colors.white,
           child: ListView(
             children: [
+              const SizedBox(height: 50),
               settingsOptions(
                 context,
                 'Account',
@@ -44,19 +45,6 @@ class _AppSettingsState extends State<AppSettings> {
                 () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (context) => ProfilePage()));
-                },
-                showDivider: false,
-              ),
-              settingsOptions(
-                context,
-                'Change Password',
-                Icons.lock,
-                () {
-                  // Navigate to Support page
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => PasswordResetApp()));
                 },
                 showDivider: false,
               ),

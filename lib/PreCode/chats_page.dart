@@ -7,6 +7,9 @@ import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart'
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+late WebSocketChannel _channel;
 
 class HelpChatPage extends StatefulWidget {
   @override
@@ -26,10 +29,33 @@ class _HelpChatPageState extends State<HelpChatPage> {
     super.initState();
     _loadUserId();
     _fetchMessages();
+
+    // Set up WebSocket
+    _channel = WebSocketChannel.connect(Uri.parse('ws://10.0.2.2:8080/ws'));
+
+    // Listen for new messages
+    _channel.stream.listen((data) {
+      final Map<String, dynamic> newMessage = jsonDecode(data);
+
+      // Check if the message is for this user
+      if (newMessage['userId'] == userId || newMessage['userId'] == 'admin') {
+        setState(() {
+          _messages.add({
+            'userId': newMessage['userId'],
+            'message': newMessage['message'],
+            'timestamp': DateTime.parse(newMessage['timestamp']),
+          });
+
+          // Sort messages to maintain the order
+          _messages.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
+    _channel.sink.close();
     _controller.dispose();
     super.dispose();
   }
@@ -48,36 +74,45 @@ class _HelpChatPageState extends State<HelpChatPage> {
     try {
       final response = await http.get(Uri.parse('$apiUrl/chats'));
       if (response.statusCode == 200) {
-        final List<dynamic> chats = jsonDecode(response.body);
+        final List<dynamic> groupedChats = jsonDecode(response.body);
         List<Map<String, dynamic>> allMessages = [];
-        final String? currentUserId = userId;
-        for (var chat in chats) {
-          for (var message in chat['messages']) {
-            if (message['userId'] == currentUserId) {
+
+        // Find the group for the current user
+        final userChats = groupedChats.firstWhere(
+          (group) => group['_id'] == userId,
+          orElse: () => null,
+        );
+
+        if (userChats != null) {
+          // Add user's messages
+          for (var chat in userChats['chats']) {
+            for (var message in chat['messages']) {
               allMessages.add({
-                'userId': message['userId'],
+                'userId': userId,
                 'message': message['message'],
-                'timestamp': DateTime.parse(message['timestamp'])
+                'timestamp': DateTime.parse(message['timestamp']),
+              });
+            }
+
+            // Add admin replies
+            for (var reply in chat['adminReplies']) {
+              allMessages.add({
+                'userId': 'admin',
+                'message': reply['message'],
+                'timestamp': DateTime.parse(reply['timestamp']),
               });
             }
           }
-          // Add replies from the admin for the user's chat
-          for (var reply in chat['adminReplies']) {
-            allMessages.add({
-              'userId': 'admin',
-              'message': reply['message'],
-              'timestamp': DateTime.parse(reply['timestamp'])
-            });
-          }
         }
 
+        // Sort messages by timestamp
         allMessages.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
 
         setState(() {
           _messages = allMessages;
         });
       } else {
-        print('Failed to load messages');
+        print('Failed to load messages: ${response.statusCode}');
       }
     } catch (error) {
       print('Error fetching messages: $error');
