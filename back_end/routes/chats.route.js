@@ -36,16 +36,29 @@ router.post('/chats', async (req, res) => {
 // Assuming you are using a middleware like JWT to authenticate and get the user's ID
 router.get('/chats', async (req, res) => {
   try {
-    const userId = req.userId;
+    const chatsGroupedByUser = await Chat.aggregate([
+      {
+        $group: {
+          _id: "$userId", // Group by userId
+          chats: {
+            $push: {
+              conversationId: "$conversationId",
+              created_at: "$created_at",
+              updated_at: "$updated_at",
+              messages: "$messages",
+              adminReplies: "$adminReplies"
+            }
+          }
+        }
+      }
+    ]);
 
-    const chats = await Chat.find({ userId: userId });
-
-    res.json(chats);
+    res.json(chatsGroupedByUser);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server Error' });
   }
 });
-
 
 
 // Send an admin reply
