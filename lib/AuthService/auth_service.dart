@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/snack_bar.dart';
+import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
 import 'package:supabase_project/MainFolder/secondaryMain.dart';
@@ -52,6 +53,8 @@ class AuthService {
     final url = Uri.parse("http://10.0.2.2:8080/signup");
 
     try {
+      String username = toTitleCase(usernameController?.text ?? '');
+
       var response = await http.post(
         url,
         headers: <String, String>{
@@ -60,7 +63,7 @@ class AuthService {
         body: jsonEncode(<String, String>{
           'email': emailController.text,
           'password': passwordController.text,
-          'username': usernameController?.text ?? '',
+          'username': username,
           'kwhRate': kwhRateController?.text ?? '',
         }),
       );

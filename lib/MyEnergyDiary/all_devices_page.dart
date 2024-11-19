@@ -9,6 +9,7 @@ import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
+import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/micaella.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -360,8 +361,12 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
 
   Future<void> addAppliance() async {
     final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
+    String applianceName = toTitleCase(
+      controllers.addApplianceNameController.text.trim(),
+    );
+
     final Map<String, dynamic> applianceData = {
-      'applianceName': controllers.addApplianceNameController.text.trim(),
+      'applianceName': applianceName,
       'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
       'usagePatternPerDay':
           double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,

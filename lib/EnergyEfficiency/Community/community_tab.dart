@@ -6,6 +6,7 @@ import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
+import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/confirm_delete.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/post_view_dialog.dart';
@@ -320,7 +321,8 @@ class _CommunityTabState extends State<CommunityTab> {
                   size: 24,
                 ),
                 onPressed: () async {
-                  final suggestionText = controller.suggestionController.text;
+                  final suggestionText = toSentenceCase(
+                      controller.suggestionController.text.trim());
 
                   if (suggestionText.isEmpty) {
                     showSnackBar(context, 'Suggestion text cannot be empty');

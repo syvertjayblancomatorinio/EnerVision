@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:country_picker/country_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
 import 'package:supabase_project/ConstantTexts/final_texts.dart';
 import 'package:supabase_project/MainFolder/secondaryMain.dart';
@@ -72,18 +73,11 @@ class _SetupProfileState extends State<SetupProfile> {
       return;
     }
 
-    // Debug prints for each input
-    print('UserId: $userId');
-    print('Name: ${_nameController.text}');
-    print('Birth Date: ${_birthDateController.text}');
-    print('Mobile Number: ${_mobileNumberController.text}');
-    print('Country: $_selectedCountry');
-    print('City: ${_cityLineController.text}');
-    print('Street: ${_streetLineController.text}');
-
     final url = Uri.parse("http://10.0.2.2:8080/updateUserProfile");
 
     try {
+      String fullName = toTitleCase(_nameController.text.trim());
+
       var response = await http.post(
         url,
         headers: <String, String>{
@@ -91,7 +85,7 @@ class _SetupProfileState extends State<SetupProfile> {
         },
         body: jsonEncode(<String, dynamic>{
           'userId': userId,
-          'name': _nameController.text,
+          'name': fullName,
           'birthDate': _birthDateController.text,
           'mobileNumber': _mobileNumberController.text,
           'address': {
