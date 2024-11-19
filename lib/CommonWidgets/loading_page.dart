@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/welcome_page.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
@@ -99,20 +100,13 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            const Text(
-              'Wait For a Second...',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Circular progress indicator
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
-            ),
+            ConstrainedBox(
+                constraints:
+                    const BoxConstraints.expand(height: 200, width: 200),
+                child: const LoadingWidget(
+                  message: 'Wait For a Second...',
+                  color: AppColors.primaryColor,
+                ))
           ],
         ),
       ),
