@@ -9,8 +9,9 @@ const suggestionsSchema = new Schema({
   deletedAt: { type: Date, default: null }
 }, { timestamps: true });
 
+suggestionsSchema.index({ userId: 1 });
+suggestionsSchema.index({ postId: 1 });
 const Suggestion = mongoose.model('Suggestion', suggestionsSchema);
-
 module.exports = Suggestion;
 
 
