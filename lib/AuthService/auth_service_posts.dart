@@ -130,8 +130,6 @@ class PostsService {
   }
   // It's almost 3am and I still couldn't figure out how to add suggestions to the specific post hays kapoy na.
 
-  // Helper method to calculate "time ago"
-
   static Future<List<Map<String, dynamic>>> getComments(String postId) async {
     final url = Uri.parse('$baseUrl/getAllPostsSuggestions/$postId');
     final response = await http.get(url);
