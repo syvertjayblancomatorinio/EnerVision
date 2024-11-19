@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/CommonWidgets/dialogs/number_of_appliances_dialog.dart';
 import 'package:supabase_project/MyEnergyDiary/common-widgets.dart';
+import 'package:supabase_project/MyEnergyDiary/date_picker.dart';
 
 import '../../../CommonWidgets/appliance_container/total_cost&kwh.dart';
 
@@ -126,7 +127,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        DatePickerWidget(
+        DatePickerWidgetWithAllMonths(
           initialDate: selectedDate,
           onDateSelected: onDateSelected,
           getApplianceCount: getUsersApplianceCount,

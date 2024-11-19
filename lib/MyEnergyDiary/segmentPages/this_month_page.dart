@@ -43,9 +43,8 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     }
 
     // Adjust the URL to match the new endpoint
-    final response = await http
-        .get(Uri.parse('$ApiConfig/getUsersCount/$userId/appliances'));
-
+    final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/getUsersCount/$userId/appliances'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
@@ -70,9 +69,11 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       throw Exception("User ID is null. Cannot fetch total monthly cost.");
     }
 
-    final url =
-        Uri.parse("$ApiConfig/totalMonthlyCostOfUserAppliances/$userId");
+    // Build the URL with the userId parameter
+    final url = Uri.parse(
+        "${ApiConfig.baseUrl}/totalMonthlyCostOfUserAppliances/$userId");
 
+    // Make the HTTP request
     final response = await http.get(
       url,
       headers: <String, String>{
@@ -89,8 +90,8 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         monthlyData['totalMonthlyCO2Emissions'] =
             data['totalMonthlyCO2Emissions'];
       });
-      throw Exception(
-          'Fetched total monthly cost: ${monthlyData['totalMonthlyCost']}');
+      // Optional: You can log the fetched data if needed.
+      print('Fetched total monthly cost: ${monthlyData['totalMonthlyCost']}');
     } else {
       throw Exception(
           'Failed to fetch total monthly cost: ${response.statusCode}');
