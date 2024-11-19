@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/AuthService/base_url.dart';
 
 class UserService {
   Future<String?> getAvatar(String userId) async {
@@ -8,10 +9,9 @@ class UserService {
     await prefs.setString('userId', userId);
 
     final response = await http
-        .get(Uri.parse('http://10.0.2.2:8080/getAvatar?userId=$userId'));
+        .get(Uri.parse('${ApiConfig.baseUrl}/getAvatar?userId=$userId'));
 
     if (response.statusCode == 200) {
-      // Parse the JSON and extract the avatar URL
       final profileData = jsonDecode(response.body);
       return profileData['avatar'];
     } else if (response.statusCode == 404) {

@@ -2,11 +2,50 @@ const express = require("express");
 const multer = require("multer");
 const User = require("../models/user.model");
 const UserProfile = require("../models/profile.model");
+const Appliance = require("../models/appliances.model");
+const MonthlyConsumption = require("../models/monthly_consumption.model");
 const router = express.Router();
 const path = require("path");
 const fs = require('fs');
 const jwt = require("jsonwebtoken");
+const runCronJob = async () => {
+    const users = await User.find(); // Get all users
+    for (const user of users) {
+        const appliances = await Appliance.find({ userId: user._id });
 
+        console.log('Appliances for user:', user._id, appliances);
+
+        const totalMonthlyCost = appliances.reduce((total, appliance) => {
+            return total + (appliance.monthlyCost || 0);
+        }, 0);
+
+        console.log('Total Monthly Cost for user:', user._id, totalMonthlyCost);
+
+        const month = new Date().getMonth() + 1; // Get the current month (1-12)
+        const year = new Date().getFullYear(); // Get the current year
+
+        const monthlyConsumption = new MonthlyConsumption({
+            userId: user._id,
+            month,
+            year,
+            totalMonthlyConsumption: totalMonthlyCost
+        });
+
+        console.log('Saving Monthly Consumption:', monthlyConsumption);
+
+        await monthlyConsumption.save(); // Save to database
+    }
+};
+
+router.get('/run-cron', async (req, res) => {
+    try {
+        await runCronJob(); // Call the cron job function
+        res.status(200).send('Cron job executed successfully');
+    } catch (err) {
+        console.error('Error running cron job:', err);
+        res.status(500).send('Cron job failed');
+    }
+});
 // Ensure the uploads directory exists
 const uploadDir = path.join(__dirname, 'uploads'); // Using __dirname for portability
 if (!fs.existsSync(uploadDir)) {

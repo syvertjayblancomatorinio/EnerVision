@@ -11,6 +11,7 @@ import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:flutter/foundation.dart';
 
 import '../SignUpLogin&LandingPage/setup_profile.dart';
+import 'base_url.dart';
 
 class AuthService {
   final BuildContext context;
@@ -50,7 +51,7 @@ class AuthService {
     // final url = Uri.parse("${apiUrl}signup");
     // final url = Uri.parse("http://192.168.1.217/signup");
 
-    final url = Uri.parse("http://10.0.2.2:8080/signup");
+    final url = Uri.parse("${ApiConfig.baseUrl}/signup");
 
     try {
       String username = toTitleCase(usernameController?.text ?? '');
@@ -100,7 +101,7 @@ class AuthService {
     // Define the API URL based on the environment
     // String apiUrl =
     //     kReleaseMode ? "http://10.0.2.2:8080/" : "http://192.168.1.217:8080/";
-    final url = Uri.parse("http://10.0.2.2:8080/signin");
+    final url = Uri.parse("${ApiConfig.baseUrl}/signin");
 
     try {
       var response = await http.post(
@@ -158,7 +159,7 @@ class AuthService {
   }
 
   Future<void> fetchUserProfile(String userId) async {
-    final url = Uri.parse("http://10.0.2.2:8080/getAvatar/$userId");
+    final url = Uri.parse("${ApiConfig.baseUrl}/getAvatar/$userId");
 
     try {
       var response = await http.get(url);
@@ -184,37 +185,3 @@ class AuthService {
     }
   }
 }
-// Future<void> signUp() async {
-//   final url = Uri.parse("http://10.0.2.2:8080/signup");
-//
-//   try {
-//     var response = await http.post(
-//       url,
-//       headers: <String, String>{
-//         'Content-Type': 'application/json; charset=UTF-8',
-//       },
-//       body: jsonEncode(<String, String>{
-//         'email': emailController.text,
-//         'password': passwordController.text,
-//         'username': usernameController?.text ?? '',
-//         'kwhRate': kwhRateController?.text ?? '',
-//       }),
-//     );
-//
-//     if (response.statusCode == 201) {
-//       Navigator.push(
-//         context,
-//         MaterialPageRoute(builder: (context) => LoginPage()),
-//       );
-//     } else if (response.statusCode == 400) {
-//       final responseBody = jsonDecode(response.body);
-//       final errorMessage =
-//           responseBody['message'] ?? 'Email is not available';
-//       print('User ID not found in response: $errorMessage');
-//     } else {
-//       print('Failed to Sign in: ${response.body}');
-//     }
-//   } catch (e) {
-//     print('Error occurred while signing up: $e');
-//   }
-// }

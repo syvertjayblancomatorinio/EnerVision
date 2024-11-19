@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 
 class ApplianceService {
-  static const String baseUrl = 'http://10.0.2.2:8080';
-
   static Future<void> addAppliance(
       String userId, Map<String, dynamic> applianceData) async {
-    final url = Uri.parse('$baseUrl/addApplianceNewLogic');
+    final url = Uri.parse('${ApiConfig.baseUrl}/addApplianceNewLogic');
 
     final response = await http.post(
       url,
@@ -40,7 +39,8 @@ class ApplianceService {
       throw Exception('User ID not found in shared preferences');
     }
 
-    final url = Uri.parse('$baseUrl/getAllTodayAppliances/$userId/appliances');
+    final url = Uri.parse(
+        '${ApiConfig.baseUrl}/getAllTodayAppliances/$userId/appliances');
 
     final response = await http.get(url);
 
@@ -78,7 +78,8 @@ class ApplianceService {
       throw Exception('User ID not found in shared preferences');
     }
 
-    final url = Uri.parse('$baseUrl/getAllUsersAppliances/$userId/appliances');
+    final url = Uri.parse(
+        'http://10.0.2.2:8080/getAllUsersAppliances/$userId/appliances');
 
     final response = await http.get(url);
 
@@ -104,7 +105,8 @@ class ApplianceService {
       'updatedData': updatedData,
     };
 
-    final url = Uri.parse('$baseUrl/updateApplianceOccurrences/$applianceId');
+    final url = Uri.parse(
+        '${ApiConfig.baseUrl}/updateApplianceOccurrences/$applianceId');
 
     final response = await http.patch(
       url,
@@ -125,7 +127,7 @@ class ApplianceService {
 
   // Static method to delete an appliance
   static Future<void> deleteAppliance(String applianceId) async {
-    final url = Uri.parse('$baseUrl/deleteAppliance/$applianceId');
+    final url = Uri.parse('${ApiConfig.baseUrl}/deleteAppliance/$applianceId');
     final response = await http.delete(
       url,
       headers: <String, String>{
@@ -150,7 +152,7 @@ class ApplianceService {
       return null;
     }
 
-    final url = Uri.parse('$baseUrl/totalDailyData/$userId');
+    final url = Uri.parse('${ApiConfig.baseUrl}/totalDailyData/$userId');
 
     try {
       final response = await http.get(
@@ -186,7 +188,7 @@ class ApplianceService {
   }
 
   static Future<void> deletePost(String postId) async {
-    final url = Uri.parse('$baseUrl/deletePost/$postId');
+    final url = Uri.parse('${ApiConfig.baseUrl}/deletePost/$postId');
     print('Sending DELETE request to: $url');
 
     final response = await http.delete(
@@ -207,7 +209,7 @@ class ApplianceService {
 
   static Future<void> addSuggestionToAPost(
       String postId, Map<String, dynamic> suggestionData) async {
-    final url = Uri.parse('$baseUrl/addSuggestions/$postId');
+    final url = Uri.parse('${ApiConfig.baseUrl}/addSuggestions/$postId');
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
     final response = await http.post(

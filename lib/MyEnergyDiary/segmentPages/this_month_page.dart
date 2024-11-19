@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
+import '../../AuthService/base_url.dart';
 import '../../CommonWidgets/dialogs/loading_animation.dart';
 
 class ThisMonthPage extends StatefulWidget {
@@ -42,8 +43,8 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     }
 
     // Adjust the URL to match the new endpoint
-    final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/getUsersCount/$userId/appliances'));
+    final response = await http
+        .get(Uri.parse('$ApiConfig/getUsersCount/$userId/appliances'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -69,8 +70,8 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       throw Exception("User ID is null. Cannot fetch total monthly cost.");
     }
 
-    final url = Uri.parse(
-        "http://10.0.2.2:8080/totalMonthlyCostOfUserAppliances/$userId");
+    final url =
+        Uri.parse("$ApiConfig/totalMonthlyCostOfUserAppliances/$userId");
 
     final response = await http.get(
       url,

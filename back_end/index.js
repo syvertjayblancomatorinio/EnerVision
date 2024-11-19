@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const app = express();
 const profileRoutes = require('./routes/profile');
@@ -8,9 +10,9 @@ const mongoose = require('mongoose');
 const MonthlyConsumption = require('./models/monthly_consumption.model'); // Import model
 const cron = require('node-cron');
 const winston = require('winston');
-
 const User = require('./models/user.model'); // Adjust the path as needed
 const Appliance = require('./models/appliances.model');
+const router = express.Router();
 
 // Cron job to save monthly consumption on the last day of each month
 cron.schedule('0 0 1 * *', async () => {
@@ -44,14 +46,35 @@ cron.schedule('0 0 1 * *', async () => {
         await monthlyConsumption.save(); // Save to database
     }
 });
+router.get('/run-cron', async (req, res) => {
+  try {
+    await runCronJob(); // Extract cron logic into a separate function
+    res.status(200).send('Cron job executed successfully');
+  } catch (err) {
+    res.status(500).send('Cron job failed');
+  }
+});
 
 
 
+
+//require('dotenv').config();
+//
+//mongoose.connect(
+//  process.env.MONGO_URI,
+//  { useNewUrlParser: true, useUnifiedTopology: true }
+//).then(() => {
+//  console.log('Connected to MongoDB');
+//  console.log('MONGO_URI:', process.env.MONGO_URI);
+//
+//}).catch((error) => {
+//  console.error('MongoDB connection error:', error);
+//});
 
 
 mongoose.connect(
-"mongodb://localhost:27017/enervision"
-//  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
+//"mongodb://localhost:27017/enervision"
+  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
 //"mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/?retryWrites=true&w=majority&appName=EnerVision-Main"
 //  { useNewUrlParser: true, useUnifiedTopology: true }
 ).then(() => {
@@ -66,7 +89,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.json());
 
-app.use('/images', express.static('C:/Users/SyvertJayMartorinio/OneDrive - Geidi/Desktop/auth/back_end/images'));
+const path = require('path');
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // Route definitions
 app.use('/', require('./routes/user.route'));
@@ -74,7 +98,6 @@ app.use('/', require('./routes/appliances.route'));
 app.use('/', require('./routes/new_appliance.route'));
 app.use('/', require('./routes/post.route'));
 app.use('/', require('./routes/suggestions.route'));
-app.use('/', require('./routes/profile.route'));
 app.use('/', require('./routes/profile.route'));
 app.use('/', require('./routes/profiles.route'));
 app.use('/', require('./routes/account.route'));
@@ -99,9 +122,17 @@ app.post('/uploadAvatar', async (req, res) => {
   }
 });
 
-// Error handling middleware
+const logger = winston.createLogger({
+  level: 'error',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'error.log' }),
+    new winston.transports.Console(),
+  ],
+});
+
 app.use((err, req, res, next) => {
-  winston.error(err.message, err); // Ensure winston is correctly configured
+  logger.error(err.message, { stack: err.stack });
   res.status(500).send('Something failed');
 });
 

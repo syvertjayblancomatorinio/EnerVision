@@ -2,13 +2,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-class SuggestionService {
-  static const String baseUrl = 'http://10.0.2.2:8080';
+import 'base_url.dart';
 
+class SuggestionService {
   static Future<void> addSuggestion(
       String userId, String postId, Map<String, dynamic> suggestionData) async {
-    final url = Uri.parse(
-        '$baseUrl/addSuggestions/$postId'); // Updated to include postId
+    final url = Uri.parse('${ApiConfig.baseUrl}/addSuggestions/$postId');
 
     final response = await http.post(
       url,
@@ -17,7 +16,7 @@ class SuggestionService {
       },
       body: jsonEncode({
         'userId': userId,
-        'suggestionData': suggestionData, // Changed to suggestionData
+        'suggestionData': suggestionData,
       }),
     );
 
