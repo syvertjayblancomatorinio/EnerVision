@@ -29,6 +29,9 @@ class _AppSettingsState extends State<AppSettings> {
       home: Scaffold(
         appBar: customAppBar1(
           showBackArrow: true,
+          onBackPressed: () {
+            Navigator.pop(context);
+          },
           showTitle: false,
         ),
         bottomNavigationBar: const BottomNavigation(selectedIndex: 4),

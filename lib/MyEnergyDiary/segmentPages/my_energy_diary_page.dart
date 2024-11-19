@@ -63,9 +63,8 @@ class _MyEnergyDiaryState extends State<MyEnergyDiary> {
       home: Scaffold(
         appBar: customAppBar1(
           title: 'My Energy Diary',
-          onBackPressed: () {
-            Navigator.pop(context);
-          },
+          showBackArrow: false,
+          showProfile: false,
         ),
         bottomNavigationBar: const BottomNavigation(selectedIndex: 1),
         body: SingleChildScrollView(

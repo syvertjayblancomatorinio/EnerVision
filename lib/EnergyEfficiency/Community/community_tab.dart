@@ -296,16 +296,54 @@ class _CommunityTabState extends State<CommunityTab> {
                 onPressed: () async {
                   final suggestionText = controller.suggestionController.text;
 
-                  if (suggestionText.isNotEmpty) {
-                    try {
-                      showSnackBar(context, 'Suggestion added successfully');
-                      controller.suggestionController
-                          .clear(); // Clear the text field after successful submission
-                    } catch (e) {
-                      showSnackBar(context, 'Failed to add suggestion: $e');
-                    }
-                  } else {
+                  if (suggestionText.isEmpty) {
                     showSnackBar(context, 'Suggestion text cannot be empty');
+                    return;
+                  }
+
+                  try {
+                    // Retrieve user ID from SharedPreferences
+                    final prefs = await SharedPreferences.getInstance();
+                    final userId = prefs.getString('userId');
+
+                    if (userId == null) {
+                      showSnackBar(context, 'User not logged in');
+                      return;
+                    }
+
+                    // Get postId (assume posts[index] contains the postId)
+                    final postId = posts[index]['_id'];
+
+                    // Construct the API URL
+                    final url = Uri.parse(
+                        '$baseUrl/addSuggestionToPost/$postId/suggestions');
+
+                    // Prepare the data for the POST request
+                    final body = jsonEncode({
+                      'userId': userId,
+                      'suggestionText': suggestionText,
+                    });
+
+                    // Send the POST request
+                    final response = await http.post(
+                      url,
+                      headers: {'Content-Type': 'application/json'},
+                      body: body,
+                    );
+
+                    if (response.statusCode == 201) {
+                      showSnackBar(
+                          context, 'Suggestion added successfully to $postId');
+                      print('Suggestion added successfully to $postId');
+                      controller.suggestionController
+                          .clear(); // Clear the text field
+                    } else {
+                      final responseData = jsonDecode(response.body);
+                      showSnackBar(context,
+                          'Failed to add suggestion: ${responseData['message']}');
+                    }
+                  } catch (e) {
+                    showSnackBar(context, 'An error occurred: $e');
                   }
                 },
               ),
