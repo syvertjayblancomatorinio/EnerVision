@@ -101,9 +101,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         isLoading =
             false; // Set loading state to false even if there is an error
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to load appliances')),
-      );
     }
   }
 
@@ -143,10 +140,13 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
             color: AppColors.primaryColor,
           ))
         else if (appliances.isEmpty)
-          const Center(
-            child: Text(
-              'No appliances added',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+          Container(
+            margin: const EdgeInsets.only(top: 200, bottom: 100),
+            child: const Center(
+              child: Text(
+                'No appliances added for \n Today\'s Appliances...',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
             ),
           )
         else

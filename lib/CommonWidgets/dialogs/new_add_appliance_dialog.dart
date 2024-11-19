@@ -32,6 +32,14 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
   void initState() {
     super.initState();
     widget.addApplianceCategoryController.text = 'Personal Devices';
+    _initializeSelectedDays();
+  }
+
+  void _initializeSelectedDays() {
+    final currentDay = DateTime.now().weekday % 7;
+    setState(() {
+      selectedDays = [currentDay + 1];
+    });
   }
 
   void _toggleDay(int day) {
