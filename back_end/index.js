@@ -91,7 +91,7 @@ app.use(express.json());
 
 const path = require('path');
 app.use('/images', express.static(path.join(__dirname, 'images')));
-
+app.use('/uploads', express.static('uploads'));
 // Route definitions
 app.use('/', require('./routes/user.route'));
 app.use('/', require('./routes/appliances.route'));

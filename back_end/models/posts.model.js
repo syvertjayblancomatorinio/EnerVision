@@ -10,7 +10,7 @@ const postSchema = new Schema({
     type: String,
     required: true
   },
-//  uploadPhoto: String,
+  uploadPhoto: String,
 
   tags : String,
   deletedAt: Date,

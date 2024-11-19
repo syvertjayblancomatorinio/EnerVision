@@ -36,6 +36,7 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
 
   bool isLoading = false;
   String displayTag = 'Search or Choose a Tag';
+
   @override
   void initState() {
     super.initState();
@@ -53,33 +54,42 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
     String title = toTitleCase(_titleController.text.trim());
     String description = toSentenceCase(_descriptionController.text.trim());
 
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, dynamic>{
-        'userId': userId,
-        'postData': {
-          'title': title,
-          'description': description,
-          'tags': tagsAsString,
-        }
-      }),
-    );
+    // Check if title and description are not empty
+    if (title.isEmpty || description.isEmpty) {
+      await _showApplianceErrorDialog(
+          context, 'Title and description cannot be empty.');
+      return;
+    }
+
+    var request = http.MultipartRequest('POST', url);
+    request.fields['userId'] = userId!;
+    request.fields['title'] = title;
+    request.fields['description'] = description;
+    request.fields['tags'] = tagsAsString;
+
+    // Check if image exists, and if so, add it to the request
+    if (_image != null) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'uploadPhoto',
+        _image!.path,
+      ));
+    }
+
+    var response = await request.send();
 
     if (response.statusCode == 400) {
-      await _showApplianceErrorDialog(context);
+      await _showApplianceErrorDialog(
+          context, 'Error adding your post. Please try again.');
     } else if (response.statusCode == 201) {
       Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => const EnergyEfficiencyPage(selectedIndex: 1)),
       );
-
       print('Post added successfully');
     } else {
-      print('Failed to add post: ${response.body}');
+      print('Failed to add post: ${response.statusCode}');
+      await _showApplianceErrorDialog(context, 'Failed to add post.');
     }
   }
 
@@ -102,11 +112,12 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
     }
   }
 
-  Future<void> _showApplianceErrorDialog(BuildContext context) async {
+  Future<void> _showApplianceErrorDialog(
+      BuildContext context, String message) async {
     await showCustomDialog(
       context: context,
       title: 'Post not Added',
-      message: 'There was an error adding your post.',
+      message: message,
       buttonText: 'OK',
     );
   }
@@ -315,31 +326,22 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
               'tags': finalSelectedTags,
             };
 
-            await createPost(userId!, postData);
-          } else {
-            _validateInputs();
-            if (_titleController.text.trim().isEmpty) {
-              _titleController.text = 'Please add a title.';
-            }
-            if (_descriptionController.text.trim().isEmpty) {
-              _descriptionController.text = 'Please add a description.';
-            }
-            if (_clickCount >= _clickLimit) {
-              Text(
-                'Button disabled after $_clickLimit clicks!',
-                style: const TextStyle(color: Colors.red),
-              );
-            }
+            setState(() {
+              isLoading = true;
+            });
 
-            await _showApplianceErrorDialog(context);
+            await createPost(userId!, postData);
+
+            setState(() {
+              isLoading = false;
+            });
+          } else {
+            _showApplianceErrorDialog(context, 'sdfs');
           }
         },
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(200, 50),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-        child: const Text('Upload'),
+        child: isLoading
+            ? const CircularProgressIndicator()
+            : const Text('Create Post'),
       ),
     );
   }

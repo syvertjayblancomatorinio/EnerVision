@@ -1,30 +1,57 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
 const User = require('../models/user.model');
 const Posts = require('../models/posts.model');
 const router = express.Router();
-const asyncHandler = require('../centralized_codes/authMiddleware');
+const asyncHandler = require('../centralized_codes/authMiddleware'); // Your async middleware
 
-router.post('/addPost', async (req, res) => {
+// Configure multer for file upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Directory to store uploaded files
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// Add a new post with optional photo upload
+router.post('/addPost', upload.single('uploadPhoto'), async (req, res) => {
   try {
-    const { userId, postData } = req.body;
+    const { userId, title, description, tags } = req.body;
 
-    const newPost = new Posts({ ...postData, userId: userId });
-    await newPost.save();
-
+    // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Create the new post object
+    const newPost = new Posts({
+      title,
+      description,
+      tags,
+      userId,
+      uploadPhoto: req.file ? req.file.filename : null // Save the filename if a photo is uploaded
+    });
+
+    // Save the post and update the user's posts
+    await newPost.save();
     user.posts.push(newPost._id);
     await user.save();
 
-    res.status(201).json({ message: 'Post added to user', post: newPost });
+    res.status(201).json({ message: 'Post added successfully', post: newPost });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
+
+
 
 // Get all posts of all users
 router.get('/displayPosts', asyncHandler(async (req, res) => {

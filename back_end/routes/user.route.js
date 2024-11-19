@@ -353,17 +353,17 @@ router.get('/getUserKwhRate/:userId', async (req, res) => {
 });
 router.get('/getUsername/:userId', async (req, res) => {
   try {
-    const userId = req.params.userId; // Get the userId from the request parameters
-    const user = await User.findById(userId); // Fetch user by ID
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' }); // Handle no user found
+      return res.status(404).json({ message: 'User not found' });
     }
 
     if (user.username != null && user.username !== '') {
-      return res.status(200).json({ username: user.username }); // Send kwhRate if found
+      return res.status(200).json({ username: user.username });
     } else {
-      return res.status(404).json({ message: 'username not found for the user' }); // No kwhRate set
+      return res.status(404).json({ message: 'username not found for the user' });
     }
 
   } catch (error) {
@@ -378,7 +378,6 @@ router.get("/user/:userId/kwhRate", async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Assuming the user object has a field 'kwhRate'
     res.json({ kwhRate: user.kwhRate });
   } catch (err) {
     console.error(err);
