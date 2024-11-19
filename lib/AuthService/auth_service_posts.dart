@@ -6,8 +6,8 @@ class PostsService {
   static const String baseUrl = 'http://10.0.2.2:8080';
 
   // Fetch posts from the API
-  static Future<List<Map<String, dynamic>>> getPosts() async {
-    final url = Uri.parse('$baseUrl/displayPosts');
+  static Future<List<Map<String, dynamic>>> getPostsOld() async {
+    final url = Uri.parse('$baseUrl/getAllPosts');
     final response = await http.get(url, headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     });
@@ -31,6 +31,40 @@ class PostsService {
       }).toList();
     } else {
       throw Exception('Failed to load Posts');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getPosts() async {
+    final url = Uri.parse('$baseUrl/getAllPosts');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      // Ensure the response contains a 'posts' key
+      if (data is Map<String, dynamic> && data.containsKey('posts')) {
+        List<Map<String, dynamic>> posts =
+            List<Map<String, dynamic>>.from(data['posts']);
+
+        // Add 'timeAgo' to each post
+        posts = posts.map((post) {
+          if (post.containsKey('createdAt')) {
+            final DateTime postDate = DateTime.parse(post['createdAt']);
+            post['timeAgo'] = _timeAgo(postDate);
+          } else {
+            post['timeAgo'] = 'Unknown time';
+          }
+          return post;
+        }).toList();
+
+        return posts; // Return only the posts as a list
+      } else {
+        throw Exception('Unexpected response structure');
+      }
+    } else if (response.statusCode == 404) {
+      throw Exception('No posts found');
+    } else {
+      throw Exception('Failed to load posts');
     }
   }
 
@@ -129,6 +163,8 @@ class PostsService {
     }
   }
   // It's almost 3am and I still couldn't figure out how to add suggestions to the specific post hays kapoy na.
+
+  // Helper method to calculate "time ago"
 
   static Future<List<Map<String, dynamic>>> getComments(String postId) async {
     final url = Uri.parse('$baseUrl/getAllPostsSuggestions/$postId');

@@ -31,8 +31,23 @@ router.get('/displayPosts', asyncHandler(async (req, res) => {
     const posts = await Posts.find().populate('userId', 'username');
     res.status(200).json({ message: 'Posts are retrieved', posts });
 }));
+router.get('/getAllPosts', asyncHandler(async (req, res) => {
+    const posts = await Posts.find()
+        .populate('userId', 'username')  // Populates the userId field with the username of the post's author
+        .populate('suggestions')  // Optionally, populate suggestions if you need them as well
+        .exec();  // Executes the query
 
-// Get all posts of a user
+    if (!posts || posts.length === 0) {
+        return res.status(404).json({ message: 'No posts found' });
+    }
+
+    // Respond with the retrieved posts
+    res.status(200).json({
+        message: 'All posts retrieved successfully',
+        posts: posts,
+    });
+}));
+
 router.get('/getAllPosts/:userId/posts', asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.userId)
         .select('username posts') // Select only the username and posts fields
@@ -42,7 +57,7 @@ router.get('/getAllPosts/:userId/posts', asyncHandler(async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
     }
 
-    // Respond with the user's username and posts
+    // Respond with the user's posts
     res.status(200).json({
         message: 'Posts retrieved successfully',
         username: user.username,

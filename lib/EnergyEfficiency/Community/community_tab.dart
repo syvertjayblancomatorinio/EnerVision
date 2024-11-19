@@ -56,12 +56,37 @@ class _CommunityTabState extends State<CommunityTab> {
     getPosts();
   }
 
+  Future<void> getPosts() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = false; // Remove this if unused
+    });
+
+    try {
+      final List<Map<String, dynamic>>? fetchedPosts =
+          await PostsService.getPosts();
+      if (fetchedPosts != null) {
+        setState(() {
+          posts = fetchedPosts;
+        });
+      } else {
+        throw Exception('Invalid post data format.');
+      }
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   Future<void> getUsersPost() async {
     setState(() {
       isLoading = true;
       isUserPost = true;
     });
-
     try {
       final fetchedData = await PostsService.fetchUsersPosts();
       setState(() {
@@ -122,13 +147,14 @@ class _CommunityTabState extends State<CommunityTab> {
                 var post = entry.value;
                 int index = entry.key;
                 return _buildUserPost(
-                  post['username'] ?? username ?? 'Unknown User',
+                  // post['username'] ?? username ?? 'Unknown User',
+                  username ?? post['userId']?['username'] ?? 'Unknown User',
                   post['title'] ?? 'No Title',
                   post['description'] ?? 'No Description',
                   post['timeAgo'] ?? 'Some time ago',
                   post['tags'] ?? 'No tags',
-                  '', // Placeholder for profileImageUrl
-                  '', // Placeholder for postImageUrl
+                  '',
+                  '',
                   index,
                 );
               }),
@@ -302,6 +328,7 @@ class _CommunityTabState extends State<CommunityTab> {
                   }
 
                   try {
+                    // Retrieve user ID from SharedPreferences
                     final prefs = await SharedPreferences.getInstance();
                     final userId = prefs.getString('userId');
 
@@ -310,6 +337,7 @@ class _CommunityTabState extends State<CommunityTab> {
                       return;
                     }
 
+                    // Get postId (assume posts[index] contains the postId)
                     final postId = posts[index]['_id'];
 
                     // Construct the API URL
@@ -352,69 +380,6 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  Widget _buildSuggestionsButton(String profileImageUrl, int index) {
-    final String validProfileImageUrl =
-        profileImageUrl.isNotEmpty ? profileImageUrl : placeholderImage;
-    return Row(
-      children: [
-        Row(
-          children: List.generate(3, (index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3.0),
-              child: CircleAvatar(
-                radius: 10.0,
-                backgroundImage: NetworkImage(validProfileImageUrl),
-                child: ClipOval(
-                  child: Image.network(
-                    validProfileImageUrl,
-                    width: 20.0,
-                    height: 20.0,
-                    fit: BoxFit.cover,
-                    errorBuilder: (BuildContext context, Object error,
-                        StackTrace? stackTrace) {
-                      return Image.asset(
-                        placeholderImage,
-                        fit: BoxFit.cover,
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
-        // Column(
-        //   children: [_buildSuggestionsList()],
-        // ),
-        const Spacer(),
-        ElevatedButton(
-          onPressed: () {
-            if (_tappedIndex == index) {
-              setState(() {
-                _tappedIndex = null;
-              });
-            } else {
-              // Call _confirmDeletePost when "Add Suggestions" is tapped
-              _confirmDeletePost(index);
-              setState(() {
-                _tappedIndex = index;
-              });
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1BBC9B),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-          ),
-          child: Text(
-            _tappedIndex == index ? 'Hide Suggestions' : 'Add Suggestions',
-          ),
-        )
-      ],
-    );
-  }
-
   Widget _buildTags(String tags) {
     return Padding(
       padding: const EdgeInsets.only(left: 10.0),
@@ -432,59 +397,6 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  Future<void> getPosts() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = false;
-    });
-
-    try {
-      final fetchedPosts = await PostsService.getPosts();
-      if (fetchedPosts != null && fetchedPosts is List) {
-        setState(() {
-          posts = fetchedPosts;
-        });
-      } else {
-        throw Exception('Invalid post data format.');
-      }
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> addSuggestionNew(
-      String postId, Map<String, dynamic> suggestionData) async {
-    if (postId.isEmpty || suggestionData.isEmpty) {
-      print('Invalid suggestion data or post ID');
-      showSnackBar(context, 'Cannot add suggestion. Missing data.');
-      return;
-    }
-
-    try {
-      await ApplianceService.addSuggestionToAPost(postId, suggestionData);
-      print('Suggestion added successfully');
-      showSnackBar(context, 'Suggestion added successfully');
-    } catch (e) {
-      print('Error adding suggestion: $e');
-      showSnackBar(context, 'Failed to add suggestion. Please try again.');
-    }
-  }
-
-  void onAddSuggestionButtonPressed(
-      String postId, Map<String, dynamic> suggestionData) {
-    if (postId != null) {
-      print("Adding suggestion for Post ID: $postId");
-      addSuggestionNew(postId, suggestionData);
-    } else {
-      print("Post ID is null, cannot add suggestion.");
-    }
-  }
-
   void showPostDialog(int index) {
     var post = posts[index];
     showDialog(
@@ -495,22 +407,6 @@ class _CommunityTabState extends State<CommunityTab> {
         );
       },
     );
-  }
-
-  void _confirmAddSuggestion(int index) {
-    if (index < 0 || index >= posts.length) {
-      print('Invalid index for deleting post');
-      return;
-    }
-
-    final post = posts[index];
-
-    if (post['_id'] == null) {
-      print('Post ID is null, cannot delete');
-      return;
-    }
-
-    print('Attempting to delete post with ID: ${post['_id']}');
   }
 
   Future<void> deletePost(String postId) async {
