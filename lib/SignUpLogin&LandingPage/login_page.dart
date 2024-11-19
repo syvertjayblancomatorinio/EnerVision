@@ -3,7 +3,7 @@ import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
-import 'package:supabase_project/SignUpLogin&LandingPage/user.dart';
+import 'package:supabase_project/ConstantTexts/user.dart';
 import 'package:supabase_project/buttons/sign_up_button.dart';
 import 'package:supabase_project/buttons/login_signUp.dart';
 import 'package:supabase_project/CommonWidgets/textfield.dart';

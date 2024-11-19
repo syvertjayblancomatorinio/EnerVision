@@ -7,7 +7,6 @@ import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/ConstantTexts/final_texts.dart';
 import 'package:supabase_project/StaticPages/aircon.dart';
-import 'package:supabase_project/zNotUsedFiles/show_all_your_device.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/home_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
