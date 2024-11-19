@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
+import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
@@ -476,8 +477,12 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
 
   Future<void> addAppliance() async {
     final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
+    String applianceName = toTitleCase(
+      controllers.addApplianceNameController.text.trim(),
+    );
+
     final Map<String, dynamic> applianceData = {
-      'applianceName': controllers.addApplianceNameController.text.trim(),
+      'applianceName': applianceName,
       'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
       'usagePatternPerDay':
           double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
@@ -516,8 +521,13 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   Future<void> updateAppliance(
       String applianceId, Map<String, dynamic> updates) async {
     try {
-      final updatedAppliance =
-          await ApplianceService.updateAppliance(applianceId, updates);
+      // Capitalize applianceName field if present
+      if (updates.containsKey('applianceName')) {
+        updates['applianceName'] = toTitleCase(updates['applianceName']);
+      }
+
+      // Call the service to update the appliance with the modified data
+      await ApplianceService.updateAppliance(applianceId, updates);
       showSnackBar(context, 'Update Success');
     } catch (e) {
       showSnackBar(context, 'Appliance can only be updated once a month.');

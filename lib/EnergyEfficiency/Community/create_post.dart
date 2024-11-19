@@ -7,6 +7,7 @@ import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
 import '../../CommonWidgets/dialogs/error_dialog.dart';
@@ -49,6 +50,8 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
     final url = Uri.parse("http://10.0.2.2:8080/addPost");
 
     String tagsAsString = postData['tags'].join(',');
+    String title = toTitleCase(_titleController.text.trim());
+    String description = toSentenceCase(_descriptionController.text.trim());
 
     var response = await http.post(
       url,
@@ -58,8 +61,8 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
       body: jsonEncode(<String, dynamic>{
         'userId': userId,
         'postData': {
-          'title': _titleController.text,
-          'description': _descriptionController.text,
+          'title': title,
+          'description': description,
           'tags': tagsAsString,
         }
       }),

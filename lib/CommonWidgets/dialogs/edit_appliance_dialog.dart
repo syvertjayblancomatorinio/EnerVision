@@ -108,6 +108,16 @@ class _EditApplianceDialogState extends State<EditApplianceDialog> {
                     }
                     return null;
                   },
+                  onChanged: (value) {
+                    if (value.length > 16) {
+                      widget.editApplianceNameController.text =
+                          value.substring(0, 16);
+                      widget.editApplianceNameController.selection =
+                          TextSelection.fromPosition(TextPosition(
+                              offset: widget
+                                  .editApplianceNameController.text.length));
+                    }
+                  },
                 ),
                 const SizedBox(height: 10),
                 TextFormField(

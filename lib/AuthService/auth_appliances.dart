@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 
 class ApplianceService {
   static const String baseUrl = 'http://10.0.2.2:8080';
@@ -93,11 +94,14 @@ class ApplianceService {
 
   static Future<void> updateAppliance(
       String applianceId, Map<String, dynamic> updatedData) async {
+    if (updatedData.containsKey('applianceName')) {
+      updatedData['applianceName'] = toTitleCase(updatedData['applianceName']);
+    }
+
     // Prepare the updated data to include required fields
     final updates = {
-      'updatedAt':
-          DateTime.now().toIso8601String(), // Current date in ISO format
-      'updatedData': updatedData, // Pass the updated data
+      'updatedAt': DateTime.now().toIso8601String(),
+      'updatedData': updatedData,
     };
 
     final url = Uri.parse('$baseUrl/updateApplianceOccurrences/$applianceId');
