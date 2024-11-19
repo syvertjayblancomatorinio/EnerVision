@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
+import '../../AuthService/base_url.dart';
 import '../../CommonWidgets/dialogs/loading_animation.dart';
 
 class ThisMonthPage extends StatefulWidget {
@@ -43,8 +44,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
 
     // Adjust the URL to match the new endpoint
     final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/getUsersCount/$userId/appliances'));
-
+        Uri.parse('${ApiConfig.baseUrl}/getUsersCount/$userId/appliances'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
@@ -69,9 +69,11 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       throw Exception("User ID is null. Cannot fetch total monthly cost.");
     }
 
+    // Build the URL with the userId parameter
     final url = Uri.parse(
-        "http://10.0.2.2:8080/totalMonthlyCostOfUserAppliances/$userId");
+        "${ApiConfig.baseUrl}/totalMonthlyCostOfUserAppliances/$userId");
 
+    // Make the HTTP request
     final response = await http.get(
       url,
       headers: <String, String>{
@@ -88,8 +90,8 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         monthlyData['totalMonthlyCO2Emissions'] =
             data['totalMonthlyCO2Emissions'];
       });
-      throw Exception(
-          'Fetched total monthly cost: ${monthlyData['totalMonthlyCost']}');
+      // Optional: You can log the fetched data if needed.
+      print('Fetched total monthly cost: ${monthlyData['totalMonthlyCost']}');
     } else {
       throw Exception(
           'Failed to fetch total monthly cost: ${response.statusCode}');

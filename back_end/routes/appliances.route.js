@@ -162,30 +162,52 @@ function calculateCost(startDate, endDate, wattage, usagePattern, kwhRate) {
 }
 
 router.get('/totalMonthlyCostOfUserAppliances/:userId', asyncHandler(async (req, res) => {
-    const { userId } = req.params;
+    try {
+        const { userId } = req.params;
 
-    // Check if the user exists
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+        // Validate if user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-    // Find all appliances for the user and sum their monthlyCost
-    const appliances = await Appliance.find({ userId });
-    const emissionFactor = 0.7;
-    let totalMonthlyKwhConsumption = 0;
-    let totalMonthlyCO2Emissions = 0;
+        // Fetch all appliances for the user
+        const appliances = await Appliance.find({ userId });
 
-    const totalMonthlyCost = appliances.reduce((total, appliance) => {
-        return total + (appliance.monthlyCost || 0);
-    }, 0);
-    // Calculate the monthly kWh consumption
-     totalMonthlyKwhConsumption = totalMonthlyCost / user.kwhRate;
+        // Check if appliances exist
+        if (!appliances || appliances.length === 0) {
+            return res.status(404).json({ message: 'No appliances found for this user' });
+        }
 
-    const monthlyCO2Emission = totalMonthlyKwhConsumption * emissionFactor;
+        // Constants for calculations
+        const emissionFactor = 0.7;
 
-    totalMonthlyCO2Emissions += monthlyCO2Emission;
+        // Calculate total monthly cost, kWh consumption, and CO2 emissions
+        const totalMonthlyCost = appliances.reduce((total, appliance) => {
+            return total + (appliance.monthlyCost || 0);
+        }, 0);
 
-    // Send the response with the total monthly cost
-    res.status(200).json({ userId, totalMonthlyCost, totalMonthlyKwhConsumption,totalMonthlyCO2Emissions ,appliances });
+        const totalMonthlyKwhConsumption = totalMonthlyCost / user.kwhRate;
+        const totalMonthlyCO2Emissions = totalMonthlyKwhConsumption * emissionFactor;
+
+        // Send the response
+        res.status(200).json({
+            userId,
+            totalMonthlyCost,
+            totalMonthlyKwhConsumption,
+            totalMonthlyCO2Emissions,
+            appliances,
+        });
+    } catch (error) {
+        // Catch and log errors
+        console.error('Error fetching monthly costs:', error);
+
+        // Respond with a 500 Internal Server Error
+        res.status(500).json({
+            message: 'An error occurred while calculating the monthly costs',
+            error: error.message,
+        });
+    }
 }));
 
 router.get('/getAllUsersAppliances/:userId/appliances', asyncHandler (async (req, res) => {

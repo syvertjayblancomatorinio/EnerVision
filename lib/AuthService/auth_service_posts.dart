@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-class PostsService {
-  static const String baseUrl = 'http://10.0.2.2:8080';
+import 'base_url.dart';
 
+class PostsService {
   // Fetch posts from the API
   static Future<List<Map<String, dynamic>>> getPostsOld() async {
-    final url = Uri.parse('$baseUrl/getAllPosts');
+    final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');
     final response = await http.get(url, headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     });
@@ -35,7 +35,7 @@ class PostsService {
   }
 
   static Future<List<Map<String, dynamic>>> getPosts() async {
-    final url = Uri.parse('$baseUrl/getAllPosts');
+    final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -75,7 +75,7 @@ class PostsService {
       throw Exception('User ID not found in shared preferences');
     }
 
-    final url = Uri.parse('$baseUrl/getAllPosts/$userId/posts');
+    final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts/$userId/posts');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -128,7 +128,7 @@ class PostsService {
   }
 
   static Future<void> deleteAPost(String postId) async {
-    final url = Uri.parse('$baseUrl/deletePost/$postId');
+    final url = Uri.parse('${ApiConfig.baseUrl}/deletePost/$postId');
     print('Sending DELETE request to: $url');
 
     final response = await http.delete(
@@ -148,7 +148,7 @@ class PostsService {
   }
 
   static Future<void> deletePost(String postId) async {
-    final url = Uri.parse('$baseUrl/posts/$postId');
+    final url = Uri.parse('${ApiConfig.baseUrl}/posts/$postId');
     final response = await http.delete(
       url,
       headers: <String, String>{
@@ -167,7 +167,8 @@ class PostsService {
   // Helper method to calculate "time ago"
 
   static Future<List<Map<String, dynamic>>> getComments(String postId) async {
-    final url = Uri.parse('$baseUrl/getAllPostsSuggestions/$postId');
+    final url =
+        Uri.parse('${ApiConfig.baseUrl}/getAllPostsSuggestions/$postId');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
