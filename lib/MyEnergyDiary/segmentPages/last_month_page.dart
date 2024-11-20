@@ -127,7 +127,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        DatePickerWidgetWithAllMonths(
+        DatePickerWidget(
           initialDate: selectedDate,
           onDateSelected: onDateSelected,
           getApplianceCount: getUsersApplianceCount,

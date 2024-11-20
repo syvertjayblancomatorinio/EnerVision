@@ -17,7 +17,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-
+  bool _isButtonEnabled = true;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -30,8 +30,46 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Future<void> _onButtonPressed() async {
+    if (!_isButtonEnabled) return;
+
+    setState(() {
+      _isButtonEnabled = false;
+    });
+
+    try {
+      if (_formKey.currentState?.validate() ?? false) {
+        try {
+          final response = await AuthService(
+            context: context,
+            emailController: _emailController,
+            passwordController: _passwordController,
+          ).signIn();
+
+          if (response != null) {
+            if (response.statusCode == 401) {
+              await _showErrorDialog(context);
+            }
+          }
+        } catch (e) {
+          _showSnackBar('Failed to Sign In: ${e.toString()}');
+          print(e.toString());
+        }
+      } else {
+        _showSnackBar('Form validation failed. Please check your input.');
+        print('Form validation not okay');
+      }
+      print("Button tapped!");
+    } finally {
+      // Re-enable the button after the task is complete
+      setState(() {
+        _isButtonEnabled = true;
+      });
+    }
+  }
+
   User user = User('', '', '');
-  Future<void> _showErrorDialog(BuildContext context) async {
+  Future<Object?> _showErrorDialog(BuildContext context) async {
     await showCustomDialog(
       context: context,
       title: 'Login Failed',
@@ -160,29 +198,7 @@ class _LoginPageState extends State<LoginPage> {
                       SizedBox(height: 20),
                       SignUpButton(
                         onPressed: () async {
-                          if (_formKey.currentState?.validate() ?? false) {
-                            try {
-                              final response = await AuthService(
-                                context: context,
-                                emailController: _emailController,
-                                passwordController: _passwordController,
-                              ).signIn();
-
-                              if (response != null) {
-                                if (response.statusCode == 401) {
-                                  await _showErrorDialog(context);
-                                }
-                              }
-                            } catch (e) {
-                              _showSnackBar(
-                                  'Failed to Sign In: ${e.toString()}');
-                              print(e.toString());
-                            }
-                          } else {
-                            _showSnackBar(
-                                'Form validation failed. Please check your input.');
-                            print('Form validation not okay');
-                          }
+                          _onButtonPressed();
                         },
                         text: 'Sign In',
                       ),

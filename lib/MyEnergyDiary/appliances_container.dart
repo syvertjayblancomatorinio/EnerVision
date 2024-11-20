@@ -207,7 +207,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                     context,
                   );
                 } else {
-                  showKwhRateDialog(
+                  _showKwhRateDialog(
                     context,
                     controllers.kwhRateController,
                     saveKwhRate,
@@ -255,18 +255,99 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
   }
 
-  Future<void> showKwhRateDialog(
-      BuildContext context,
-      TextEditingController kwhRateController,
-      Function saveKwhRate,
-      Function fetchAppliances,
-      Function fetchDailyCost) async {
-    return showDialog<void>(
+  Future<void> saveKwhRate(String kwhRate) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final String? userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/updateKwh/$userId');
+
+    final response = await http.patch(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode({'kwhRate': kwhRate}),
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save kWh rate');
+    }
+  }
+
+  Future<double?> getKwhRate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+
+    if (userId == null) {
+      throw Exception('User ID not found in shared preferences');
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/getUserKwhRate/$userId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('KwhRate found: ${data['kwhRate']}');
+      return (data['kwhRate'] as num).toDouble();
+    } else if (response.statusCode == 404) {
+      print('KwhRate not found for user.');
+      return null;
+    } else {
+      throw Exception('Failed to load user kwhRate');
+    }
+  }
+
+  Future<void> deleteAppliance(String applianceId) async {
+    try {
+      await ApplianceService.deleteAppliance(applianceId);
+      print('Appliance deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
+    }
+  }
+
+  Future<void> _showApplianceErrorDialog(BuildContext context) async {
+    await showCustomDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
+      title: 'Appliance not Added',
+      message:
+          'Appliance name must not have a duplicate.\nPlease use a different name.',
+      buttonText: 'OK',
+    );
+  }
+
+  Future<Object?> _showKwhRateDialog(
+    BuildContext context,
+    TextEditingController kwhRateController,
+    Function saveKwhRate,
+    Function fetchAppliances,
+    Function fetchDailyCost,
+  ) async {
+    {
+      return showGeneralDialog(
+          context: context,
+          barrierDismissible: false,
+          barrierLabel: '',
+          barrierColor: Colors.black.withOpacity(0.5),
+          transitionDuration: const Duration(milliseconds: 200),
+          transitionBuilder: (context, animation1, animation2, child) {
+            return Transform.scale(
+              scale: animation1.value,
+              child: Opacity(
+                opacity: animation1.value,
+                child: child,
+              ),
+            );
+          },
+          pageBuilder: (context, animation1, animation2) {
             return AlertDialog(
               title: const Text('Enter kWh Rate'),
               content: Column(
@@ -375,6 +456,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                             await saveKwhRate(kwhRate);
                             Navigator.of(context).pop();
                             _showAddApplianceDialog(context);
+
                             fetchAppliances();
                             fetchDailyCost();
                           } catch (e) {
@@ -400,79 +482,8 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                 ],
               ),
             );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> saveKwhRate(String kwhRate) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final String? userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found');
+          });
     }
-
-    final url = Uri.parse('http://10.0.2.2:8080/updateKwh/$userId');
-
-    final response = await http.patch(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({'kwhRate': kwhRate}),
-    );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to save kWh rate');
-    }
-  }
-
-  Future<double?> getKwhRate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
-    }
-
-    final url = Uri.parse('http://10.0.2.2:8080/getUserKwhRate/$userId');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print('KwhRate found: ${data['kwhRate']}');
-      return (data['kwhRate'] as num).toDouble();
-    } else if (response.statusCode == 404) {
-      print('KwhRate not found for user.');
-      return null;
-    } else {
-      throw Exception('Failed to load user kwhRate');
-    }
-  }
-
-  Future<void> deleteAppliance(String applianceId) async {
-    try {
-      await ApplianceService.deleteAppliance(applianceId);
-      print('Appliance deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
-  }
-
-  Future<void> _showApplianceErrorDialog(BuildContext context) async {
-    await showCustomDialog(
-      context: context,
-      title: 'Appliance not Added',
-      message:
-          'Appliance name must not have a duplicate.\nPlease use a different name.',
-      buttonText: 'OK',
-    );
   }
 
   Future<void> addAppliance() async {

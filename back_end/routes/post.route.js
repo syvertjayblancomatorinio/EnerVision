@@ -4,12 +4,12 @@ const path = require('path');
 const User = require('../models/user.model');
 const Posts = require('../models/posts.model');
 const router = express.Router();
-const asyncHandler = require('../centralized_codes/authMiddleware'); // Your async middleware
+const asyncHandler = require('../centralized_codes/authMiddleware');
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Directory to store uploaded files
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -19,7 +19,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Add a new post with optional photo upload
 router.post('/addPost', upload.single('uploadPhoto'), async (req, res) => {
   try {
     const { userId, title, description, tags } = req.body;
