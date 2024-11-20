@@ -78,7 +78,7 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
     String formattedDate = DateFormat('MMMM yyyy').format(widget.initialDate);
 
     return GestureDetector(
-      onTap: () => _showMonthYearPicker(context),
+      onTap: () => _showApplianceErrorDialog(context),
       child: Padding(
         padding: const EdgeInsets.only(top: 40.0, bottom: 10),
         child: Row(
@@ -100,105 +100,117 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
     );
   }
 
-  Future<void> _showMonthYearPicker(BuildContext context) async {
+  Future<void> _showApplianceErrorDialog(BuildContext context) async {
+    await showDatePicker(context: context);
+  }
+
+  Future<Object?> showDatePicker({
+    required BuildContext context,
+  }) async {
     String tempSelectedMonth = selectedMonth!;
     int tempSelectedYear = selectedYear!;
-
-    return showDialog<void>(
+    return showGeneralDialog(
       context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+      barrierDismissible: false,
+      barrierLabel: '',
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 200),
+      transitionBuilder: (context, animation1, animation2, child) {
+        return Transform.scale(
+          scale: animation1.value,
+          child: Opacity(
+            opacity: animation1.value,
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (context, animation1, animation2) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'SELECT MONTH AND YEAR',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'SELECT MONTH AND YEAR',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    DropdownButton<String>(
+                      value: tempSelectedMonth,
+                      onChanged: (String? newMonth) {
+                        if (newMonth != null) {
+                          setState(() {
+                            tempSelectedMonth = newMonth;
+                          });
+                        }
+                      },
+                      items: months.map((String month) {
+                        return DropdownMenuItem<String>(
+                          value: month,
+                          child: Text(month),
+                        );
+                      }).toList(),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        DropdownButton<String>(
-                          value: tempSelectedMonth,
-                          onChanged: (String? newMonth) {
-                            if (newMonth != null) {
-                              setState(() {
-                                tempSelectedMonth = newMonth;
-                              });
-                            }
-                          },
-                          items: months.map((String month) {
-                            return DropdownMenuItem<String>(
-                              value: month,
-                              child: Text(month),
-                            );
-                          }).toList(),
-                        ),
-                        DropdownButton<int>(
-                          value: tempSelectedYear,
-                          onChanged: (int? newYear) {
-                            if (newYear != null) {
-                              setState(() {
-                                tempSelectedYear = newYear;
-                              });
-                            }
-                          },
-                          items: years.map((int year) {
-                            return DropdownMenuItem<int>(
-                              value: year,
-                              child: Text(year.toString()),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.grey),
-                          ),
-                          child: const Text('Cancel',
-                              style: TextStyle(color: Colors.black)),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            int monthIndex =
-                                months.indexOf(tempSelectedMonth) + 1;
-
-                            DateTime newDate =
-                                DateTime(tempSelectedYear, monthIndex);
-
-                            widget.onDateSelected(newDate);
-                            widget.getApplianceCount();
-                            Navigator.pop(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.teal),
-                          child: const Text('Save'),
-                        ),
-                      ],
+                    DropdownButton<int>(
+                      value: tempSelectedYear,
+                      onChanged: (int? newYear) {
+                        if (newYear != null) {
+                          setState(() {
+                            tempSelectedYear = newYear;
+                          });
+                        }
+                      },
+                      items: years.map((int year) {
+                        return DropdownMenuItem<int>(
+                          value: year,
+                          child: Text(year.toString()),
+                        );
+                      }).toList(),
                     ),
                   ],
                 ),
-              ),
-            );
-          },
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.grey),
+                      ),
+                      child: const Text('Cancel',
+                          style: TextStyle(color: Colors.black)),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        int monthIndex = months.indexOf(tempSelectedMonth) + 1;
+
+                        DateTime newDate =
+                            DateTime(tempSelectedYear, monthIndex);
+
+                        widget.onDateSelected(newDate);
+                        widget.getApplianceCount();
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal),
+                      child: const Text('Save'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

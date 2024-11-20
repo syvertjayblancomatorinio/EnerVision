@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
-import 'package:flutter/material.dart';
-import 'package:supabase_project/ConstantTexts/colors.dart';
-
-Future<void> showCustomDialog({
+Future<Object?> showCustomDialog({
   required BuildContext context,
   required String title,
   required String message,
   required String buttonText,
   IconData? icon = Icons.error_outline,
   Color? iconColor = AppColors.secondaryColor,
-}) async {
-  return showDialog<void>(
+}) {
+  return showGeneralDialog(
     context: context,
     barrierDismissible: false,
-    builder: (BuildContext context) {
+    barrierLabel: '',
+    barrierColor: Colors.black.withOpacity(0.5),
+    transitionDuration: const Duration(milliseconds: 200),
+    transitionBuilder: (context, animation1, animation2, child) {
+      return Transform.scale(
+        scale: animation1.value,
+        child: Opacity(
+          opacity: animation1.value,
+          child: child,
+        ),
+      );
+    },
+    pageBuilder: (context, animation1, animation2) {
       return Dialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),

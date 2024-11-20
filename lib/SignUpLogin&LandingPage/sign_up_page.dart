@@ -43,7 +43,7 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  Future<void> _showErrorDialog(BuildContext context) async {
+  Future<Object?> _showErrorDialog(BuildContext context) async {
     await showCustomDialog(
       context: context,
       title: 'Registration Error',
