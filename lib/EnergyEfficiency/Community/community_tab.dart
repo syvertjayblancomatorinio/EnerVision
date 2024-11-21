@@ -237,34 +237,34 @@ class _CommunityTabState extends State<CommunityTab> {
                     }),
                   ),
                   const Spacer(),
-                  StatefulBuilder(
-                    builder: (BuildContext context, StateSetter setState) {
-                      return ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            if (_tappedIndex == index) {
-                              _tappedIndex = null;
-                            } else {
-                              postId = post['id'];
-                              fetchSuggestions(postId);
-                              _tappedIndex = index;
-                            }
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1BBC9B),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
-                        ),
-                        child: Text(
-                          _tappedIndex == index
-                              ? 'Hide Suggestions'
-                              : 'Add Suggestions',
-                        ),
-                      );
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_tappedIndex == index) {
+                        setState(() {
+                          _tappedIndex = null;
+                        });
+                      } else {
+                        setState(() {
+                          // postId = post['id'];
+                          postId = post['id'] ?? post['_id'];
+
+                          fetchSuggestions(postId);
+                          _tappedIndex = index;
+                        });
+                      }
                     },
-                  ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1BBC9B),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                    ),
+                    child: Text(
+                      _tappedIndex == index
+                          ? 'Hide Suggestions'
+                          : 'Add Suggestions',
+                    ),
+                  )
                 ],
               ),
               if (_tappedIndex == index) _buildSuggestionTextField(index),
@@ -330,10 +330,7 @@ class _CommunityTabState extends State<CommunityTab> {
           ),
           const SizedBox(height: 10.0),
           // Scrollable suggestions list
-          SizedBox(
-            height: 200.0, // Limit the height to make it scrollable
-            child: suggestionsList(),
-          ),
+          _buildSuggestionsList(),
         ],
       ),
     );
@@ -365,82 +362,107 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
-  Widget suggestionsList() {
-    return ScrollbarTheme(
-      data: ScrollbarThemeData(
-        thumbColor: WidgetStateProperty.all(AppColors.primaryColor),
-        trackColor: WidgetStateProperty.all(Colors.grey[300]), // Track color
-        trackBorderColor: WidgetStateProperty.all(Colors.transparent),
-        thickness: WidgetStateProperty.all(10), // Adjust thickness
-        radius: const Radius.circular(20), // Rounded edges
-        thumbVisibility:
-            WidgetStateProperty.all(true), // Always show the scrollbar
-      ),
-      child: Scrollbar(
-        thumbVisibility: true,
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: suggestions.length,
-          itemBuilder: (context, index) {
-            final suggestion = suggestions[index];
-            return Container(
-              padding: const EdgeInsets.only(left: 15, bottom: 5),
-              margin: const EdgeInsets.symmetric(vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(7.0),
-                border: Border.all(color: Colors.grey[300]!),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+  Widget _buildSuggestionsList() {
+    if (isLoading) {
+      return const SizedBox(
+        height: 30,
+        child: LoadingWidget(
+          message: 'Fetching all Suggestions',
+          color: AppColors.primaryColor,
+        ),
+      );
+    } else if (suggestions.isEmpty) {
+      return SizedBox(
+        height: 30,
+        child: Text(
+          'No Suggestions Yet.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey[700],
+          ),
+        ),
+      );
+    } else {
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 200),
+        child: ScrollbarTheme(
+          data: ScrollbarThemeData(
+            thumbColor: WidgetStateProperty.all(AppColors.primaryColor),
+            trackColor: WidgetStateProperty.all(Colors.grey[300]),
+            // Track color
+            trackBorderColor: WidgetStateProperty.all(Colors.transparent),
+            thickness: WidgetStateProperty.all(10),
+            radius: const Radius.circular(20),
+            thumbVisibility: WidgetStateProperty.all(true),
+          ),
+          child: Scrollbar(
+            thumbVisibility: true,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: suggestions.length,
+              itemBuilder: (context, index) {
+                final suggestion = suggestions[index];
+                return Container(
+                  padding: const EdgeInsets.only(left: 15, bottom: 5),
+                  margin: const EdgeInsets.symmetric(vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(7.0),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        children: [
+                          Text(
+                            suggestion['username'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.0,
+                              color: Color(0xFF1BBC9B),
+                            ),
+                          ),
+                          const Spacer(),
+                          PopupMenuButton(
+                            icon: const Icon(Icons.more_horiz),
+                            itemBuilder: (BuildContext context) {
+                              return {'Edit', 'Delete'}.map((String choice) {
+                                return PopupMenuItem<String>(
+                                  value: choice,
+                                  child: Text(choice),
+                                );
+                              }).toList();
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5.0),
                       Text(
-                        suggestion['username'],
+                        suggestion['suggestionText'],
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.0,
-                          color: Color(0xFF1BBC9B),
+                          fontSize: 14.0,
+                          color: Colors.black,
                         ),
                       ),
-                      const Spacer(),
-                      PopupMenuButton(
-                        icon: const Icon(Icons.more_horiz),
-                        itemBuilder: (BuildContext context) {
-                          return {'Edit', 'Delete'}.map((String choice) {
-                            return PopupMenuItem<String>(
-                              value: choice,
-                              child: Text(choice),
-                            );
-                          }).toList();
-                        },
-                      ),
+                      const SizedBox(height: 5.0),
+                      // Text(
+                      //   "Commented on: ${DateTime.parse(suggestion['suggestionDate']).toLocal()}",
+                      //   style: const TextStyle(
+                      //     fontSize: 12.0,
+                      //     color: Colors.grey,
+                      //   ),
+                      // ),
                     ],
                   ),
-                  const SizedBox(height: 5.0),
-                  Text(
-                    suggestion['suggestionText'],
-                    style: const TextStyle(
-                      fontSize: 14.0,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 5.0),
-                  // Text(
-                  //   "Commented on: ${DateTime.parse(suggestion['suggestionDate']).toLocal()}",
-                  //   style: const TextStyle(
-                  //     fontSize: 12.0,
-                  //     color: Colors.grey,
-                  //   ),
-                  // ),
-                ],
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   void addSuggestionFunction(int index) async {
@@ -524,7 +546,7 @@ class _CommunityTabState extends State<CommunityTab> {
   Future<void> getPosts() async {
     setState(() {
       isLoading = true;
-      isUserPost = false; // Remove this if unused
+      isUserPost = false;
     });
 
     try {
