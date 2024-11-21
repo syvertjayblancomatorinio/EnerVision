@@ -1,6 +1,17 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
-class SuggestionExample extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:supabase_project/AuthService/auth_service_posts.dart';
+import 'package:supabase_project/AuthService/base_url.dart';
+import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
+import 'package:http/http.dart' as http;
+
+class SuggestionExample extends StatefulWidget {
+  @override
+  State<SuggestionExample> createState() => _SuggestionExampleState();
+}
+
+class _SuggestionExampleState extends State<SuggestionExample> {
   final List<Map<String, dynamic>> suggestions = [
     {
       "_id": "671e3d05844b1bfce7281304",
@@ -16,6 +27,79 @@ class SuggestionExample extends StatelessWidget {
       "suggestionDate": "2024-11-21T09:30:00.000Z",
     },
   ];
+  static String _timeAgo(DateTime dateTime) {
+    final Duration difference = DateTime.now().difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPosts() async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      // Ensure the response contains a 'posts' key
+      if (data is Map<String, dynamic> && data.containsKey('posts')) {
+        List<Map<String, dynamic>> posts =
+            List<Map<String, dynamic>>.from(data['posts']);
+
+        // Add 'timeAgo' to each post
+        posts = posts.map((post) {
+          if (post.containsKey('createdAt')) {
+            final DateTime postDate = DateTime.parse(post['createdAt']);
+            post['timeAgo'] = _timeAgo(postDate);
+          } else {
+            post['timeAgo'] = 'Unknown time';
+          }
+          return post;
+        }).toList();
+
+        return posts; // Return only the posts as a list
+      } else {
+        throw Exception('Unexpected response structure');
+      }
+    } else if (response.statusCode == 404) {
+      throw Exception('No posts found');
+    } else {
+      throw Exception('Failed to load posts');
+    }
+  }
+
+  // Future<void> getPosts() async {
+  //   // setState(() {
+  //   //   isLoading = true;
+  //   //   isUserPost = false;
+  //   // });
+  //
+  //   try {
+  //     final List<Map<String, dynamic>>? fetchedPosts =
+  //         await PostsService.getPosts();
+  //     if (fetchedPosts != null) {
+  //       // setState(() {
+  //       //   posts = fetchedPosts;
+  //       // });
+  //     } else {
+  //       throw Exception('Invalid post data format.');
+  //     }
+  //   } catch (e) {
+  //     print('Failed to fetch posts: $e');
+  //     showSnackBar(context, 'Failed to fetch posts. Please try again later.');
+  //   } finally {
+  //     // setState(() {
+  //     //   isLoading = false;
+  //     // });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
