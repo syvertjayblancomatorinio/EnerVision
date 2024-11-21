@@ -6,33 +6,6 @@ import 'base_url.dart';
 
 class PostsService {
   // Fetch posts from the API
-  static Future<List<Map<String, dynamic>>> getPostsOld() async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');
-    final response = await http.get(url, headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    });
-
-    if (response.statusCode == 200) {
-      List<dynamic> fetchedPosts = jsonDecode(response.body)['posts'] ?? [];
-
-      return fetchedPosts.map<Map<String, dynamic>>((post) {
-        DateTime createdAt = DateTime.parse(post['createdAt']);
-        String timeAgo = _timeAgo(createdAt);
-        return {
-          'title': post['title'] ?? 'No title',
-          'description': post['description'] ?? 'No description',
-          'tags': post['tags'] ?? 'No tags',
-          'imagePath': 'assets/image (6).png',
-          'timeAgo': timeAgo,
-          'username': post['userId'] != null
-              ? post['userId']['username']
-              : 'Unknown user',
-        };
-      }).toList();
-    } else {
-      throw Exception('Failed to load Posts');
-    }
-  }
 
   static Future<List<Map<String, dynamic>>> getPosts() async {
     final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');
@@ -181,6 +154,34 @@ class PostsService {
       throw Exception('Suggestions not found');
     } else {
       throw Exception('Failed to load suggestions: ${response.reasonPhrase}');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getPostsOld() async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');
+    final response = await http.get(url, headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    });
+
+    if (response.statusCode == 200) {
+      List<dynamic> fetchedPosts = jsonDecode(response.body)['posts'] ?? [];
+
+      return fetchedPosts.map<Map<String, dynamic>>((post) {
+        DateTime createdAt = DateTime.parse(post['createdAt']);
+        String timeAgo = _timeAgo(createdAt);
+        return {
+          'title': post['title'] ?? 'No title',
+          'description': post['description'] ?? 'No description',
+          'tags': post['tags'] ?? 'No tags',
+          'imagePath': 'assets/image (6).png',
+          'timeAgo': timeAgo,
+          'username': post['userId'] != null
+              ? post['userId']['username']
+              : 'Unknown user',
+        };
+      }).toList();
+    } else {
+      throw Exception('Failed to load Posts');
     }
   }
 }

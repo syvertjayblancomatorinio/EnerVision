@@ -73,8 +73,8 @@ router.get('/run-cron', async (req, res) => {
 
 
 mongoose.connect(
-//"mongodb://localhost:27017/enervision"
-  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
+"mongodb://localhost:27017/enervision"
+//  "mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/enervision",
 //"mongodb+srv://22104647:J%40mes2004@enervision-main.elxae.mongodb.net/?retryWrites=true&w=majority&appName=EnerVision-Main"
 //  { useNewUrlParser: true, useUnifiedTopology: true }
 ).then(() => {

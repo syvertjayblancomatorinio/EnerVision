@@ -20,6 +20,8 @@ import 'package:supabase_project/EnergyEfficiency/Community/suggestion_list.dart
 import 'package:supabase_project/EnergyEfficiency/Community/top_bar.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 
+import '../../PreCode/deleteDialog.dart';
+
 class CommunityTab extends StatefulWidget {
   const CommunityTab({super.key});
 
@@ -55,52 +57,6 @@ class _CommunityTabState extends State<CommunityTab> {
   void initState() {
     super.initState();
     getPosts();
-  }
-
-  Future<void> getPosts() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = false; // Remove this if unused
-    });
-
-    try {
-      final List<Map<String, dynamic>>? fetchedPosts =
-          await PostsService.getPosts();
-      if (fetchedPosts != null) {
-        setState(() {
-          posts = fetchedPosts;
-        });
-      } else {
-        throw Exception('Invalid post data format.');
-      }
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> getUsersPost() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = true;
-    });
-    try {
-      final fetchedData = await PostsService.fetchUsersPosts();
-      setState(() {
-        posts = List<Map<String, dynamic>>.from(fetchedData['posts']);
-        username = fetchedData['username'];
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
   }
 
   @override
@@ -321,58 +277,7 @@ class _CommunityTabState extends State<CommunityTab> {
                   size: 24,
                 ),
                 onPressed: () async {
-                  final suggestionText = toSentenceCase(
-                      controller.suggestionController.text.trim());
-
-                  if (suggestionText.isEmpty) {
-                    showSnackBar(context, 'Suggestion text cannot be empty');
-                    return;
-                  }
-
-                  try {
-                    // Retrieve user ID from SharedPreferences
-                    final prefs = await SharedPreferences.getInstance();
-                    final userId = prefs.getString('userId');
-
-                    if (userId == null) {
-                      showSnackBar(context, 'User not logged in');
-                      return;
-                    }
-
-                    // Get postId (assume posts[index] contains the postId)
-                    final postId = posts[index]['_id'];
-
-                    // Construct the API URL
-                    final url = Uri.parse(
-                        '$baseUrl/addSuggestionToPost/$postId/suggestions');
-
-                    // Prepare the data for the POST request
-                    final body = jsonEncode({
-                      'userId': userId,
-                      'suggestionText': suggestionText,
-                    });
-
-                    // Send the POST request
-                    final response = await http.post(
-                      url,
-                      headers: {'Content-Type': 'application/json'},
-                      body: body,
-                    );
-
-                    if (response.statusCode == 201) {
-                      showSnackBar(
-                          context, 'Suggestion added successfully to $postId');
-                      print('Suggestion added successfully to $postId');
-                      controller.suggestionController
-                          .clear(); // Clear the text field
-                    } else {
-                      final responseData = jsonDecode(response.body);
-                      showSnackBar(context,
-                          'Failed to add suggestion: ${responseData['message']}');
-                    }
-                  } catch (e) {
-                    showSnackBar(context, 'An error occurred: $e');
-                  }
+                  addSuggestionFunction(index);
                 },
               ),
             ],
@@ -380,6 +285,58 @@ class _CommunityTabState extends State<CommunityTab> {
         ],
       ),
     );
+  }
+
+  void addSuggestionFunction(int index) async {
+    final suggestionText =
+        toSentenceCase(controller.suggestionController.text.trim());
+
+    if (suggestionText.isEmpty) {
+      showSnackBar(context, 'Suggestion text cannot be empty');
+      return;
+    }
+
+    try {
+      // Retrieve user ID from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+
+      if (userId == null) {
+        showSnackBar(context, 'User not logged in');
+        return;
+      }
+
+      // Get postId (assume posts[index] contains the postId)
+      final postId = posts[index]['_id'];
+
+      // Construct the API URL
+      final url = Uri.parse('$baseUrl/addSuggestionToPost/$postId/suggestions');
+
+      // Prepare the data for the POST request
+      final body = jsonEncode({
+        'userId': userId,
+        'suggestionText': suggestionText,
+      });
+
+      // Send the POST request
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 201) {
+        showSnackBar(context, 'Suggestion added successfully to $postId');
+        print('Suggestion added successfully to $postId');
+        controller.suggestionController.clear(); // Clear the text field
+      } else {
+        final responseData = jsonDecode(response.body);
+        showSnackBar(
+            context, 'Failed to add suggestion: ${responseData['message']}');
+      }
+    } catch (e) {
+      showSnackBar(context, 'An error occurred: $e');
+    }
   }
 
   Widget _buildTags(String tags) {
@@ -399,6 +356,61 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
+  Future<void> deletePost(String postId) async {
+    try {
+      await PostsService.deleteAPost(postId);
+      print('Post deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
+    }
+  }
+
+  Future<void> getPosts() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = false; // Remove this if unused
+    });
+
+    try {
+      final List<Map<String, dynamic>>? fetchedPosts =
+          await PostsService.getPosts();
+      if (fetchedPosts != null) {
+        setState(() {
+          posts = fetchedPosts;
+        });
+      } else {
+        throw Exception('Invalid post data format.');
+      }
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> getUsersPost() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = true;
+    });
+    try {
+      final fetchedData = await PostsService.fetchUsersPosts();
+      setState(() {
+        posts = List<Map<String, dynamic>>.from(fetchedData['posts']);
+        username = fetchedData['username'];
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   void showPostDialog(int index) {
     var post = posts[index];
     showDialog(
@@ -409,15 +421,6 @@ class _CommunityTabState extends State<CommunityTab> {
         );
       },
     );
-  }
-
-  Future<void> deletePost(String postId) async {
-    try {
-      await PostsService.deleteAPost(postId);
-      print('Post deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
   }
 
   void _confirmDeletePost(int index) {

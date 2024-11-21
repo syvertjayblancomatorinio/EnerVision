@@ -59,9 +59,9 @@ router.get('/displayPosts', asyncHandler(async (req, res) => {
 }));
 router.get('/getAllPosts', asyncHandler(async (req, res) => {
     const posts = await Posts.find()
-        .populate('userId', 'username')  // Populates the userId field with the username of the post's author
-        .populate('suggestions')  // Optionally, populate suggestions if you need them as well
-        .exec();  // Executes the query
+        .populate('userId', 'username')
+        .populate('suggestions')
+        .exec();
 
     if (!posts || posts.length === 0) {
         return res.status(404).json({ message: 'No posts found' });

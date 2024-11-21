@@ -101,7 +101,7 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
     try {
       final fetchedPosts = await PostsService.getPosts();
       setState(() {
-        posts = fetchedPosts;
+        posts = fetchedPosts as List;
       });
     } catch (e) {
       print('Failed to fetch posts: $e');
