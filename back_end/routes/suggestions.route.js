@@ -75,10 +75,10 @@ router.post('/addSuggestionToPost/:postId/suggestions', asyncHandler(async (req,
         suggestion: savedSuggestion,
     });
 }));
+
 // Retrieve all suggestions for a specific post
 router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
   try {
-    // Fetch the post and populate suggestions along with usernames from the user collection
     const post = await Post.findById(req.params.postId)
       .populate({
         path: 'suggestions',
@@ -89,11 +89,11 @@ router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
       return res.status(404).json({ message: 'Post not found' });
     }
 
-    // Extract suggestions with only necessary details and usernames
-    const suggestionsWithUsernames = post.suggestions.map(({ _id, suggestionText, userId }) => ({
+    const suggestionsWithUsernames = post.suggestions.map(({ _id, suggestionText,createdAt,userId }) => ({
       _id,
-      suggestionText, // Include the suggestion text field
-      username: userId?.username || 'Unknown' // Use 'Unknown' if userId is missing
+      suggestionText,
+      createdAt,
+      username: userId?.username || 'Unknown',
     }));
 
     res.status(200).json(suggestionsWithUsernames);

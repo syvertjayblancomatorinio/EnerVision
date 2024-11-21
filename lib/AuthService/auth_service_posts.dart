@@ -23,7 +23,7 @@ class PostsService {
         posts = posts.map((post) {
           if (post.containsKey('createdAt')) {
             final DateTime postDate = DateTime.parse(post['createdAt']);
-            post['timeAgo'] = _timeAgo(postDate);
+            post['timeAgo'] = _formatDateTime(postDate);
           } else {
             post['timeAgo'] = 'Unknown time';
           }
@@ -98,6 +98,40 @@ class PostsService {
     } else {
       return 'Just now';
     }
+  }
+
+  static String _formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 60) {
+      return "${difference.inMinutes} minutes ago";
+    } else if (difference.inHours < 24) {
+      return "${difference.inHours} hours ago";
+    } else if (difference.inDays < 7) {
+      return "${difference.inDays} days ago";
+    } else {
+      // Format as "day month year" for older dates
+      return "${dateTime.day} ${_monthName(dateTime.month)} ${dateTime.year}";
+    }
+  }
+
+  static String _monthName(int month) {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ];
+    return months[month - 1];
   }
 
   static Future<void> deleteAPost(String postId) async {
