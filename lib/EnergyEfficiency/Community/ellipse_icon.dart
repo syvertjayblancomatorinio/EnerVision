@@ -59,6 +59,21 @@ class BuildTags extends StatelessWidget {
   }
 }
 
+class TagsAndTitle extends StatelessWidget {
+  final String tags;
+  final String title;
+
+  const TagsAndTitle({super.key, required this.tags, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [BuildTitle(title: title), BuildTags(tags: tags)],
+    );
+  }
+}
+
 class BuildTitleTags extends StatelessWidget {
   final String title;
   final String tags;
