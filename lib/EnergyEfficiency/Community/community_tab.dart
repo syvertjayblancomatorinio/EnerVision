@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
+import 'package:supabase_project/AuthService/auth_suggestions.dart';
 import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
@@ -337,7 +338,12 @@ class _CommunityTabState extends State<CommunityTab> {
                     size: 24,
                   ),
                   onPressed: () async {
-                    addSuggestionFunction(index);
+                    SuggestionService.addSuggestion(
+                      context: context,
+                      suggestionController: controller.suggestionController,
+                      posts: posts,
+                      index: index,
+                    );
                     fetchSuggestions(postId);
                   },
                 ),
@@ -345,7 +351,6 @@ class _CommunityTabState extends State<CommunityTab> {
             ),
           ),
           const SizedBox(height: 10.0),
-          // Scrollable suggestions list
           _buildSuggestionsList(),
         ],
       ),
@@ -534,59 +539,6 @@ class _CommunityTabState extends State<CommunityTab> {
       setState(() {
         isLoading = false;
       });
-    }
-  }
-
-  void addSuggestionFunction(int index) async {
-    final suggestionText =
-        toSentenceCase(controller.suggestionController.text.trim());
-
-    if (suggestionText.isEmpty) {
-      showSnackBar(context, 'Suggestion text cannot be empty');
-      return;
-    }
-
-    try {
-      // Retrieve user ID from SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('userId');
-
-      if (userId == null) {
-        showSnackBar(context, 'User not logged in');
-        return;
-      }
-
-      // Get postId (assume posts[index] contains the postId)
-      final postId = posts[index]['id'] ?? posts[index]['_id'];
-
-      // Construct the API URL
-      final url = Uri.parse(
-          '${ApiConfig.baseUrl}/addSuggestionToPost/$postId/suggestions');
-
-      // Prepare the data for the POST request
-      final body = jsonEncode({
-        'userId': userId,
-        'suggestionText': suggestionText,
-      });
-
-      // Send the POST request
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: body,
-      );
-
-      if (response.statusCode == 201) {
-        showSnackBar(context, 'Suggestion added successfully to $postId');
-        print('Suggestion added successfully to $postId');
-        controller.suggestionController.clear(); // Clear the text field
-      } else {
-        final responseData = jsonDecode(response.body);
-        showSnackBar(
-            context, 'Failed to add suggestion: ${responseData['message']}');
-      }
-    } catch (e) {
-      showSnackBar(context, 'An error occurred: $e');
     }
   }
 
