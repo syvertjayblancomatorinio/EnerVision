@@ -35,10 +35,9 @@ router.post('/addPost', upload.single('uploadPhoto'), async (req, res) => {
       description,
       tags,
       userId,
-      uploadPhoto: req.file ? req.file.filename : null // Save the filename if a photo is uploaded
+      uploadPhoto: req.file ? req.file.filename : null
     });
 
-    // Save the post and update the user's posts
     await newPost.save();
     user.posts.push(newPost._id);
     await user.save();
@@ -59,20 +58,37 @@ router.get('/displayPosts', asyncHandler(async (req, res) => {
 }));
 router.get('/getAllPosts', asyncHandler(async (req, res) => {
     const posts = await Posts.find()
-        .populate('userId', 'username')  // Populates the userId field with the username of the post's author
-        .populate('suggestions')  // Optionally, populate suggestions if you need them as well
-        .exec();  // Executes the query
+        .populate('userId', 'username') // Populate post author username
+        .populate({
+            path: 'suggestions',
+            select: 'content suggestionText userId', // Select suggestion data
+            populate: { path: 'userId', select: 'username' } // Populate nested suggestion author username
+        })
+        .exec();
 
     if (!posts || posts.length === 0) {
         return res.status(404).json({ message: 'No posts found' });
     }
 
-    // Respond with the retrieved posts
     res.status(200).json({
         message: 'All posts retrieved successfully',
-        posts: posts,
+        posts: posts.map(post => ({
+            id: post._id,
+            title: post.title, // Post title
+            tags: post.tags, // Post tags
+            description: post.description, // Post description
+            createdAt: post.createdAt, // Post creation timestamp
+            username: post.userId?.username || 'Unknown', // Post author's username
+            suggestions: post.suggestions.map(suggestion => ({
+                id: suggestion._id,
+                content: suggestion.content, // Suggestion content
+                suggestionText: suggestion.suggestionText || '', // Suggestion text
+                suggestedBy: suggestion.userId?.username || 'Unknown', // Suggestion author's username
+            })),
+        })),
     });
 }));
+
 
 router.get('/getAllPosts/:userId/posts', asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.userId)

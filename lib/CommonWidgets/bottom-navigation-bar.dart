@@ -71,7 +71,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CommunityGuidelines(),
+            builder: (context) => SuggestionExample(),
             // builder: (context) => EnergyPowerUsed(
             //   value: 'we',
             //   title: '23',

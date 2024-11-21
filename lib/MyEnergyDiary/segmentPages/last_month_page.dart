@@ -48,10 +48,8 @@ class _LastMonthPageState extends State<LastMonthPage> {
       return;
     }
 
-    final formattedMonth =
-        DateFormat('MM').format(selectedDate); // Extract month
-    final formattedYear =
-        DateFormat('yyyy').format(selectedDate); // Extract year
+    final formattedMonth = DateFormat('MM').format(selectedDate);
+    final formattedYear = DateFormat('yyyy').format(selectedDate);
 
     final url = Uri.parse(
         'http://10.0.2.2:8080/getMonthlyConsumption/$userId?month=$formattedMonth&year=$formattedYear');
@@ -63,7 +61,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
         final data = json.decode(response.body);
 
         setState(() {
-          applianceCount = data['appliances']?.length ?? 0; // Total appliances
+          applianceCount = data['appliances']?.length ?? 0;
           appliances =
               List<Map<String, dynamic>>.from(data['appliances'] ?? []);
         });
@@ -198,8 +196,8 @@ class _LastMonthPageState extends State<LastMonthPage> {
       return;
     }
 
-    final formattedMonth = DateFormat('MM').format(date); // Get month as "MM"
-    final formattedYear = DateFormat('yyyy').format(date); // Get year as "yyyy"
+    final formattedMonth = DateFormat('MM').format(date);
+    final formattedYear = DateFormat('yyyy').format(date);
 
     final url = Uri.parse(
         "http://10.0.2.2:8080/monthlyDataNew/$userId?month=$formattedMonth&year=$formattedYear");
@@ -227,8 +225,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
             data['data']['totalMonthlyConsumption']?.toDouble() ?? 0.0;
 
         // Fetch user's kwhRate from a reliable source
-        final double kwhRate = await getUserKwhRate(
-            userId); // Assuming this method retrieves the kwhRate
+        final double kwhRate = await getUserKwhRate(userId);
 
         // Calculate totalKwhConsumption
         double totalKwhConsumption =

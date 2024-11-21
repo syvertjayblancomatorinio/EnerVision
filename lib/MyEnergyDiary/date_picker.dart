@@ -30,13 +30,11 @@ class _DatePickerWidgetWithAllMonthsState
   void initState() {
     super.initState();
 
-    // Generate all 12 months
     months = List.generate(
       12,
       (index) => DateFormat.MMMM().format(DateTime(0, index + 1)),
     );
 
-    // Generate years (e.g., current year and previous years if needed)
     years = List.generate(10, (index) => DateTime.now().year - index);
 
     selectedMonth = DateFormat('MMMM').format(widget.initialDate);

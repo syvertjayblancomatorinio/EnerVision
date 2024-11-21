@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SuggestionItem extends StatelessWidget {
+  final String username;
   final String suggestion;
   final int index;
   final TextEditingController controller;
@@ -8,13 +9,14 @@ class SuggestionItem extends StatelessWidget {
   final Function onDeletePressed;
 
   const SuggestionItem({
-    Key? key,
+    super.key,
     required this.suggestion,
     required this.index,
     required this.controller,
     required this.onEditPressed,
     required this.onDeletePressed,
-  }) : super(key: key);
+    required this.username,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +34,9 @@ class SuggestionItem extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Juan Dela Cruz',
-                style: TextStyle(
+              Text(
+                username,
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1BBC9B),
                   fontSize: 16.0,
@@ -74,16 +76,18 @@ class SuggestionItem extends StatelessWidget {
 }
 
 class SuggestionsList extends StatelessWidget {
+  final String username;
   final List<String> suggestions;
   final Function(int) onEditPressed;
   final Function(int) onDeletePressed;
 
   const SuggestionsList({
-    Key? key,
+    super.key,
+    required this.username,
     required this.suggestions,
     required this.onEditPressed,
     required this.onDeletePressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +100,7 @@ class SuggestionsList extends StatelessWidget {
           controller: TextEditingController(text: suggestions[index]),
           onEditPressed: () => onEditPressed(index),
           onDeletePressed: () => onDeletePressed(index),
+          username: username,
         );
       },
     );

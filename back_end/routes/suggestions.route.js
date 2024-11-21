@@ -82,7 +82,7 @@ router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
     const post = await Post.findById(req.params.postId)
       .populate({
         path: 'suggestions',
-        populate: { path: 'userId', select: 'username' } // Fetches the username from the user
+        populate: { path: 'userId', select: 'username' }
       });
 
     if (!post) {

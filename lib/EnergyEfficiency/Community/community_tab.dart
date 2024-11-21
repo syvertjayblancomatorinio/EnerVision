@@ -20,6 +20,8 @@ import 'package:supabase_project/EnergyEfficiency/Community/suggestion_list.dart
 import 'package:supabase_project/EnergyEfficiency/Community/top_bar.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 
+import '../../PreCode/deleteDialog.dart';
+
 class CommunityTab extends StatefulWidget {
   const CommunityTab({super.key});
 
@@ -46,9 +48,45 @@ class _CommunityTabState extends State<CommunityTab> {
   String? error;
 
   List<TextEditingController> editControllers = [];
-  List<dynamic> suggestions = [];
-  List<Map<String, dynamic>> posts = [];
 
+  List<Map<String, dynamic>> posts = [];
+  // final List<Map<String, dynamic>> suggestions = [
+  //   {
+  //     "_id": "671e3d05844b1bfce7281304",
+  //     "userId": {"_id": "670a08e4f579c8fb68fe47a7", "username": "User1"},
+  //     "suggestionText": "This is the first suggestion.",
+  //     "suggestionDate": "2024-11-20T14:00:00.000Z",
+  //   },
+  //   {
+  //     "_id": "671e3d05844b1bfce7281305",
+  //     "userId": {"_id": "670a08e4f579c8fb68fe47a8", "username": "User2"},
+  //     "suggestionText":
+  //         "This is the second suggestion with more text for testing.",
+  //     "suggestionDate": "2024-11-21T09:30:00.000Z",
+  //   },
+  //   {
+  //     "_id": "671e3d05844b1bfce7281305",
+  //     "userId": {"_id": "670a08e4f579c8fb68fe47a8", "username": "User2"},
+  //     "suggestionText":
+  //         "This is the second suggestion with more text for testing.",
+  //     "suggestionDate": "2024-11-21T09:30:00.000Z",
+  //   },
+  //   {
+  //     "_id": "671e3d05844b1bfce7281305",
+  //     "userId": {"_id": "670a08e4f579c8fb68fe47a8", "username": "User2"},
+  //     "suggestionText":
+  //         "This is the second suggestion with more text for testing.",
+  //     "suggestionDate": "2024-11-21T09:30:00.000Z",
+  //   },
+  //   {
+  //     "_id": "671e3d05844b1bfce7281305",
+  //     "userId": {"_id": "670a08e4f579c8fb68fe47a8", "username": "User2"},
+  //     "suggestionText":
+  //         "This is the second suggestion with more text for testing.",
+  //     "suggestionDate": "2024-11-21T09:30:00.000Z",
+  //   },
+  // ];
+  late List<Map<String, dynamic>> suggestions = [];
   static const String baseUrl = 'http://10.0.2.2:8080';
 
   @override
@@ -57,59 +95,12 @@ class _CommunityTabState extends State<CommunityTab> {
     getPosts();
   }
 
-  Future<void> getPosts() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = false; // Remove this if unused
-    });
-
-    try {
-      final List<Map<String, dynamic>>? fetchedPosts =
-          await PostsService.getPosts();
-      if (fetchedPosts != null) {
-        setState(() {
-          posts = fetchedPosts;
-        });
-      } else {
-        throw Exception('Invalid post data format.');
-      }
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> getUsersPost() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = true;
-    });
-    try {
-      final fetchedData = await PostsService.fetchUsersPosts();
-      setState(() {
-        posts = List<Map<String, dynamic>>.from(fetchedData['posts']);
-        username = fetchedData['username'];
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       controller: _scrollController,
       child: Column(
         children: <Widget>[
-          const SizedBox(height: 20),
           TopBar(onEditTap: () {
             _showActionSheet(context);
           }, onRefreshTap: () {
@@ -149,13 +140,14 @@ class _CommunityTabState extends State<CommunityTab> {
                 int index = entry.key;
                 return _buildUserPost(
                   // post['username'] ?? username ?? 'Unknown User',
-                  username ?? post['userId']?['username'] ?? 'Unknown User',
+                  username ?? post['username'] ?? 'Unknown User',
                   post['title'] ?? 'No Title',
                   post['description'] ?? 'No Description',
                   post['timeAgo'] ?? 'Some time ago',
                   post['tags'] ?? 'No tags',
                   '',
                   '',
+
                   index,
                 );
               }),
@@ -245,30 +237,34 @@ class _CommunityTabState extends State<CommunityTab> {
                     }),
                   ),
                   const Spacer(),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_tappedIndex == index) {
-                        setState(() {
-                          _tappedIndex = null;
-                        });
-                      } else {
-                        setState(() {
-                          _tappedIndex = index;
-                        });
-                      }
+                  StatefulBuilder(
+                    builder: (BuildContext context, StateSetter setState) {
+                      return ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            if (_tappedIndex == index) {
+                              _tappedIndex = null;
+                            } else {
+                              postId = post['id'];
+                              fetchSuggestions(postId);
+                              _tappedIndex = index;
+                            }
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1BBC9B),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                        ),
+                        child: Text(
+                          _tappedIndex == index
+                              ? 'Hide Suggestions'
+                              : 'Add Suggestions',
+                        ),
+                      );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1BBC9B),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20.0),
-                      ),
-                    ),
-                    child: Text(
-                      _tappedIndex == index
-                          ? 'Hide Suggestions'
-                          : 'Add Suggestions',
-                    ),
-                  )
+                  ),
                 ],
               ),
               if (_tappedIndex == index) _buildSuggestionTextField(index),
@@ -281,8 +277,6 @@ class _CommunityTabState extends State<CommunityTab> {
 
   Widget _buildSuggestionTextField(int index) {
     return Container(
-      margin: const EdgeInsets.all(18.0),
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(7.0),
@@ -290,96 +284,215 @@ class _CommunityTabState extends State<CommunityTab> {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 2.0),
-                child: Image(
-                  image: AssetImage('assets/suggestion.png'),
-                  width: 50.0,
-                  height: 50.0,
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(7.0),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: Row(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 2.0),
+                  child: Image(
+                    image: AssetImage('assets/suggestion.png'),
+                    width: 50.0,
+                    height: 50.0,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 5.0),
-              Expanded(
-                child: TextField(
-                  controller: controller.suggestionController,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: 'Suggest changes or additional tips...',
-                    hintStyle: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12.0,
+                const SizedBox(width: 5.0),
+                Expanded(
+                  child: TextField(
+                    controller: controller.suggestionController,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Suggest changes or additional tips...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12.0,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.send_rounded,
-                  color: Color(0xFF1BBC9B),
-                  size: 24,
+                IconButton(
+                  icon: const Icon(
+                    Icons.send_rounded,
+                    color: Color(0xFF1BBC9B),
+                    size: 24,
+                  ),
+                  onPressed: () async {
+                    addSuggestionFunction(index);
+                    fetchSuggestions(postId);
+                  },
                 ),
-                onPressed: () async {
-                  final suggestionText = toSentenceCase(
-                      controller.suggestionController.text.trim());
-
-                  if (suggestionText.isEmpty) {
-                    showSnackBar(context, 'Suggestion text cannot be empty');
-                    return;
-                  }
-
-                  try {
-                    // Retrieve user ID from SharedPreferences
-                    final prefs = await SharedPreferences.getInstance();
-                    final userId = prefs.getString('userId');
-
-                    if (userId == null) {
-                      showSnackBar(context, 'User not logged in');
-                      return;
-                    }
-
-                    // Get postId (assume posts[index] contains the postId)
-                    final postId = posts[index]['_id'];
-
-                    // Construct the API URL
-                    final url = Uri.parse(
-                        '$baseUrl/addSuggestionToPost/$postId/suggestions');
-
-                    // Prepare the data for the POST request
-                    final body = jsonEncode({
-                      'userId': userId,
-                      'suggestionText': suggestionText,
-                    });
-
-                    // Send the POST request
-                    final response = await http.post(
-                      url,
-                      headers: {'Content-Type': 'application/json'},
-                      body: body,
-                    );
-
-                    if (response.statusCode == 201) {
-                      showSnackBar(
-                          context, 'Suggestion added successfully to $postId');
-                      print('Suggestion added successfully to $postId');
-                      controller.suggestionController
-                          .clear(); // Clear the text field
-                    } else {
-                      final responseData = jsonDecode(response.body);
-                      showSnackBar(context,
-                          'Failed to add suggestion: ${responseData['message']}');
-                    }
-                  } catch (e) {
-                    showSnackBar(context, 'An error occurred: $e');
-                  }
-                },
-              ),
-            ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 10.0),
+          // Scrollable suggestions list
+          SizedBox(
+            height: 200.0, // Limit the height to make it scrollable
+            child: suggestionsList(),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> fetchSuggestions(String postId) async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      final suggestionsData = await PostsService.getComments(postId);
+      setState(() {
+        suggestions = suggestionsData;
+        print(
+          'suggestions data loaded $suggestionsData',
+        );
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        error = 'Failed to load suggestions. Please try again later.';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Widget suggestionsList() {
+    return ScrollbarTheme(
+      data: ScrollbarThemeData(
+        thumbColor: WidgetStateProperty.all(AppColors.primaryColor),
+        trackColor: WidgetStateProperty.all(Colors.grey[300]), // Track color
+        trackBorderColor: WidgetStateProperty.all(Colors.transparent),
+        thickness: WidgetStateProperty.all(10), // Adjust thickness
+        radius: const Radius.circular(20), // Rounded edges
+        thumbVisibility:
+            WidgetStateProperty.all(true), // Always show the scrollbar
+      ),
+      child: Scrollbar(
+        thumbVisibility: true,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: suggestions.length,
+          itemBuilder: (context, index) {
+            final suggestion = suggestions[index];
+            return Container(
+              padding: const EdgeInsets.only(left: 15, bottom: 5),
+              margin: const EdgeInsets.symmetric(vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(7.0),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        suggestion['username'],
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16.0,
+                          color: Color(0xFF1BBC9B),
+                        ),
+                      ),
+                      const Spacer(),
+                      PopupMenuButton(
+                        icon: const Icon(Icons.more_horiz),
+                        itemBuilder: (BuildContext context) {
+                          return {'Edit', 'Delete'}.map((String choice) {
+                            return PopupMenuItem<String>(
+                              value: choice,
+                              child: Text(choice),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5.0),
+                  Text(
+                    suggestion['suggestionText'],
+                    style: const TextStyle(
+                      fontSize: 14.0,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 5.0),
+                  // Text(
+                  //   "Commented on: ${DateTime.parse(suggestion['suggestionDate']).toLocal()}",
+                  //   style: const TextStyle(
+                  //     fontSize: 12.0,
+                  //     color: Colors.grey,
+                  //   ),
+                  // ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void addSuggestionFunction(int index) async {
+    final suggestionText =
+        toSentenceCase(controller.suggestionController.text.trim());
+
+    if (suggestionText.isEmpty) {
+      showSnackBar(context, 'Suggestion text cannot be empty');
+      return;
+    }
+
+    try {
+      // Retrieve user ID from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+
+      if (userId == null) {
+        showSnackBar(context, 'User not logged in');
+        return;
+      }
+
+      // Get postId (assume posts[index] contains the postId)
+      final postId = posts[index]['id'] ?? posts[index]['_id'];
+
+      // Construct the API URL
+      final url = Uri.parse('$baseUrl/addSuggestionToPost/$postId/suggestions');
+
+      // Prepare the data for the POST request
+      final body = jsonEncode({
+        'userId': userId,
+        'suggestionText': suggestionText,
+      });
+
+      // Send the POST request
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 201) {
+        showSnackBar(context, 'Suggestion added successfully to $postId');
+        print('Suggestion added successfully to $postId');
+        controller.suggestionController.clear(); // Clear the text field
+      } else {
+        final responseData = jsonDecode(response.body);
+        showSnackBar(
+            context, 'Failed to add suggestion: ${responseData['message']}');
+      }
+    } catch (e) {
+      showSnackBar(context, 'An error occurred: $e');
+    }
   }
 
   Widget _buildTags(String tags) {
@@ -399,6 +512,61 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
+  Future<void> deletePost(String postId) async {
+    try {
+      await PostsService.deleteAPost(postId);
+      print('Post deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
+    }
+  }
+
+  Future<void> getPosts() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = false; // Remove this if unused
+    });
+
+    try {
+      final List<Map<String, dynamic>>? fetchedPosts =
+          await PostsService.getPosts();
+      if (fetchedPosts != null) {
+        setState(() {
+          posts = fetchedPosts;
+        });
+      } else {
+        throw Exception('Invalid post data format.');
+      }
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> getUsersPost() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = true;
+    });
+    try {
+      final fetchedData = await PostsService.fetchUsersPosts();
+      setState(() {
+        posts = List<Map<String, dynamic>>.from(fetchedData['posts']);
+        username = fetchedData['username'];
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   void showPostDialog(int index) {
     var post = posts[index];
     showDialog(
@@ -409,15 +577,6 @@ class _CommunityTabState extends State<CommunityTab> {
         );
       },
     );
-  }
-
-  Future<void> deletePost(String postId) async {
-    try {
-      await PostsService.deleteAPost(postId);
-      print('Post deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
   }
 
   void _confirmDeletePost(int index) {
