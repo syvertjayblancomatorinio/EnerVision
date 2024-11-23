@@ -104,6 +104,10 @@ router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
 });
 
 
+
+
+
+/*
 // Update a specific suggestion of a user
 router.put('/suggestions/:userId/:suggestionId', async (req, res) => {
   try {
@@ -161,4 +165,5 @@ router.get('/suggestionsPost/:postId/suggestions', asyncHandler(async (req, res)
         suggestions,
     });
 }));
+*/
 module.exports = router;

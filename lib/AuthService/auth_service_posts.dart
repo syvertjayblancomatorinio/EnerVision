@@ -173,24 +173,6 @@ class PostsService {
 
   // Helper method to calculate "time ago"
 
-  static Future<List<Map<String, dynamic>>> getComments(String postId) async {
-    final url =
-        Uri.parse('${ApiConfig.baseUrl}/getAllPostsSuggestions/$postId');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      try {
-        return List<Map<String, dynamic>>.from(jsonDecode(response.body));
-      } catch (e) {
-        throw Exception('Failed to parse suggestions data');
-      }
-    } else if (response.statusCode == 404) {
-      throw Exception('Suggestions not found');
-    } else {
-      throw Exception('Failed to load suggestions: ${response.reasonPhrase}');
-    }
-  }
-
   static Future<List<Map<String, dynamic>>> getPostsOld() async {
     final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');
     final response = await http.get(url, headers: <String, String>{
