@@ -26,7 +26,7 @@ class PostsService {
           List<Map<String, dynamic>> posts =
               List<Map<String, dynamic>>.from(data['posts']);
 
-          // Add 'timeAgo' to each post
+          // Add 'timeAgo' to each post and suggestions
           posts = posts.map((post) {
             if (post.containsKey('createdAt')) {
               final DateTime postDate = DateTime.parse(post['createdAt']);
@@ -34,13 +34,34 @@ class PostsService {
             } else {
               post['timeAgo'] = 'Unknown time';
             }
+
+            // Handle suggestions for the post
+            if (post.containsKey('suggestions')) {
+              post['suggestions'] = post['suggestions'].map((suggestion) {
+                return {
+                  'id': suggestion['id'],
+                  'content': suggestion['content'],
+                  'suggestionText': suggestion['suggestionText'] ?? '',
+                  'suggestedBy': suggestion['suggestedBy'] ?? 'Unknown',
+                  // 'createdAt': suggestion['createdAt'] ?? ''
+                };
+              }).toList();
+            }
+            if (post.containsKey('createdAt')) {
+              final DateTime postDate = DateTime.parse(post['createdAt']);
+              post['timeAgo'] = _timeAgo(postDate);
+            } else {
+              post['timeAgo'] = 'Unknown time';
+            }
+
             return post;
           }).toList();
 
+          // Save posts in Hive for future use
           var box = await Hive.openBox('postsBox');
           await box.put('allPosts', posts);
 
-          return posts; // Return only the posts as a list
+          return posts; // Return posts with suggestions
         } else {
           throw Exception('Unexpected response structure');
         }

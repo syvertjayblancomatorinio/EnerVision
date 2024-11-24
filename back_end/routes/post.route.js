@@ -80,6 +80,7 @@ router.get('/getAllPosts',authenticateToken, asyncHandler(async (req, res) => {
                 content: suggestion.content,
                 suggestionText: suggestion.suggestionText || '',
                 suggestedBy: suggestion.userId?.username || 'Unknown',
+                createdAt: suggestion.createdAt || 'Unknown',
             })),
         })),
     });
@@ -89,8 +90,10 @@ router.get('/getAllPosts',authenticateToken, asyncHandler(async (req, res) => {
 router.get('/getAllPosts/:userId/posts',authenticateToken, asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.userId)
         .select('username posts') // Select only the username and posts fields
-        .populate('posts'); // Populate the posts field
-
+       .populate({
+           path: 'posts',
+           populate: { path: 'suggestions' }
+       });
     console.log('Fetched user:', user); // Log user data here
 
     if (!user) {

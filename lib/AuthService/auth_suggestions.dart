@@ -47,6 +47,7 @@ class SuggestionService {
 
       if (response.statusCode == 201) {
         showSnackBar(context, 'Suggestion added successfully to $postId');
+        print('Suggestion added successfully to $postId');
         suggestionController.clear(); // Clear the text field
       } else {
         final responseData = jsonDecode(response.body);
