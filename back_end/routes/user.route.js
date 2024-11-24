@@ -183,7 +183,7 @@ console.log("JWT_SECRET:", process.env.JWT_SECRET); // This will help you verify
     // Generate a JWT token
     const token = jwt.sign(
       { id: user._id, username: user.username },
-      process.env.JWT_SECRET, // Use the secret key from .env
+      process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 

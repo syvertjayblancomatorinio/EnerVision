@@ -490,6 +490,7 @@ class _CommunityTabState extends State<CommunityTab> {
   Future<void> deletePost(String postId) async {
     try {
       await PostsService.deleteAPost(postId);
+      showSnackBar(context, 'Post deleted successfully');
       print('Post deleted successfully');
     } catch (e) {
       print('Error deleting appliance: $e');
