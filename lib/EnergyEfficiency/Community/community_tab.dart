@@ -18,6 +18,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_project/EnergyEfficiency/Community/ellipse_icon.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/empty_post_page.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/top_bar.dart';
+import 'package:hive/hive.dart';
 
 class CommunityTab extends StatefulWidget {
   const CommunityTab({super.key});
@@ -525,16 +526,32 @@ class _CommunityTabState extends State<CommunityTab> {
     });
 
     try {
-      final List<Map<String, dynamic>>? fetchedPosts =
-          await PostsService.getPosts();
-      print('Fetched all posts: $fetchedPosts'); // Log the fetched posts
+      // Attempt to load posts from Hive (cached posts)
+      List<Map<String, dynamic>> postsFromHive =
+          await PostsService.getPostsFromHive();
+      print('Fetched all from hive: $postsFromHive');
 
-      if (fetchedPosts != null) {
-        setState(() {
-          posts = fetchedPosts;
-        });
+      // If no posts exist in Hive, fetch from API
+      if (postsFromHive.isEmpty) {
+        final List<Map<String, dynamic>>? fetchedPosts =
+            await PostsService.getPosts();
+        print('Fetched all posts: $fetchedPosts');
+
+        if (fetchedPosts != null && fetchedPosts.isNotEmpty) {
+          setState(() {
+            posts = fetchedPosts;
+          });
+
+          // Save the fetched posts in Hive for future use
+          var box = await Hive.openBox('postsBox');
+          await box.put('allPosts', fetchedPosts);
+        } else {
+          throw Exception('Invalid post data format.');
+        }
       } else {
-        throw Exception('Invalid post data format.');
+        setState(() {
+          posts = postsFromHive;
+        });
       }
     } catch (e) {
       print('Failed to fetch posts: $e');

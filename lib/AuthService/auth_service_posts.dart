@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/preferences.dart';
-
+import 'package:hive/hive.dart';
 import 'base_url.dart';
 
 class PostsService {
@@ -37,6 +37,9 @@ class PostsService {
             return post;
           }).toList();
 
+          var box = await Hive.openBox('postsBox');
+          await box.put('allPosts', posts);
+
           return posts; // Return only the posts as a list
         } else {
           throw Exception('Unexpected response structure');
@@ -50,6 +53,18 @@ class PostsService {
 
     // Throw an exception if the token is null
     throw Exception('Token is null. Failed to authenticate.');
+  }
+
+// Retrieve posts from Hive
+  static Future<List<Map<String, dynamic>>> getPostsFromHive() async {
+    var box = await Hive.openBox('postsBox');
+    List<Map<String, dynamic>> posts = [];
+
+    if (box.containsKey('allPosts')) {
+      posts = List<Map<String, dynamic>>.from(box.get('allPosts'));
+    }
+
+    return posts;
   }
 
   static Future<Map<String, dynamic>> fetchUsersPosts() async {
