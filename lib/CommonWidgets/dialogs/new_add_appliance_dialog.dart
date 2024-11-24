@@ -342,7 +342,7 @@ class DropdownWithIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
+        SizedBox(
           width: double.infinity,
           child: DropdownButtonFormField<String>(
             value: controller.text.isNotEmpty ? controller.text : null,

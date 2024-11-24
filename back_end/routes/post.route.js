@@ -5,6 +5,7 @@ const User = require('../models/user.model');
 const Posts = require('../models/posts.model');
 const router = express.Router();
 const asyncHandler = require('../centralized_codes/authMiddleware');
+const authenticateToken = require('../middleware');
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
@@ -19,8 +20,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.post('/addPost', upload.single('uploadPhoto'), async (req, res) => {
-  try {
+router.post('/addPost', upload.single('uploadPhoto'),asyncHandler(async (req, res) => {
     const { userId, title, description, tags } = req.body;
 
     // Check if user exists
@@ -43,17 +43,15 @@ router.post('/addPost', upload.single('uploadPhoto'), async (req, res) => {
     await user.save();
 
     res.status(201).json({ message: 'Post added successfully', post: newPost });
-  } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
-});
+}));
 
 
 
 
 // Route to fetch all posts
-router.get('/getAllPosts', asyncHandler(async (req, res) => {
+router.get('/getAllPosts',authenticateToken, asyncHandler(async (req, res) => {
     const posts = await Posts.find()
         .populate('userId', 'username') // Populate post author username
         .populate({
@@ -88,7 +86,7 @@ router.get('/getAllPosts', asyncHandler(async (req, res) => {
 }));
 
 // Route to fetch posts for a specific user
-router.get('/getAllPosts/:userId/posts', asyncHandler(async (req, res) => {
+router.get('/getAllPosts/:userId/posts',authenticateToken, asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.userId)
         .select('username posts') // Select only the username and posts fields
         .populate('posts'); // Populate the posts field
@@ -157,7 +155,7 @@ router.delete('/posts/:userId/:postId', asyncHandler(async (req, res) => {
   return res.status(200).json({ message: 'Post deleted successfully' });
 }));
 
-router.delete('/deletePost/:postId', async (req, res) => {
+router.delete('/deletePost/:postId',authenticateToken, async (req, res) => {
   try {
     const postId = req.params.postId;
 
