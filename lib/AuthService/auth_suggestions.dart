@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/AuthService/preferences.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 
 import 'base_url.dart';
@@ -74,6 +75,32 @@ class SuggestionService {
       throw Exception('Suggestions not found');
     } else {
       throw Exception('Failed to load suggestions: ${response.reasonPhrase}');
+    }
+  }
+
+  static Future<void> deleteSuggestion(String suggestionId) async {
+    final url = Uri.parse(
+        '${ApiConfig.baseUrl}/deleteSuggestion/$suggestionId'); // Correct endpoint
+    String? token = await getToken();
+
+    if (token == null) {
+      throw Exception('Authentication token is missing. Please log in again.');
+    }
+
+    final response = await http.delete(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Suggestion deleted successfully'); // Optional logging
+    } else {
+      final responseBody = jsonDecode(response.body);
+      throw Exception(
+          'Failed to delete suggestion: ${responseBody['message'] ?? 'Unknown error'}');
     }
   }
 }
