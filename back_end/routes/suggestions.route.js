@@ -20,7 +20,7 @@ router.post('/addSuggestions/:postId', async (req, res) => {
     }
 
     // Check if the post exists
-    const post = await Post.findById(postId);
+    const post = await Posts.findById(postId);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
@@ -56,7 +56,7 @@ router.post('/addSuggestionToPost/:postId/suggestions', asyncHandler(async (req,
     }
 
     // Check if the post exists
-    const post = await Post.findById(postId);
+    const post = await Posts.findById(postId);
     if (!post) {
         return res.status(404).json({ message: 'Post not found' });
     }

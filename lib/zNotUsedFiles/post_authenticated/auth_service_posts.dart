@@ -2,21 +2,27 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/preferences.dart';
-import 'package:hive/hive.dart';
-import 'base_url.dart';
+
+import '../../AuthService/base_url.dart';
 
 class PostsService {
   // Fetch posts from the API
 
   static Future<List<Map<String, dynamic>>> getPosts() async {
-    String? token = await getToken();
     final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');
+    String? token = await getToken();
 
-    // Ensure a valid token is present
-    if (token != null) {
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $token',
-      });
+    if (token == null || token.isEmpty) {
+      throw Exception('Token is missing');
+    }
+
+    try {
+      final response = await http.get(
+        url,
+        headers: <String, String>{
+          'Authorization': 'Bearer $token',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -26,121 +32,80 @@ class PostsService {
           List<Map<String, dynamic>> posts =
               List<Map<String, dynamic>>.from(data['posts']);
 
-          // Add 'timeAgo' to each post and suggestions
+          // Add 'timeAgo' to each post
           posts = posts.map((post) {
             if (post.containsKey('createdAt')) {
-              final DateTime postDate = DateTime.parse(post['createdAt']);
-              post['timeAgo'] = _formatDateTime(postDate);
+              try {
+                final DateTime postDate = DateTime.parse(post['createdAt']);
+                post['timeAgo'] = _formatDateTime(postDate);
+              } catch (e) {
+                post['timeAgo'] = 'Invalid date';
+              }
             } else {
               post['timeAgo'] = 'Unknown time';
             }
-
-            // Handle suggestions for the post
-            if (post.containsKey('suggestions')) {
-              post['suggestions'] = post['suggestions'].map((suggestion) {
-                return {
-                  'id': suggestion['id'],
-                  'content': suggestion['content'],
-                  'suggestionText': suggestion['suggestionText'] ?? '',
-                  'suggestedBy': suggestion['suggestedBy'] ?? 'Unknown',
-                  'createdAt': suggestion['createdAt'] ?? ''
-                };
-              }).toList();
-            }
-            if (post.containsKey('createdAt')) {
-              final DateTime postDate = DateTime.parse(post['createdAt']);
-              post['timeAgo'] = _timeAgo(postDate);
-            } else {
-              post['timeAgo'] = 'Unknown time';
-            }
-
             return post;
           }).toList();
 
-          // Save posts in Hive for future use
-          var box = await Hive.openBox('postsBox');
-          await box.put('allPosts', posts);
-
-          return posts; // Return posts with suggestions
+          return posts; // Return only the posts as a list
         } else {
-          throw Exception('Unexpected response structure');
+          throw Exception(
+              'Unexpected response structure: No "posts" key found');
         }
       } else if (response.statusCode == 404) {
         throw Exception('No posts found');
       } else {
-        throw Exception('Failed to load posts: ${response.statusCode}');
+        throw Exception(
+            'Failed to load posts, status code: ${response.statusCode}');
       }
+    } catch (e) {
+      throw Exception('Error fetching posts: $e');
     }
-
-    // Throw an exception if the token is null
-    throw Exception('Token is null. Failed to authenticate.');
-  }
-
-// Retrieve posts from Hive
-  static Future<List<Map<String, dynamic>>> getPostsFromHive() async {
-    var box = await Hive.openBox('postsBox');
-    List<Map<String, dynamic>> posts = [];
-
-    if (box.containsKey('allPosts')) {
-      posts = List<Map<String, dynamic>>.from(box.get('allPosts'));
-    }
-
-    return posts;
   }
 
   static Future<Map<String, dynamic>> fetchUsersPosts() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
-
     if (userId == null) {
       throw Exception('User ID not found in shared preferences');
     }
 
-    print('User ID: $userId'); // Log the userId for debugging
-
     final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts/$userId/posts');
-    String? token = await getToken();
-    if (token != null) {
-      final response = await http.get(url, headers: {
-        'Authorization': 'Bearer $token',
-      });
+    final response = await http.get(url);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('API Response: $data'); // Log the response data
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
 
-        // Ensure the response contains both 'username' and 'posts'
-        if (data is Map<String, dynamic> &&
-            data.containsKey('username') &&
-            data.containsKey('posts')) {
-          List<Map<String, dynamic>> posts =
-              List<Map<String, dynamic>>.from(data['posts']);
+      // Ensure the response contains both 'username' and 'posts'
+      if (data is Map<String, dynamic> &&
+          data.containsKey('username') &&
+          data.containsKey('posts')) {
+        List<Map<String, dynamic>> posts =
+            List<Map<String, dynamic>>.from(data['posts']);
 
-          // Add 'timeAgo' to each post
-          posts = posts.map((post) {
-            if (post.containsKey('createdAt')) {
-              final DateTime postDate = DateTime.parse(post['createdAt']);
-              post['timeAgo'] = _timeAgo(postDate);
-            } else {
-              post['timeAgo'] = 'Unknown time';
-            }
-            return post;
-          }).toList();
+        // Add 'timeAgo' to each post
+        posts = posts.map((post) {
+          if (post.containsKey('createdAt')) {
+            final DateTime postDate = DateTime.parse(post['createdAt']);
+            post['timeAgo'] = _timeAgo(postDate);
+          } else {
+            post['timeAgo'] = 'Unknown time';
+          }
+          return post;
+        }).toList();
 
-          return {
-            'username': data['username'],
-            'posts': posts,
-          };
-        } else {
-          throw Exception('Unexpected response structure');
-        }
-      } else if (response.statusCode == 404) {
-        throw Exception('User not found');
+        return {
+          'username': data['username'],
+          'posts': posts,
+        };
       } else {
-        throw Exception('Failed to load posts');
+        throw Exception('Unexpected response structure');
       }
+    } else if (response.statusCode == 404) {
+      throw Exception('User not found');
+    } else {
+      throw Exception('Failed to load posts');
     }
-    throw Exception('Token is null. Failed to authenticate.');
   }
 
   static String _timeAgo(DateTime dateTime) {
@@ -194,24 +159,20 @@ class PostsService {
   static Future<void> deleteAPost(String postId) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/deletePost/$postId');
     print('Sending DELETE request to: $url');
-    String? token = await getToken();
-    if (token != null) {
-      final response = await http.delete(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
-        },
-      );
 
-      if (response.statusCode == 200) {
-        print('Post with ID $postId deleted successfully.');
-      } else {
-        final responseBody = jsonDecode(response.body);
-        print('Failed to delete appliance. Server response: ${response.body}');
-        throw Exception(
-            'Failed to delete appliance: ${responseBody['message']}');
-      }
+    final response = await http.delete(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print('Post with ID $postId deleted successfully.');
+    } else {
+      final responseBody = jsonDecode(response.body);
+      print('Failed to delete appliance. Server response: ${response.body}');
+      throw Exception('Failed to delete appliance: ${responseBody['message']}');
     }
   }
 
