@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const router = express.Router();
 const fs = require('fs');
+const authenticateToken = require('../middleware'); // Import your token middleware
 
 
 const storage = multer.diskStorage({
@@ -22,7 +23,7 @@ const upload = multer({
 });
 
 // Update user profile route
-router.post('/updateUserProfile', upload.single('avatar'), asyncHandler(async (req, res) => {
+router.post('/updateUserProfile', upload.single('avatar'),authenticateToken, asyncHandler(async (req, res) => {
   const { userId, name, birthDate, energyInterest, mobileNumber, address } = req.body;
 
   try {

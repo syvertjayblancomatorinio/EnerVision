@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/AuthService/preferences.dart';
 import 'package:supabase_project/AuthService/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
@@ -65,15 +66,17 @@ class AuthService {
           'email': emailController.text,
           'password': passwordController.text,
           'username': username,
-          'kwhRate': kwhRateController?.text ?? '',
         }),
       );
 
       if (response.statusCode == 201) {
         var responseBody = jsonDecode(response.body);
+        final token = responseBody['token'];
 
         String userId = responseBody['user']['_id'];
-
+        if (token != null) {
+          await saveToken(token);
+        }
         // Save the user ID to shared preferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userId', userId);
@@ -98,9 +101,6 @@ class AuthService {
   }
 
   Future<http.Response?> signIn() async {
-    // Define the API URL based on the environment
-    // String apiUrl =
-    //     kReleaseMode ? "http://10.0.2.2:8080/" : "http://192.168.1.217:8080/";
     final url = Uri.parse("${ApiConfig.baseUrl}/signin");
 
     try {
@@ -115,20 +115,22 @@ class AuthService {
         }),
       );
 
-      // Check for successful response
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
         if (responseBody != null &&
             responseBody['user'] != null &&
             responseBody['user']['_id'] != null) {
           String userId = responseBody['user']['_id'];
-          bool hasProfile =
-              responseBody['user']['profiles']; // Check if user has a profile
-
+          final token = responseBody['token'];
+          bool hasProfile = responseBody['user']['hasProfile'] ?? false;
+          if (token != null) {
+            await saveToken(token);
+          }
           // Save the user ID to shared preferences
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('userId', userId);
 
+          // Navigate based on the profile existence
           if (hasProfile) {
             Navigator.push(
               context,

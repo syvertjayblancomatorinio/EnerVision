@@ -17,6 +17,7 @@ import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import '../../ConstantTexts/Theme.dart';
 import '../../YourEnergyCalculator&Compare/compare_device.dart';
+import '../AuthService/preferences.dart';
 
 class AllDevicesPage extends StatefulWidget {
   final String userId;
@@ -382,22 +383,25 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       print('User ID not found in shared preferences');
       return;
     }
+    String? token = await getToken();
+    if (token != null) {
+      var response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'applianceData': applianceData,
+        }),
+      );
 
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'applianceData': applianceData,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      fetchAppliances();
-    } else {
-      await _showApplianceErrorDialog(context);
+      if (response.statusCode == 201) {
+        fetchAppliances();
+      } else {
+        await _showApplianceErrorDialog(context);
+      }
     }
   }
 

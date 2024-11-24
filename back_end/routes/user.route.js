@@ -9,6 +9,12 @@ const path = require("path");
 const fs = require('fs');
 const jwt = require("jsonwebtoken");
 const cron = require('node-cron');
+const authenticateToken = require('../middleware');
+
+const dotenv = require('dotenv');
+
+dotenv.config();
+
 
 const saveMonthlyConsumption = async (userId, month, year) => {
     const user = await User.findById(userId);
@@ -153,6 +159,11 @@ router.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Check if email or password is missing
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
@@ -165,20 +176,30 @@ router.post("/signin", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // Ensure JWT_SECRET is loaded properly
+    console.log(process.env.JWT_SECRET); // Log it to verify
+console.log("JWT_SECRET:", process.env.JWT_SECRET); // This will help you verify the loaded secret
+
     // Generate a JWT token
-    const token = jwt.sign({ id: user._id, username: user.username }, 'your_jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign(
+      { id: user._id, username: user.username },
+      process.env.JWT_SECRET, // Use the secret key from .env
+      { expiresIn: '1h' }
+    );
 
     // Check if the user has a profile
     const profile = await UserProfile.findOne({ userId: user._id });
 
     // Successful login response
     return res.status(200).json({
-      token, // Include the token in the response
+      token,
       user: {
         _id: user._id,
-        profiles: profile ? true : false,
+        username: user.username,
+        hasProfile: profile ? true : false,
       },
     });
+
   } catch (err) {
     console.error("Error during signin: ", err.message);
     res.status(500).json({ message: "Internal server error", error: err.message });
@@ -192,21 +213,36 @@ function capitalizeWords(str) {
 router.post("/signup", async (req, res) => {
   try {
     const existingUser = await User.findOne({ email: req.body.email });
-     const formattedUsername = capitalizeWords(req.body.username);
+    const formattedUsername = capitalizeWords(req.body.username);
+
     if (!existingUser) {
       const newUser = new User({
         email: req.body.email,
         password: req.body.password,
         username: formattedUsername,
-        kwhRate: req.body.kwhRate
       });
 
       await newUser.save();
 
-      console.log(newUser);
-      res.status(201).json({ message: "User created successfully", user: newUser });
+      // Generate a JWT token
+      const token = jwt.sign(
+        { id: newUser._id, username: newUser.username },
+        process.env.JWT_SECRET,  // Make sure your secret is in the environment variables
+        { expiresIn: '1h' }  // Set the token expiration (1 hour in this example)
+      );
+
+      // Send the response with the user info and token
+      res.status(201).json({
+        message: "User created successfully",
+        user: {
+          _id: newUser._id,
+          username: newUser.username,
+          email: newUser.email,
+        },
+        token: token
+      });
     } else {
-      res.status(400).json({ message: "Email is not available" });
+      res.status(400).json({ message: "Email is already in use" });
     }
   } catch (err) {
     console.error(err);

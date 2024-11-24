@@ -4,6 +4,8 @@ const asyncHandler = require('../centralized_codes/authMiddleware');
 const Appliance = require('../models/appliances.model');
 const router = express.Router();
 const MonthlyConsumption = require('../models/monthly_consumption.model');
+const protectedRouter = require('../routes/privateRouter');
+const authenticateToken = require('../middleware'); // Import your token middleware
 
 // Function to calculate remaining occurrences of selected days in a month
 function getRemainingOccurrences(year, month, startDay, selectedDays) {
@@ -147,7 +149,7 @@ const saveMonthlyConsumption = async (userId, month, year) => {
     }
 };
 
-router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
+router.post('/addApplianceNewLogic', authenticateToken, asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
     const { applianceName, applianceCategory, wattage, usagePatternPerDay, createdAt, selectedDays } = applianceData;
 
@@ -207,16 +209,14 @@ router.post('/addApplianceNewLogic', asyncHandler(async (req, res) => {
     const currentMonth = createdDate.getMonth() + 1;
     const currentYear = createdDate.getFullYear();
 
-try {
-    await saveMonthlyConsumption(userId, currentMonth, currentYear);
-} catch (error) {
-    return res.status(500).json({ message: 'Error updating monthly consumption', error: error.message });
-}
-
+    try {
+        await saveMonthlyConsumption(userId, currentMonth, currentYear);
+    } catch (error) {
+        return res.status(500).json({ message: 'Error updating monthly consumption', error: error.message });
+    }
 
     res.status(201).json({ message: 'Appliance added to user', appliance: newAppliance });
 }));
-
 router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req, res) => {
     const applianceId = req.params.applianceId;
     const { updatedAt, updatedData } = req.body; // Extract updatedAt and updatedData from request body
@@ -266,7 +266,7 @@ router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req
     const kwhRate = user.kwhRate || 0;
 
     const createdDate = appliance.createdAt;
-    const updatedDate = updatedAt ? new Date(updatedAt) : new Date(); // Set to current date or override if provided
+    const updatedDate = updatedAt ? new Date(updatedAt) : new Date();
 
     // Ensure the updatedAt date is not before the createdAt date
     if (updatedDate < createdDate) {

@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const express = require('express');
 const app = express();
 const profileRoutes = require('./routes/profile');
@@ -13,63 +11,13 @@ const winston = require('winston');
 const User = require('./models/user.model'); // Adjust the path as needed
 const Appliance = require('./models/appliances.model');
 const router = express.Router();
-
-// Cron job to save monthly consumption on the last day of each month
-cron.schedule('0 0 1 * *', async () => {
-    const users = await User.find(); // Get all users
-    for (const user of users) {
-        const appliances = await Appliance.find({ userId: user._id });
-
-        // Debugging: Log the appliances and their monthly costs
-        console.log('Appliances for user:', user._id, appliances);
-
-        const totalMonthlyCost = appliances.reduce((total, appliance) => {
-            return total + (appliance.monthlyCost || 0);
-        }, 0);
-
-        // Debugging: Log the total monthly cost
-        console.log('Total Monthly Cost for user:', user._id, totalMonthlyCost);
-
-        const month = new Date().getMonth() + 1; // Get the current month (1-12)
-        const year = new Date().getFullYear(); // Get the current year
-
-        const monthlyConsumption = new MonthlyConsumption({
-            userId: user._id,
-            month,
-            year,
-            totalMonthlyConsumption: totalMonthlyCost
-        });
-
-        // Debugging: Log before saving to the database
-        console.log('Saving Monthly Consumption:', monthlyConsumption);
-
-        await monthlyConsumption.save(); // Save to database
-    }
-});
-router.get('/run-cron', async (req, res) => {
-  try {
-    await runCronJob(); // Extract cron logic into a separate function
-    res.status(200).send('Cron job executed successfully');
-  } catch (err) {
-    res.status(500).send('Cron job failed');
-  }
-});
+require('dotenv').config();
+const publicRouter = require('./routes/publicRouter'); // Assume this exports public routes
+const protectedRouter = require('./routes/privateRouter'); // Assume this exports protected routes
 
 
+app.use(express.json()); // Middleware to parse JSON
 
-
-//require('dotenv').config();
-//
-//mongoose.connect(
-//  process.env.MONGO_URI,
-//  { useNewUrlParser: true, useUnifiedTopology: true }
-//).then(() => {
-//  console.log('Connected to MongoDB');
-//  console.log('MONGO_URI:', process.env.MONGO_URI);
-//
-//}).catch((error) => {
-//  console.error('MongoDB connection error:', error);
-//});
 
 
 mongoose.connect(
@@ -79,8 +27,12 @@ mongoose.connect(
 //  { useNewUrlParser: true, useUnifiedTopology: true }
 ).then(() => {
   console.log('Connected to MongoDB');
+  console.log("MONGO_URI:", process.env.MONGO_URI); // Should show the Mongo URI
+  console.log("JWT_SECRET:", process.env.JWT_SECRET); // Should show the JWT
+
 }).catch((error) => {
   console.error('MongoDB connection error:', error);
+
 });
 
 // Middleware
@@ -121,6 +73,47 @@ app.post('/uploadAvatar', async (req, res) => {
     res.status(500).json({ error: 'Failed to upload avatar' });
   }
 });
+// Cron job to save monthly consumption on the last day of each month
+cron.schedule('0 0 1 * *', async () => {
+    const users = await User.find(); // Get all users
+    for (const user of users) {
+        const appliances = await Appliance.find({ userId: user._id });
+
+        // Debugging: Log the appliances and their monthly costs
+        console.log('Appliances for user:', user._id, appliances);
+
+        const totalMonthlyCost = appliances.reduce((total, appliance) => {
+            return total + (appliance.monthlyCost || 0);
+        }, 0);
+
+        // Debugging: Log the total monthly cost
+        console.log('Total Monthly Cost for user:', user._id, totalMonthlyCost);
+
+        const month = new Date().getMonth() + 1; // Get the current month (1-12)
+        const year = new Date().getFullYear(); // Get the current year
+
+        const monthlyConsumption = new MonthlyConsumption({
+            userId: user._id,
+            month,
+            year,
+            totalMonthlyConsumption: totalMonthlyCost
+        });
+
+        // Debugging: Log before saving to the database
+        console.log('Saving Monthly Consumption:', monthlyConsumption);
+
+        await monthlyConsumption.save(); // Save to database
+    }
+});
+app.get('/run-cron', async (req, res) => {
+  try {
+    await runCronJob(); // Extract cron logic into a separate function
+    res.status(200).send('Cron job executed successfully');
+  } catch (err) {
+    res.status(500).send('Cron job failed');
+  }
+});
+
 
 const logger = winston.createLogger({
   level: 'error',

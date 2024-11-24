@@ -3,6 +3,7 @@ const router = express.Router();
 const Suggestion = require('../models/suggestions.model');
 const Post = require('../models/posts.model');
 const asyncHandler = require('../centralized_codes/authMiddleware');
+const authenticate = require('../middleware');
 // Add a new suggestion to a post
 router.post('/addSuggestions/:postId', async (req, res) => {
   try {
@@ -111,7 +112,9 @@ router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
 });
 
 
-router.put('/editSuggestion/:suggestionId', async (req, res) => {
+router.put('/editSuggestion/:suggestionId',
+// authenticate,
+ async (req, res) => {
     const { suggestionId } = req.params;
     const { suggestionText } = req.body;
 

@@ -18,6 +18,7 @@ import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dar
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
+import '../AuthService/preferences.dart';
 import '../CommonWidgets/controllers/app_controllers.dart';
 
 class AppliancesContainer extends StatefulWidget {
@@ -502,6 +503,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       'selectedDays': selectedDays,
     };
 
+    // Retrieve userId from SharedPreferences
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? userId = prefs.getString('userId');
 
@@ -510,22 +512,29 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       return;
     }
 
-    var response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'applianceData': applianceData,
-      }),
-    );
+    // Get the token from SharedPreferences or other method
+    String? token = await getToken();
+    if (token != null) {
+      var response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'applianceData': applianceData,
+        }),
+      );
 
-    if (response.statusCode == 201) {
-      fetchTodayAppliances();
-      fetchDailyCost();
+      if (response.statusCode == 201) {
+        fetchTodayAppliances();
+        fetchDailyCost();
+      } else {
+        await _showApplianceErrorDialog(context);
+      }
     } else {
-      await _showApplianceErrorDialog(context);
+      print('No token found');
     }
   }
 

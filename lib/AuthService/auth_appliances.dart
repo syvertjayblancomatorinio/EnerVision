@@ -2,32 +2,34 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/base_url.dart';
+import 'package:supabase_project/AuthService/preferences.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 
 class ApplianceService {
   static Future<void> addAppliance(
       String userId, Map<String, dynamic> applianceData) async {
+    String? token = await getToken();
     final url = Uri.parse('${ApiConfig.baseUrl}/addApplianceNewLogic');
-
-    final response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'applianceData': applianceData,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      final responseBody = jsonDecode(response.body);
-      print('Appliance added: ${responseBody['appliance']}');
-    } else if (response.statusCode == 400) {
-      final responseBody = jsonDecode(response.body);
-      throw Exception('Failed to add appliance: ${responseBody['error']}');
-    } else {
-      throw Exception('Unexpected error: ${response.body}');
+    if (token != null) {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'applianceData': applianceData,
+        }),
+      );
+      if (response.statusCode == 201) {
+        final responseBody = jsonDecode(response.body);
+        print('Appliance added: ${responseBody['appliance']}');
+      } else if (response.statusCode == 400) {
+        final responseBody = jsonDecode(response.body);
+        throw Exception('Failed to add appliance: ${responseBody['error']}');
+      } else {
+        throw Exception('Unexpected error: ${response.body}');
+      }
     }
   }
 

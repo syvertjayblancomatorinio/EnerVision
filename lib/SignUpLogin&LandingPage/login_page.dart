@@ -38,7 +38,8 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      if (_formKey.currentState?.validate() ?? false) {
+      // Ensure _formKey.currentState is not null
+      if (_formKey.currentState != null && _formKey.currentState!.validate()) {
         try {
           final response = await AuthService(
             context: context,
@@ -49,15 +50,16 @@ class _LoginPageState extends State<LoginPage> {
           if (response != null) {
             if (response.statusCode == 401) {
               await _showErrorDialog(context);
+            } else if (response.statusCode == 200) {
+              _showSnackBar('Sign In Successful!');
+              // Handle successful login response here, e.g., navigate to the home page
             }
           }
         } catch (e) {
-          _showSnackBar('Failed to Sign In: ${e.toString()}');
-          print(e.toString());
+          print('Error during sign in: ${e.toString()}');
         }
       } else {
-        _showSnackBar('Form validation failed. Please check your input.');
-        print('Form validation not okay');
+        print('Form validation failed.');
       }
       print("Button tapped!");
     } finally {
