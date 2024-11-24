@@ -51,16 +51,15 @@ router.post('/addPost', upload.single('uploadPhoto'),asyncHandler(async (req, re
 
 
 // Route to fetch all posts
-router.get('/getAllPosts',authenticateToken, asyncHandler(async (req, res) => {
+router.get('/getAllPosts', authenticateToken, asyncHandler(async (req, res) => {
     const posts = await Posts.find()
         .populate('userId', 'username') // Populate post author username
         .populate({
             path: 'suggestions',
-            select: 'content suggestionText userId',
+            select: 'content suggestionText userId createdAt', // Ensure createdAt is selected
             populate: { path: 'userId', select: 'username' }
         })
         .exec();
-
 
     if (!posts || posts.length === 0) {
         return res.status(404).json({ message: 'No posts found' });
@@ -73,18 +72,19 @@ router.get('/getAllPosts',authenticateToken, asyncHandler(async (req, res) => {
             title: post.title,
             tags: post.tags,
             description: post.description,
-            createdAt: post.createdAt,
+            createdAt: post.createdAt, // Ensure post's createdAt is included
             username: post.userId?.username || 'Unknown', // Ensure post's author username
             suggestions: post.suggestions.map(suggestion => ({
                 id: suggestion._id,
                 content: suggestion.content,
                 suggestionText: suggestion.suggestionText || '',
+                createdAt: suggestion.createdAt || '', // Ensure suggestion's createdAt is included
                 suggestedBy: suggestion.userId?.username || 'Unknown',
-                createdAt: suggestion.createdAt || 'Unknown',
             })),
         })),
     });
 }));
+
 
 // Route to fetch posts for a specific user
 router.get('/getAllPosts/:userId/posts',authenticateToken, asyncHandler(async (req, res) => {
