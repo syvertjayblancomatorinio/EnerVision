@@ -21,7 +21,6 @@ class SuggestionService {
     }
 
     try {
-      // Retrieve user ID from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('userId');
 
@@ -30,13 +29,10 @@ class SuggestionService {
         return;
       }
 
-      // Get postId (assume posts[index] contains the postId)
       final postId = posts[index]['id'] ?? posts[index]['_id'];
 
-      // Construct the API URL
       final url = Uri.parse(
           '${ApiConfig.baseUrl}/addSuggestionToPost/$postId/suggestions');
-      // Prepare the data for the POST request
       final body = jsonEncode({
         'userId': userId,
         'suggestionText': suggestionText,
@@ -59,6 +55,24 @@ class SuggestionService {
       }
     } catch (e) {
       showSnackBar(context, 'An error occurred: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getComments(String postId) async {
+    final url =
+        Uri.parse('${ApiConfig.baseUrl}/getAllPostsSuggestions/$postId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      try {
+        return List<Map<String, dynamic>>.from(jsonDecode(response.body));
+      } catch (e) {
+        throw Exception('Failed to parse suggestions data');
+      }
+    } else if (response.statusCode == 404) {
+      throw Exception('Suggestions not found');
+    } else {
+      throw Exception('Failed to load suggestions: ${response.reasonPhrase}');
     }
   }
 }

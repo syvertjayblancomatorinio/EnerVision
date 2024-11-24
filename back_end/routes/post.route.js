@@ -51,11 +51,7 @@ router.post('/addPost', upload.single('uploadPhoto'), async (req, res) => {
 
 
 
-// Get all posts of all users
-router.get('/displayPosts', asyncHandler(async (req, res) => {
-    const posts = await Posts.find().populate('userId', 'username');
-    res.status(200).json({ message: 'Posts are retrieved', posts });
-}));
+
 router.get('/getAllPosts', asyncHandler(async (req, res) => {
     const posts = await Posts.find()
         .populate('userId', 'username') // Populate post author username
@@ -89,7 +85,6 @@ router.get('/getAllPosts', asyncHandler(async (req, res) => {
     });
 }));
 
-
 router.get('/getAllPosts/:userId/posts', asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.userId)
         .select('username posts') // Select only the username and posts fields
@@ -106,6 +101,8 @@ router.get('/getAllPosts/:userId/posts', asyncHandler(async (req, res) => {
         posts: user.posts,
     });
 }));
+
+
 
 // Get a specific post of a user
 router.get('/posts/:userId/:postId', async (req, res) => {
@@ -170,5 +167,10 @@ router.delete('/deletePost/:postId', async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
+// Get all posts of all users
+router.get('/displayPosts', asyncHandler(async (req, res) => {
+    const posts = await Posts.find().populate('userId', 'username');
+    res.status(200).json({ message: 'Posts are retrieved', posts });
+}));
 
 module.exports = router;

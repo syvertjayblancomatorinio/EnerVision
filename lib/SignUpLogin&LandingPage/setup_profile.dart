@@ -10,6 +10,8 @@ import 'package:supabase_project/ConstantTexts/final_texts.dart';
 import 'package:supabase_project/MainFolder/secondaryMain.dart';
 import 'dart:convert';
 
+import '../AuthService/preferences.dart';
+
 class SetupProfile extends StatefulWidget {
   const SetupProfile({super.key});
 
@@ -72,43 +74,48 @@ class _SetupProfileState extends State<SetupProfile> {
       print('User ID is not available.');
       return;
     }
+    String? token = await getToken();
 
     final url = Uri.parse("http://10.0.2.2:8080/updateUserProfile");
+    if (token != null) {
+      try {
+        String fullName = toTitleCase(_nameController.text.trim());
+        String? token = await getToken();
+        if (token != null) {
+          var response = await http.post(
+            url,
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(<String, dynamic>{
+              'userId': userId,
+              'name': fullName,
+              'birthDate': _birthDateController.text,
+              'mobileNumber': _mobileNumberController.text,
+              'address': {
+                'countryLine': _selectedCountry,
+                'cityLine': _cityLineController.text,
+                'streetLine': _streetLineController.text,
+              },
+            }),
+          );
 
-    try {
-      String fullName = toTitleCase(_nameController.text.trim());
-
-      var response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'userId': userId,
-          'name': fullName,
-          'birthDate': _birthDateController.text,
-          'mobileNumber': _mobileNumberController.text,
-          'address': {
-            'countryLine': _selectedCountry,
-            'cityLine': _cityLineController.text,
-            'streetLine': _streetLineController.text,
-          },
-        }),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        var profileData = jsonDecode(response.body);
-        print('Profile updated successfully: ${profileData['message']}');
-        await prefs.setString('name', _nameController.text);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => SplashScreen()),
-        );
-      } else {
-        print('Failed to update profile: ${response.body}');
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            var profileData = jsonDecode(response.body);
+            print('Profile updated successfully: ${profileData['message']}');
+            await prefs.setString('name', _nameController.text);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SplashScreen()),
+            );
+          } else {
+            print('Failed to update profile: ${response.body}');
+          }
+        }
+      } catch (e) {
+        print('Error occurred while updating profile: $e');
       }
-    } catch (e) {
-      print('Error occurred while updating profile: $e');
     }
   }
 

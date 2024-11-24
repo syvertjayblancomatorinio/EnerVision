@@ -3,6 +3,7 @@ const router = express.Router();
 const Suggestion = require('../models/suggestions.model');
 const Post = require('../models/posts.model');
 const asyncHandler = require('../centralized_codes/authMiddleware');
+const authenticate = require('../middleware');
 // Add a new suggestion to a post
 router.post('/addSuggestions/:postId', async (req, res) => {
   try {
@@ -79,11 +80,18 @@ router.post('/addSuggestionToPost/:postId/suggestions', asyncHandler(async (req,
 // Retrieve all suggestions for a specific post
 router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
   try {
-    const post = await Post.findById(req.params.postId)
+  const post = await Post.findById(req.params.postId)
       .populate({
-        path: 'suggestions',
-        populate: { path: 'userId', select: 'username' }
+          path: 'suggestions',
+          options: { sort: { createdAt: -1 } }, // Sort by createdAt, latest first
+          populate: { path: 'userId', select: 'username' }
       });
+
+//    const post = await Post.findById(req.params.postId)
+//      .populate({
+//        path: 'suggestions',
+//        populate: { path: 'userId', select: 'username' }
+//      });
 
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
@@ -104,6 +112,47 @@ router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
 });
 
 
+router.put('/editSuggestion/:suggestionId',
+// authenticate,
+ async (req, res) => {
+    const { suggestionId } = req.params;
+    const { suggestionText } = req.body;
+
+    try {
+        const suggestion = await Suggestion.findById(suggestionId);
+        if (!suggestion) {
+            return res.status(404).json({ message: 'Suggestion not found' });
+        }
+
+        suggestion.suggestionText = suggestionText;
+        await suggestion.save();
+
+        res.status(200).json({ message: 'Suggestion updated successfully', suggestion });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.delete('/deleteSuggestion/:suggestionId', async (req, res) => {
+    const { suggestionId } = req.params;
+
+    try {
+        const suggestion = await Suggestion.findByIdAndDelete(suggestionId);
+        if (!suggestion) {
+            return res.status(404).json({ message: 'Suggestion not found' });
+        }
+
+        res.status(200).json({ message: 'Suggestion deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
+
+/*
 // Update a specific suggestion of a user
 router.put('/suggestions/:userId/:suggestionId', async (req, res) => {
   try {
@@ -161,4 +210,5 @@ router.get('/suggestionsPost/:postId/suggestions', asyncHandler(async (req, res)
         suggestions,
     });
 }));
+*/
 module.exports = router;

@@ -2,32 +2,34 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/base_url.dart';
+import 'package:supabase_project/AuthService/preferences.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 
 class ApplianceService {
   static Future<void> addAppliance(
       String userId, Map<String, dynamic> applianceData) async {
+    String? token = await getToken();
     final url = Uri.parse('${ApiConfig.baseUrl}/addApplianceNewLogic');
-
-    final response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({
-        'userId': userId,
-        'applianceData': applianceData,
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      final responseBody = jsonDecode(response.body);
-      print('Appliance added: ${responseBody['appliance']}');
-    } else if (response.statusCode == 400) {
-      final responseBody = jsonDecode(response.body);
-      throw Exception('Failed to add appliance: ${responseBody['error']}');
-    } else {
-      throw Exception('Unexpected error: ${response.body}');
+    if (token != null) {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'applianceData': applianceData,
+        }),
+      );
+      if (response.statusCode == 201) {
+        final responseBody = jsonDecode(response.body);
+        print('Appliance added: ${responseBody['appliance']}');
+      } else if (response.statusCode == 400) {
+        final responseBody = jsonDecode(response.body);
+        throw Exception('Failed to add appliance: ${responseBody['error']}');
+      } else {
+        throw Exception('Unexpected error: ${response.body}');
+      }
     }
   }
 
@@ -79,7 +81,7 @@ class ApplianceService {
     }
 
     final url = Uri.parse(
-        'http://10.0.2.2:8080/getAllUsersAppliances/$userId/appliances');
+        '${ApiConfig.baseUrl}/getAllUsersAppliances/$userId/appliances');
 
     final response = await http.get(url);
 
@@ -107,37 +109,45 @@ class ApplianceService {
 
     final url = Uri.parse(
         '${ApiConfig.baseUrl}/updateApplianceOccurrences/$applianceId');
+    String? token = await getToken();
+    if (token != null) {
+      final response = await http.patch(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(updates),
+      );
 
-    final response = await http.patch(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(updates),
-    );
-
-    if (response.statusCode == 200) {
-      final responseBody = jsonDecode(response.body);
-      return responseBody; // Return response if needed
-    } else {
-      final responseBody = jsonDecode(response.body);
-      throw Exception('Failed to update appliance: ${responseBody['error']}');
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        return responseBody; // Return response if needed
+      } else {
+        final responseBody = jsonDecode(response.body);
+        throw Exception('Failed to update appliance: ${responseBody['error']}');
+      }
     }
   }
 
   // Static method to delete an appliance
   static Future<void> deleteAppliance(String applianceId) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/deleteAppliance/$applianceId');
-    final response = await http.delete(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-    );
-    if (response.statusCode == 200) {
-    } else {
-      final responseBody = jsonDecode(response.body);
-      throw Exception('Failed to delete appliance: ${responseBody['message']}');
+    String? token = await getToken();
+    if (token != null) {
+      final response = await http.delete(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+      } else {
+        final responseBody = jsonDecode(response.body);
+        throw Exception(
+            'Failed to delete appliance: ${responseBody['message']}');
+      }
     }
   }
 

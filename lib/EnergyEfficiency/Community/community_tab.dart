@@ -468,7 +468,7 @@ class _CommunityTabState extends State<CommunityTab> {
     });
 
     try {
-      final suggestionsData = await PostsService.getComments(postId);
+      final suggestionsData = await SuggestionService.getComments(postId);
       setState(() {
         suggestions = suggestionsData;
         print(

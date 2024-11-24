@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
+import 'package:supabase_project/AuthService/auth_suggestions.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
@@ -394,7 +395,7 @@ class _CommunityTabState extends State<CommunityTab> {
     });
 
     try {
-      final suggestionsData = await PostsService.getComments(postId);
+      final suggestionsData = await SuggestionService.getComments(postId);
       setState(() {
         suggestions = suggestionsData;
         print(
