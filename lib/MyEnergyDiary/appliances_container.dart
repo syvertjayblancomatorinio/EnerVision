@@ -18,6 +18,7 @@ import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dar
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
+import '../AuthService/kwh_rate.dart';
 import '../AuthService/preferences.dart';
 import '../CommonWidgets/controllers/app_controllers.dart';
 
@@ -256,73 +257,19 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
   }
 
-  Future<void> saveKwhRate(String kwhRate) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final String? userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found');
-    }
-
-    final url = Uri.parse('http://10.0.2.2:8080/updateKwh/$userId');
-    String? token = await getToken();
-
-    final response = await http.patch(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'kwhRate': kwhRate}),
-    );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to save kWh rate');
-    }
-  }
-
   Future<double?> getKwhRate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
-    }
-
-    final url = Uri.parse('http://10.0.2.2:8080/getUserKwhRate/$userId');
-
-    String? token = await getToken();
-
-    if (token == null || token.isEmpty) {
-      throw Exception('Token is missing');
-    }
-
     try {
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('KwhRate found: ${data['kwhRate']}');
-        return (data['kwhRate'] as num).toDouble();
-      } else if (response.statusCode == 404) {
-        print('KwhRate not found for user.');
-        return null; // Return null if not found
+      double? kwhRate = await KWHRateService.getKwhRate();
+      if (kwhRate != null) {
+        print('Current kWh Rate: $kwhRate');
+        return kwhRate;
       } else {
-        throw Exception(
-            'Failed to load user kwhRate, status code: ${response.statusCode}');
+        print('kWh Rate not found');
+        return null;
       }
     } catch (e) {
-      print('Error: $e');
-      rethrow;
+      print('Error fetching kWh rate: $e');
+      return 0.00; // Return null in case of error
     }
   }
 
@@ -561,12 +508,9 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   Future<void> updateAppliance(
       String applianceId, Map<String, dynamic> updates) async {
     try {
-      // Capitalize applianceName field if present
       if (updates.containsKey('applianceName')) {
         updates['applianceName'] = toTitleCase(updates['applianceName']);
       }
-
-      // Call the service to update the appliance with the modified data
       await ApplianceService.updateAppliance(applianceId, updates);
       showSnackBar(context, 'Update Success');
     } catch (e) {
@@ -772,5 +716,14 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         );
       },
     );
+  }
+
+  void saveKwhRate(String kwhRate) async {
+    try {
+      await KWHRateService.saveKwhRate(kwhRate);
+      print('kWh Rate saved successfully');
+    } catch (e) {
+      print('Failed to save kWh Rate: $e');
+    }
   }
 }

@@ -17,6 +17,7 @@ import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import '../../ConstantTexts/Theme.dart';
 import '../../YourEnergyCalculator&Compare/compare_device.dart';
+import '../AuthService/kwh_rate.dart';
 import '../AuthService/preferences.dart';
 
 class AllDevicesPage extends StatefulWidget {
@@ -292,26 +293,18 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
   }
 
   Future<double?> getKwhRate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
-    }
-
-    final url = Uri.parse('http://10.0.2.2:8080/getUserKwhRate/$userId');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print('KwhRate found: ${data['kwhRate']}');
-      return (data['kwhRate'] as num)
-          .toDouble(); // Ensures it’s returned as a double
-    } else if (response.statusCode == 404) {
-      print('KwhRate not found for user.');
-      return null;
-    } else {
-      throw Exception('Failed to load user kwhRate');
+    try {
+      double? kwhRate = await KWHRateService.getKwhRate();
+      if (kwhRate != null) {
+        print('Current kWh Rate: $kwhRate');
+        return kwhRate;
+      } else {
+        print('kWh Rate not found');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching kWh rate: $e');
+      return 0.00; // Return null in case of error
     }
   }
 
@@ -567,37 +560,12 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     }
   }
 
-  Future<void> saveKwhRate(String kwhRate) async {
-    // Wait for SharedPreferences to initialize
-    final prefs = await SharedPreferences.getInstance();
-
-    // Get userId from SharedPreferences
-    final String? userId = prefs.getString('userId');
-
-    // Check if userId is available
-    if (userId == null) {
-      throw Exception('User ID not found');
-    }
-
-    // Build the request URL
-    final url = Uri.parse('http://10.0.2.2:8080/updateKwh/$userId');
-
-    // Send the HTTP PATCH request to update the kWh rate
-    final response = await http.patch(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode({'kwhRate': kwhRate}),
-    );
-
-    // Log the response for debugging
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    // Check if the request was successful
-    if (response.statusCode != 200) {
-      throw Exception('Failed to save kWh rate');
+  void saveKwhRate(String kwhRate) async {
+    try {
+      await KWHRateService.saveKwhRate(kwhRate);
+      print('kWh Rate saved successfully');
+    } catch (e) {
+      print('Failed to save kWh Rate: $e');
     }
   }
 

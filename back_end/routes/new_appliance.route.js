@@ -89,7 +89,7 @@ const saveMonthlyConsumption = async (userId, month, year) => {
     }
 };
 
-router.post('/addApplianceNewLogic', authenticateToken, asyncHandler(async (req, res) => {
+router.post('/addApplianceNewLogic', authenticateToken,asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
     const { applianceName, applianceCategory, wattage, usagePatternPerDay, createdAt, selectedDays } = applianceData;
 
@@ -157,7 +157,7 @@ router.post('/addApplianceNewLogic', authenticateToken, asyncHandler(async (req,
 
     res.status(201).json({ message: 'Appliance added to user', appliance: newAppliance });
 }));
-router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req, res) => {
+router.patch('/updateApplianceOccurrences/:applianceId',authenticateToken ,asyncHandler(async (req, res) => {
     const applianceId = req.params.applianceId;
     const { updatedAt, updatedData } = req.body; // Extract updatedAt and updatedData from request body
     const { applianceName, wattage, usagePatternPerDay, selectedDays } = updatedData;
@@ -246,6 +246,24 @@ router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req
     await appliance.save();
 
     res.status(200).json({ message: 'Appliance updated successfully', newEnergyKwh, oldEnergyKwh, newTotalDaysUsed, appliance });
+}));
+router.delete('/deleteAppliance/:applianceId', authenticateToken,asyncHandler(async (req, res) =>{
+    const applianceId = req.params.applianceId;
+
+    // Find the appliance to delete
+    const appliance = await Appliance.findByIdAndDelete(applianceId);
+    if (!appliance) {
+      return res.status(404).json({ message: 'Appliance not found' });
+    }
+
+    // Remove the appliance from the user's list
+    await User.updateMany(
+      { appliances: applianceId },
+      { $pull: { appliances: applianceId } }
+    );
+    res.json({ message: 'Appliance deleted successfully' });
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
 }));
 
 // Function to calculate remaining occurrences of selected days in a month

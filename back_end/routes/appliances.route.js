@@ -518,28 +518,6 @@ router.get('/monthlyDataNew/:userId', async (req, res) => {
 
 
 
-router.delete('/deleteAppliance/:applianceId', async (req, res) => {
-  try {
-    const applianceId = req.params.applianceId;
-
-    // Find the appliance to delete
-    const appliance = await Appliance.findByIdAndDelete(applianceId);
-    if (!appliance) {
-      return res.status(404).json({ message: 'Appliance not found' });
-    }
-
-    // Remove the appliance from the user's list
-    await User.updateMany(
-      { appliances: applianceId },
-      { $pull: { appliances: applianceId } }
-    );
-
-    res.json({ message: 'Appliance deleted successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
-});
 
 
 module.exports = router;
