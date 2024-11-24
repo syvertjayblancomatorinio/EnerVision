@@ -131,8 +131,8 @@ class _CommunityTabState extends State<CommunityTab> {
                 var post = entry.value;
                 int index = entry.key;
                 return _buildUserPost(
-                  // post['username'] ?? username ?? 'Unknown User',
-                  username ?? post['username'] ?? 'Unknown User',
+                  post['username'] ?? username ?? 'Unknown User',
+                  // username ?? post['username'] ?? 'Unknown User',
                   post['title'] ?? 'No Title',
                   post['description'] ?? 'No Description',
                   post['timeAgo'] ?? 'Some time ago',
@@ -496,15 +496,38 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
+  Future<void> getUsersPost() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = true;
+    });
+    try {
+      final fetchedData = await PostsService.fetchUsersPosts();
+      print('Fetched data: $fetchedData'); // Log the fetched data
+
+      setState(() {
+        posts = List<Map<String, dynamic>>.from(fetchedData['posts']);
+        username = fetchedData['username'];
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   Future<void> getPosts() async {
     setState(() {
       isLoading = true;
-      isUserPost = false;
     });
 
     try {
       final List<Map<String, dynamic>>? fetchedPosts =
           await PostsService.getPosts();
+      print('Fetched all posts: $fetchedPosts'); // Log the fetched posts
+
       if (fetchedPosts != null) {
         setState(() {
           posts = fetchedPosts;
@@ -515,26 +538,6 @@ class _CommunityTabState extends State<CommunityTab> {
     } catch (e) {
       print('Failed to fetch posts: $e');
       showSnackBar(context, 'Failed to fetch posts. Please try again later.');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> getUsersPost() async {
-    setState(() {
-      isLoading = true;
-      isUserPost = true;
-    });
-    try {
-      final fetchedData = await PostsService.fetchUsersPosts();
-      setState(() {
-        posts = List<Map<String, dynamic>>.from(fetchedData['posts']);
-        username = fetchedData['username'];
-      });
-    } catch (e) {
-      print('Failed to fetch posts: $e');
     } finally {
       setState(() {
         isLoading = false;
@@ -579,10 +582,14 @@ class _CommunityTabState extends State<CommunityTab> {
   void _togglePostView() {
     setState(() {
       showUsersPosts = !showUsersPosts;
+
+      // Clear previous posts to prevent data mixing
+      posts.clear(); // Assuming `posts` is your list of posts being displayed
+
       if (showUsersPosts) {
-        getUsersPost();
+        getUsersPost(); // Fetch posts for the logged-in user
       } else {
-        getPosts();
+        getPosts(); // Fetch all posts
       }
     });
   }
