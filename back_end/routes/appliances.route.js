@@ -5,6 +5,9 @@ const Appliance = require('../models/appliances.model');
 const router = express.Router();
 const MonthlyConsumption = require('../models/monthly_consumption.model');
 
+
+
+
 router.post('/addApplianceToUser', asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
 

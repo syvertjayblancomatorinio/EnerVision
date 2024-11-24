@@ -250,24 +250,6 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-router.patch('/updateKwh/:userId', async (req, res) => {
-  try {
-    const userId = req.params.userId;
-    const updates = req.body;
-
-    // Find and update the appliance
-    const updateKWHRate = await User.findByIdAndUpdate(userId, updates, { new: true });
-
-    if (!updateKWHRate) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json({ message: 'Users KWH  updated successfully', user: updateKWHRate });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
-});
 
 router.put("/update-kwh-rate",  async (req, res) => {
   try {
@@ -368,25 +350,6 @@ router.post(
   }
 );
 
-router.get('/getUserKwhRate/:userId', async (req, res) => {
-  try {
-    const userId = req.params.userId; // Get the userId from the request parameters
-    const user = await User.findById(userId); // Fetch user by ID
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' }); // Handle no user found
-    }
-
-    if (user.kwhRate != null && user.kwhRate !== '') {
-      return res.status(200).json({ kwhRate: user.kwhRate }); // Send kwhRate if found
-    } else {
-      return res.status(404).json({ message: 'kwhRate not found for the user' }); // No kwhRate set
-    }
-
-  } catch (error) {
-    return res.status(500).json({ message: 'Failed to fetch user kwhRate', error: error.message });
-  }
-});
 router.get('/getUsername/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;

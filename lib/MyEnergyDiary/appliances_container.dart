@@ -266,11 +266,13 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
 
     final url = Uri.parse('http://10.0.2.2:8080/updateKwh/$userId');
+    String? token = await getToken();
 
     final response = await http.patch(
       url,
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode({'kwhRate': kwhRate}),
     );
@@ -292,17 +294,35 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
 
     final url = Uri.parse('http://10.0.2.2:8080/getUserKwhRate/$userId');
-    final response = await http.get(url);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print('KwhRate found: ${data['kwhRate']}');
-      return (data['kwhRate'] as num).toDouble();
-    } else if (response.statusCode == 404) {
-      print('KwhRate not found for user.');
-      return null;
-    } else {
-      throw Exception('Failed to load user kwhRate');
+    String? token = await getToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Token is missing');
+    }
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('KwhRate found: ${data['kwhRate']}');
+        return (data['kwhRate'] as num).toDouble();
+      } else if (response.statusCode == 404) {
+        print('KwhRate not found for user.');
+        return null; // Return null if not found
+      } else {
+        throw Exception(
+            'Failed to load user kwhRate, status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+      rethrow;
     }
   }
 

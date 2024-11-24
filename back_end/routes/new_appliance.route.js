@@ -7,92 +7,32 @@ const MonthlyConsumption = require('../models/monthly_consumption.model');
 const protectedRouter = require('../routes/privateRouter');
 const authenticateToken = require('../middleware'); // Import your token middleware
 
-// Function to calculate remaining occurrences of selected days in a month
-function getRemainingOccurrences(year, month, startDay, selectedDays) {
-    let dayOccurrences = {};
-    selectedDays.forEach(day => {
-        dayOccurrences[day] = 0;
-    });
 
-    let currentDate = new Date(year, month - 1, startDay);
-    const lastDay = new Date(year, month, 0);
-
-    for (let day = currentDate; day <= lastDay; day.setDate(day.getDate() + 1)) {
-        const currentDayOfWeek = day.getDay();
-        if (selectedDays.includes(currentDayOfWeek)) {
-            dayOccurrences[currentDayOfWeek]++;
-        }
+router.patch('/updateKwh/:userId', authenticateToken,asyncHandler(async (req, res) => {
+    const userId = req.params.userId;
+    const updates = req.body;
+    const updateKWHRate = await User.findByIdAndUpdate(userId, updates, { new: true });
+    if (!updateKWHRate) {
+      return res.status(404).json({ message: 'User not found' });
     }
-    return dayOccurrences;
-}
-function getOccurrencesBetweenDates(startDate, endDate, selectedDays) {
-    let dayOccurrences = {};
-    selectedDays.forEach(day => {
-        dayOccurrences[day] = 0;
-    });
-
-    for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
-        const currentDayOfWeek = day.getDay();
-        if (selectedDays.includes(currentDayOfWeek)) {
-            dayOccurrences[currentDayOfWeek]++;
-        }
-    }
-
-    return dayOccurrences;
-}
-
-router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
-    const { userId, month, year, totalMonthlyConsumption } = req.body;
-
-    if (!month || !year) {
-        return res.status(400).json({ message: 'Month and year are required.' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Define emission factor
-    const emissionFactor = 0.7;
-
-    // Calculate totalMonthlyCost
-    let totalMonthlyCost = 0;
-    if (totalMonthlyConsumption) {
-        totalMonthlyCost = totalMonthlyConsumption;
-    } else {
-        const appliances = await Appliance.find({ userId });
-        totalMonthlyCost = appliances.reduce((total, appliance) => {
-            return total + (appliance.monthlyCost || 0);
-        }, 0);
-    }
-
-    // Calculate totalMonthlyKwhConsumption
-    const totalMonthlyKwhConsumption = user.kwhRate > 0 ? totalMonthlyCost / user.kwhRate : 0;
-
-    // Calculate totalMonthlyCO2Emissions
-    const totalMonthlyCO2Emissions = totalMonthlyKwhConsumption * emissionFactor;
-
-    // Save monthly consumption data
-    const monthlyConsumption = new MonthlyConsumption({
-        userId: user._id,
-        month: parseInt(month, 10),
-        year: parseInt(year, 10),
-        totalMonthlyConsumption: totalMonthlyCost,
-        totalMonthlyKwhConsumption,
-        totalMonthlyCO2Emissions
-    });
-
-    await monthlyConsumption.save();
-
-    res.status(200).json({
-        message: 'Monthly consumption saved successfully.',
-        totalMonthlyConsumption: totalMonthlyCost,
-        totalMonthlyKwhConsumption,
-        totalMonthlyCO2Emissions
-    });
+    res.json({ message: 'Users KWH  updated successfully', user: updateKWHRate });
+    res.status(500).json({ message: 'Internal server error', error: err.message });
 }));
+router.get('/getUserKwhRate/:userId', authenticateToken , asyncHandler(async (req, res) => {
+    const userId = req.params.userId;
+    const user = await User.findById(userId);
 
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' }); // Handle no user found
+    }
+
+    if (user.kwhRate != null && user.kwhRate !== '') {
+      return res.status(200).json({ kwhRate: user.kwhRate }); // Send kwhRate if found
+    } else {
+      return res.status(404).json({ message: 'kwhRate not found for the user' }); // No kwhRate set
+    }
+    return res.status(500).json({ message: 'Failed to fetch user kwhRate', error: error.message });
+}));
 
 const saveMonthlyConsumption = async (userId, month, year) => {
     const user = await User.findById(userId);
@@ -307,4 +247,91 @@ router.patch('/updateApplianceOccurrences/:applianceId', asyncHandler(async (req
 
     res.status(200).json({ message: 'Appliance updated successfully', newEnergyKwh, oldEnergyKwh, newTotalDaysUsed, appliance });
 }));
+
+// Function to calculate remaining occurrences of selected days in a month
+function getRemainingOccurrences(year, month, startDay, selectedDays) {
+    let dayOccurrences = {};
+    selectedDays.forEach(day => {
+        dayOccurrences[day] = 0;
+    });
+
+    let currentDate = new Date(year, month - 1, startDay);
+    const lastDay = new Date(year, month, 0);
+
+    for (let day = currentDate; day <= lastDay; day.setDate(day.getDate() + 1)) {
+        const currentDayOfWeek = day.getDay();
+        if (selectedDays.includes(currentDayOfWeek)) {
+            dayOccurrences[currentDayOfWeek]++;
+        }
+    }
+    return dayOccurrences;
+}
+function getOccurrencesBetweenDates(startDate, endDate, selectedDays) {
+    let dayOccurrences = {};
+    selectedDays.forEach(day => {
+        dayOccurrences[day] = 0;
+    });
+
+    for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
+        const currentDayOfWeek = day.getDay();
+        if (selectedDays.includes(currentDayOfWeek)) {
+            dayOccurrences[currentDayOfWeek]++;
+        }
+    }
+
+    return dayOccurrences;
+}
+
+router.post('/testSaveMonthlyConsumption', asyncHandler(async (req, res) => {
+    const { userId, month, year, totalMonthlyConsumption } = req.body;
+
+    if (!month || !year) {
+        return res.status(400).json({ message: 'Month and year are required.' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Define emission factor
+    const emissionFactor = 0.7;
+
+    // Calculate totalMonthlyCost
+    let totalMonthlyCost = 0;
+    if (totalMonthlyConsumption) {
+        totalMonthlyCost = totalMonthlyConsumption;
+    } else {
+        const appliances = await Appliance.find({ userId });
+        totalMonthlyCost = appliances.reduce((total, appliance) => {
+            return total + (appliance.monthlyCost || 0);
+        }, 0);
+    }
+
+    // Calculate totalMonthlyKwhConsumption
+    const totalMonthlyKwhConsumption = user.kwhRate > 0 ? totalMonthlyCost / user.kwhRate : 0;
+
+    // Calculate totalMonthlyCO2Emissions
+    const totalMonthlyCO2Emissions = totalMonthlyKwhConsumption * emissionFactor;
+
+    // Save monthly consumption data
+    const monthlyConsumption = new MonthlyConsumption({
+        userId: user._id,
+        month: parseInt(month, 10),
+        year: parseInt(year, 10),
+        totalMonthlyConsumption: totalMonthlyCost,
+        totalMonthlyKwhConsumption,
+        totalMonthlyCO2Emissions
+    });
+
+    await monthlyConsumption.save();
+
+    res.status(200).json({
+        message: 'Monthly consumption saved successfully.',
+        totalMonthlyConsumption: totalMonthlyCost,
+        totalMonthlyKwhConsumption,
+        totalMonthlyCO2Emissions
+    });
+}));
+
 module.exports = router;
