@@ -44,15 +44,19 @@ class PostsService {
   static Future<Map<String, dynamic>> fetchUsersPosts() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
+
     if (userId == null) {
       throw Exception('User ID not found in shared preferences');
     }
+
+    print('User ID: $userId'); // Log the userId for debugging
 
     final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts/$userId/posts');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+      print('API Response: $data'); // Log the response data
 
       // Ensure the response contains both 'username' and 'posts'
       if (data is Map<String, dynamic> &&
