@@ -7,6 +7,7 @@ import 'package:supabase_project/ConstantTexts/user.dart';
 import 'package:supabase_project/buttons/sign_up_button.dart';
 import 'package:supabase_project/buttons/login_signUp.dart';
 import 'package:supabase_project/CommonWidgets/textfield.dart';
+import 'package:wc_form_validators/wc_form_validators.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,6 +21,8 @@ class _LoginPageState extends State<LoginPage> {
   bool _isButtonEnabled = true;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _showClearPasswordIcon = false;
+  bool _showClearEmailIcon = false;
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -122,44 +125,45 @@ class _LoginPageState extends State<LoginPage> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
-                      MyTextField(
+                      CustomTextField(
                         controller: _emailController,
                         hintText: 'Email',
+                        keyboardType: TextInputType.emailAddress,
                         obscureText: false,
-                        prefixIcon: Icons.email_outlined,
+                        prefixIcon: const Icon(Icons.email_outlined),
                         onChanged: (value) {
+                          setState(() {
+                            _showClearEmailIcon = value.isNotEmpty;
+                          });
                           user.email = value;
                         },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Enter Email';
-                          } else if (RegExp(
-                                  r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-                              .hasMatch(value)) {
-                            return null;
-                          } else {
-                            return 'Enter Valid Email';
-                          }
-                        },
+                        validator: Validators.compose([
+                          Validators.required('Email is required'),
+                          Validators.patternString(
+                              r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+                              'Enter Valid Email')
+                        ]),
                       ),
                       const SizedBox(height: 20),
-                      MyTextField(
+                      PasswordField(
                         controller: _passwordController,
-                        obscureText: true,
                         hintText: 'Password',
-                        prefixIcon: Icons.lock_open_outlined,
+                        // keyboardType: TextInputType.text,
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        // obscureText: true,
                         onChanged: (value) {
+                          setState(() {
+                            _showClearPasswordIcon = value.isNotEmpty;
+                          });
                           user.password = value;
                         },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Enter Password';
-                          } else {
-                            return null;
-                          }
-                        },
+                        // validator: Validators.compose([
+                        //   Validators.required('Password is required'),
+                        //   Validators.patternString(
+                        //       r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$',
+                        //       'Password must be at least 8 characters long \n Must have at least one special character\n Must have at least one Uppercase character')
+                        // ]),
                       ),
-                      const SizedBox(height: 40),
                       Row(
                         children: [
                           GestureDetector(

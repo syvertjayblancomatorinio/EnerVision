@@ -285,8 +285,9 @@ class PasswordField extends StatefulWidget {
 class _PasswordFieldState extends State<PasswordField> {
   bool _showClearIcon = false;
   bool _isValid = true;
-  bool _hasStartedTyping = false; // Tracks whether the user has started typing
+  bool _hasStartedTyping = false;
   String? _errorText;
+  bool _isPasswordVisible = false;
 
   final Map<String, bool> _passwordRequirements = {
     "At least 8 characters": false,
@@ -343,7 +344,7 @@ class _PasswordFieldState extends State<PasswordField> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextFormField(
-              obscureText: true,
+              obscureText: !_isPasswordVisible,
               controller: widget.controller,
               onChanged: (value) {
                 setState(() {
@@ -380,19 +381,37 @@ class _PasswordFieldState extends State<PasswordField> {
                   fontSize: 12.0,
                 ),
                 prefixIcon: widget.prefixIcon,
-                suffixIcon: _showClearIcon
-                    ? IconButton(
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Eye icon for toggling password visibility
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                    ),
+                    // Clear icon for clearing the field
+                    if (_showClearIcon)
+                      IconButton(
                         onPressed: () {
                           widget.controller.clear();
                           setState(() {
                             _showClearIcon = false;
                             _hasStartedTyping = false;
                           });
-                          _validatePassword('');
+                          _validatePassword(widget.controller as String);
                         },
                         icon: const Icon(Icons.clear),
-                      )
-                    : null,
+                      ),
+                  ],
+                ),
                 errorText: _errorText,
               ),
             ),

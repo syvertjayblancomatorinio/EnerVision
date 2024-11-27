@@ -28,10 +28,9 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final AppControllers controllers = AppControllers();
+  bool _isPasswordVisible = false;
 
   bool _showClearIcon = false;
-  bool _showClearEmailIcon = false;
-  bool _showClearPasswordIcon = false;
   bool _isLoading = false;
 
   User user = User('', '', '');
@@ -128,7 +127,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               prefixIcon: const Icon(Icons.email_outlined),
                               onChanged: (value) {
                                 setState(() {
-                                  _showClearEmailIcon = value.isNotEmpty;
+                                  _showClearIcon = value.isNotEmpty;
                                 });
                                 user.email = value;
                               },
@@ -148,7 +147,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               // obscureText: true,
                               onChanged: (value) {
                                 setState(() {
-                                  _showClearPasswordIcon = value.isNotEmpty;
+                                  _showClearIcon = value.isNotEmpty;
                                 });
                                 user.password = value;
                               },
