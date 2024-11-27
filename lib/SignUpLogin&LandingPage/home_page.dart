@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/EnergyEfficiency/YourEnergy/device_category_page.dart';
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 import '../StaticPages/energy_efficiency_tab/Electric-Vehicles-Transportation.dart';
 import '../StaticPages/energy_efficiency_tab/energy-effieciency-widget.dart';
@@ -48,7 +49,7 @@ class _YourEnergyTabState extends State<YourEnergyTab> {
 Widget content(BuildContext context) {
   return SingleChildScrollView(
     child: Padding(
-      padding: const EdgeInsets.only(top: 20.0),
+      padding: const EdgeInsets.only(top: 5.0),
       child: Column(
         children: <Widget>[
           yourEnergyContent(context),
@@ -66,16 +67,16 @@ Widget yourEnergyContent(BuildContext context) {
       const Padding(
         padding: EdgeInsets.all(20.0),
         child: Text(
-          'Welcome to EnerVision,\n ready to save energy?',
+          'Welcome to EnerVision,\nready to save energy?',
           style: TextStyle(
-              fontSize: 20, fontWeight: FontWeight.w900, color: Colors.grey),
+              fontSize: 18, fontWeight: FontWeight.w500, color: Colors.black),
         ),
       ),
-      const SizedBox(height: 20),
-      searchTextField(),
-      const SizedBox(height: 20),
-      categoryStoryTags(context),
-      const SizedBox(height: 20),
+      const SizedBox(height: 10),
+      CategorySelectionPage(),
+      const SizedBox(
+        height: 15.0,
+      ),
       energyCategories(context),
       const Padding(
         padding: EdgeInsets.symmetric(horizontal: 40.0),
@@ -85,26 +86,7 @@ Widget yourEnergyContent(BuildContext context) {
   );
 }
 
-Widget searchTextField() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-    child: TextField(
-      decoration: InputDecoration(
-        hintText: 'Search',
-        prefixIcon: const Icon(Icons.search),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30.0),
-        ),
-        filled: true,
-        fillColor: Colors.grey[200],
-      ),
-    ),
-  );
-}
-
-Widget title(
-  String title,
-) {
+Widget title(String title) {
   return Text(
     title,
     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -112,61 +94,63 @@ Widget title(
   );
 }
 
-Widget categoryStoryTags(BuildContext context) {
-  return Column(
-    children: [
-      title('Category Story Tags'),
-      const SizedBox(height: 20),
-      Center(
-        child: Wrap(
-          spacing: 20.0,
-          runSpacing: 20.0,
-          alignment: WrapAlignment.center,
-          children: [
-            storyTag('Renewable Energy', context,
-                const RenewableEnergy(selectedIndex: 1)),
-            storyTag('Solar Energy', context, const FossilFuelsWidget()),
-            storyTag('EnergyStorage', context,
-                const EnergyStorage(selectedIndex: 1)),
-            storyTag('Energy Efficiency Widget', context,
-                const EnergyEfficiencyWidget(selectedIndex: 1)),
-            storyTag('Electric Vehicles', context,
-                const ElectricVehicles(selectedIndex: 1)),
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
 Widget energyCategories(BuildContext context) {
   return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      title('Energy Categories'),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: title('Energy Categories'),
+      ),
       const SizedBox(height: 20),
-      Center(
-        child: Wrap(
-          spacing: 20.0,
-          runSpacing: 20.0,
-          alignment: WrapAlignment.center,
-          children: [
-            storyTag('Renewable Energy', context,
-                const RenewableEnergy(selectedIndex: 1)),
-            storyTag('Fossil Fuels', context, const FossilFuelsWidget()),
-            storyTag('EnergyStorage', context,
-                const EnergyStorage(selectedIndex: 1)),
-            storyTag('Energy Efficiency Widget', context,
-                const EnergyEfficiencyWidget(selectedIndex: 1)),
-            storyTag('Electric Vehicles', context,
-                const ElectricVehicles(selectedIndex: 1)),
-          ],
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        child: Center(
+          child: Wrap(
+            spacing: 15.0,
+            runSpacing: 15.0,
+            alignment: WrapAlignment.center,
+            children: [
+              storyTag(
+                'Renewable Energy',
+                context,
+                const RenewableEnergy(selectedIndex: 1),
+                'assets/renewable.jpg',
+              ),
+              storyTag(
+                'Fossil Fuels',
+                context,
+                const FossilFuelsWidget(),
+                'assets/fossil.jpg',
+              ),
+              storyTag(
+                'Energy Storage',
+                context,
+                const EnergyStorage(selectedIndex: 1),
+                'assets/energy_storage.webp',
+              ),
+              storyTag(
+                'Energy Efficiency',
+                context,
+                const EnergyEfficiencyWidget(selectedIndex: 1),
+                'assets/efficiency.jpg',
+              ),
+              storyTag(
+                'Electric Vehicles',
+                context,
+                const ElectricVehicles(selectedIndex: 1),
+                'assets/electric.avif',
+              ),
+            ],
+          ),
         ),
       ),
     ],
   );
 }
 
-Widget storyTag(String title, BuildContext context, Widget page) {
+Widget storyTag(
+    String title, BuildContext context, Widget page, String imagePath) {
   return InkWell(
     onTap: () {
       Navigator.push(
@@ -175,32 +159,34 @@ Widget storyTag(String title, BuildContext context, Widget page) {
       );
     },
     child: Container(
-      width: 120,
-      height: 70,
-      padding: const EdgeInsets.all(8.0),
+      width: 110,
+      height: 100,
       decoration: BoxDecoration(
-        image: const DecorationImage(
-          image: AssetImage('assets/deviceImage.png'),
+        image: DecorationImage(
+          image: AssetImage(imagePath),
           fit: BoxFit.cover,
         ),
         borderRadius: BorderRadius.circular(20.0),
       ),
       child: Center(
-        child: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            shadows: [
-              Shadow(
-                offset: Offset(0, 1),
-                blurRadius: 3,
-                color: Colors.black45,
-              ),
-            ],
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              shadows: [
+                Shadow(
+                  offset: Offset(0, 1),
+                  blurRadius: 3,
+                  color: Colors.black45,
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
       ),
     ),
@@ -211,7 +197,7 @@ Widget optimizeEnergyUsage(BuildContext context) {
   return Container(
     decoration: greyBoxDecoration(),
     padding: const EdgeInsets.all(10),
-    margin: const EdgeInsets.symmetric(vertical: 40),
+    margin: const EdgeInsets.symmetric(vertical: 20),
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [

@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/EnergyEfficiency/Community/ellipse_icon.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/empty_post_page.dart';
+import 'package:supabase_project/EnergyEfficiency/Community/post_image.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/top_bar.dart';
 import 'package:hive/hive.dart';
 
@@ -110,24 +111,48 @@ class _CommunityTabState extends State<CommunityTab> {
       print('Suggestion deleted successfully');
       // Optionally, update your UI state here (e.g., remove the suggestion from the list)
     } catch (e) {
-      print('Error deleting Suggestion: $e');
+      print("Error deleting Suggestion: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      child: Column(
-        children: <Widget>[
-          TopBar(onEditTap: () {
-            _showActionSheet(context);
-          }, onRefreshTap: () {
-            getPostsFromApi();
-          }),
-          _content(),
-        ],
-      ),
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            children: <Widget>[
+              TopBar(onEditTap: () {
+                _showActionSheet(context);
+              }, onRefreshTap: () {
+                getPostsFromApi();
+              }),
+              _content(),
+            ],
+          ),
+        ),
+        Positioned(
+          bottom: 0.0,
+          right: 20.0,
+          child: ElevatedButton(
+            onPressed: () async {
+              _showActionSheet(context);
+            },
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              padding: const EdgeInsets.all(24),
+            ),
+            child: const Icon(
+              Icons.add,
+              size: 16,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -478,35 +503,14 @@ class _CommunityTabState extends State<CommunityTab> {
                                               ),
                                             ),
                                             const Spacer(),
-                                            // Text(
-                                            //   suggestion['createdAt'] ??
-                                            //       'Some time ago',
-                                            //   style: const TextStyle(
-                                            //     fontWeight: FontWeight.bold,
-                                            //     fontSize: 16.0,
-                                            //     color: Color(0xFF1BBC9B),
-                                            //   ),
-                                            // ),
                                             Text(
                                               _formatDateTime(
-                                                suggestion['createdAt'],
-                                              ),
-                                              // _formatDateTime(
-                                              //       DateTime.parse(suggestion[
-                                              //           'suggestionDate']),
-                                              //     ) ??
-                                              // _formatDateTime(
-                                              //   DateTime.parse(suggestion[
-                                              //               'suggestionDate'] ??
-                                              //           suggestion['createdAt'])
-                                              //       as String?,
-                                              // ),
+                                                  suggestion['createdAt']),
                                               style: const TextStyle(
                                                 fontSize: 12.0,
                                                 color: Colors.grey,
                                               ),
                                             ),
-
                                             PopupMenuButton<String>(
                                               icon:
                                                   const Icon(Icons.more_horiz),
@@ -523,7 +527,7 @@ class _CommunityTabState extends State<CommunityTab> {
                                               onSelected: (String value) async {
                                                 if (value == 'Delete') {
                                                   _confirmDeleteSuggestion(
-                                                      index); // Pass the correct index here
+                                                      index);
                                                 } else if (value == 'Edit') {
                                                   // Handle edit logic here
                                                   print('Edit tapped');
@@ -571,7 +575,7 @@ class _CommunityTabState extends State<CommunityTab> {
     int index,
   ) {
     List<dynamic> sortedPosts = List.from(posts);
-    // final post = posts[index];
+    final post = posts[index];
 
     sortedPosts.sort((a, b) {
       DateTime? timeA = DateTime.tryParse(a['timeAgo'] ?? '');
@@ -595,6 +599,7 @@ class _CommunityTabState extends State<CommunityTab> {
               _buildTopPost(username, timeAgo, tags, profileImageUrl, index),
               BuildTitle(title: title),
               BuildDescription(description: description),
+              // PostImage(postImageUrl: postImageUrl),
               const SizedBox(height: 10.0),
               _buildAddSuggestions(profileImageUrl, postImageUrl, index),
               if (_tappedIndex == index) _buildSuggestionTextField(index),

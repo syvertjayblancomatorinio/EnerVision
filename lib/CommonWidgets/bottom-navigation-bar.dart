@@ -12,6 +12,8 @@ import 'package:supabase_project/Settings/app-settings-widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/StaticPages/anne_aircon.dart';
 
+import '../EnergyPage/EnergyTracker/energy_tracker_widget.dart';
+import '../EnergyPage/offline_calculator.dart';
 import '../PreCode/addSuggestion.dart';
 
 class BottomNavigation extends StatefulWidget {
@@ -71,7 +73,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => SuggestionExample(),
+            builder: (context) => const OfflineCalculator(),
             // builder: (context) => EnergyPowerUsed(
             //   value: 'we',
             //   title: '23',

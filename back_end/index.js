@@ -57,6 +57,7 @@ app.use('/', require('./routes/chats.route'));
 app.use('/', require('./routes/faqs.route'));
 app.use('/', require('./routes/compared_appliance.route'));
 app.use('/', require('./routes/monthly_consumption.route'));
+app.use('/', require('./routes/device_info.route'));
 
 // Upload avatar route (ensure Avatar model is defined and imported)
 app.post('/uploadAvatar', async (req, res) => {
