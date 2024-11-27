@@ -186,3 +186,26 @@ String _monthName(int month) {
   ];
   return months[month - 1];
 }
+
+// For The Offline Calculator
+const String pageTitle = "Offline Energy Calculator";
+const String pageTitleDescription =
+    'An offline tool for efficient energy management. Calculate your average energy costs by entering essential details like kWh rate, wattage, daily usage pattern, and days used per week — no internet connection required!';
+const String energyCostEstimate = "Energy Cost Estimate";
+const String energyCalculationParameters = "Energy Calculation Parameters";
+
+const String energyCalculationParametersExplainer =
+    "Input key data like wattage, usage pattern, and kWh rate to calculate your energy costs offline.";
+const String energyCostEstimateExplainer =
+    'Estimate your energy costs based on appliance wattage, daily usage, and frequency with this offline tool.';
+const String estimatedEnergyCost = "Estimated Monthly Energy Cost";
+const String wattage = "Wattage";
+const String wattageLabelText = "Enter your appliance wattage";
+const String wattagePlaceholder = "E.g. 1000";
+const String usagePattern = "Usage Pattern";
+const String usagePatternText = "Usage Pattern (hours per day)";
+const String usagePatternPlaceholder = "E.g. 24";
+const String kwhRate = "KWH Rate";
+const String kwhRateText = "Enter KWH Rate in your Service Provider";
+const String kwhRatePlaceholder = "E.g. 18";
+const String calculateMonthlyCostButton = "Calculate Monthly Cost";
