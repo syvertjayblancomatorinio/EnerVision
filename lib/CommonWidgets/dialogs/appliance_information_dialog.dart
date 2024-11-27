@@ -110,7 +110,7 @@ class _ApplianceInformationDialogState extends State<ApplianceInformationDialog>
                             valueWidget: Text(
                                 ' ${widget.appliance['usagePatternPerDay'] ?? 'hours'} hours')),
                         KeyValueRow(
-                          label: 'Monthly Cost',
+                          label: "Month's Cost",
                           valueWidget: Text(
                             'PHP ${formatter.format(widget.appliance['monthlyCost'] ?? 0)}',
                           ),
@@ -202,11 +202,13 @@ class KeyValueRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600],
+              ),
             ),
           ),
           const Spacer(),

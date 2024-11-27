@@ -3,6 +3,8 @@ import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart'
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
+import '../../ConstantTexts/final_texts.dart';
+
 class EditApplianceDialog extends StatefulWidget {
   final TextEditingController editApplianceNameController;
   final TextEditingController editWattageController;
@@ -36,6 +38,7 @@ class EditApplianceDialog extends StatefulWidget {
 class _EditApplianceDialogState extends State<EditApplianceDialog> {
   List<int> selectedDays = [];
   final AppControllers controller = AppControllers();
+  bool isAllSelected = false;
 
   @override
   void initState() {
@@ -44,6 +47,20 @@ class _EditApplianceDialogState extends State<EditApplianceDialog> {
     if (widget.appliance['selectedDays'] != null) {
       selectedDays = List<int>.from(widget.appliance['selectedDays']);
     }
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      if (isAllSelected) {
+        // Deselect all days
+        selectedDays.clear();
+        isAllSelected = false;
+      } else {
+        // Select all days
+        selectedDays = [1, 2, 3, 4, 5, 6, 7];
+        isAllSelected = true;
+      }
+    });
   }
 
   void _toggleDay(int day) {
@@ -179,7 +196,28 @@ class _EditApplianceDialogState extends State<EditApplianceDialog> {
                   },
                 ),
                 const SizedBox(height: 20),
-                const Text("Select Days", style: TextStyle(fontSize: 18)),
+                GestureDetector(
+                  onTap: _toggleSelectAll,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.select_all,
+                          color: isAllSelected
+                              ? AppColors.primaryColor
+                              : Colors.black),
+                      const SizedBox(width: 8),
+                      Text(
+                        selectDays,
+                        style: TextStyle(
+                          color: isAllSelected
+                              ? AppColors.primaryColor
+                              : Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 20),
                 Column(
                   mainAxisSize: MainAxisSize.min,

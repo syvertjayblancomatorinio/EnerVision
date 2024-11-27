@@ -1,6 +1,34 @@
-const supabaseKey = String.fromEnvironment(
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVta3pyc3B5cHJmd3NydXJhZ3pqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQwNzg4MTYsImV4cCI6MjAzOTY1NDgxNn0.xiTz7LTNn6mT3zFcSr078P_kO5vjo9uXUOAVBNvCaQQ');
-const String appname = 'EverVision';
+const String appname = 'EnerVision';
+
+// For The Energy Efficiency Page
+
+const String energyEfficiency = "Energy Efficiency";
+
+// For The Offline Calculator
+const String pageTitle = "Offline Energy Calculator";
+const String pageTitleDescription =
+    'An offline tool for efficient energy management. Calculate your average energy costs by entering essential details like kWh rate, wattage, daily usage pattern, and days used per week — no internet connection required!';
+
+const String energyCostEstimate = "Energy Cost Estimate";
+const String energyCostEstimateExplainer =
+    "Estimate costs by wattage, usage, and frequency—offline and easy!";
+
+const String energyCalculationParameters = "Energy Calculation Parameters";
+const String energyCalculationParametersExplainer =
+    "Enter wattage, usage, and rate to estimate energy costs offline.";
+
+const String estimatedEnergyCost = "Estimated Monthly Energy Cost";
+const String wattage = "Wattage";
+const String wattageLabelText = "Enter your appliance wattage";
+const String wattagePlaceholder = "E.g. 1000";
+const String usagePattern = "Usage Pattern";
+const String usagePatternText = "Usage Pattern (hours per day)";
+const String usagePatternPlaceholder = "E.g. 24";
+const String kwhRate = "KWH Rate";
+const String kwhRateText = "Enter KWH Rate in your Service Provider";
+const String kwhRatePlaceholder = "E.g. 18";
+const String calculateMonthlyCostButton = "Calculate";
+const String selectDays = 'Select Days';
 const String renewableEnergyP1 =
     'Renewable energy  comes from natural sources that are constantly replenished. These sources are crucial for a sustainable future.';
 const String renewableEnergyP2 =
@@ -186,26 +214,3 @@ String _monthName(int month) {
   ];
   return months[month - 1];
 }
-
-// For The Offline Calculator
-const String pageTitle = "Offline Energy Calculator";
-const String pageTitleDescription =
-    'An offline tool for efficient energy management. Calculate your average energy costs by entering essential details like kWh rate, wattage, daily usage pattern, and days used per week — no internet connection required!';
-const String energyCostEstimate = "Energy Cost Estimate";
-const String energyCalculationParameters = "Energy Calculation Parameters";
-
-const String energyCalculationParametersExplainer =
-    "Input key data like wattage, usage pattern, and kWh rate to calculate your energy costs offline.";
-const String energyCostEstimateExplainer =
-    'Estimate your energy costs based on appliance wattage, daily usage, and frequency with this offline tool.';
-const String estimatedEnergyCost = "Estimated Monthly Energy Cost";
-const String wattage = "Wattage";
-const String wattageLabelText = "Enter your appliance wattage";
-const String wattagePlaceholder = "E.g. 1000";
-const String usagePattern = "Usage Pattern";
-const String usagePatternText = "Usage Pattern (hours per day)";
-const String usagePatternPlaceholder = "E.g. 24";
-const String kwhRate = "KWH Rate";
-const String kwhRateText = "Enter KWH Rate in your Service Provider";
-const String kwhRatePlaceholder = "E.g. 18";
-const String calculateMonthlyCostButton = "Calculate Monthly Cost";

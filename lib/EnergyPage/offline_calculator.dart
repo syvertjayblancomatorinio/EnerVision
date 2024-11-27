@@ -27,6 +27,7 @@ class _OfflineCalculatorState extends State<OfflineCalculator> {
   List<int> selectedDays = [];
   late double result = 0;
   double monthlyCost = 0;
+  bool isAllSelected = false;
 
   @override
   void initState() {
@@ -271,7 +272,7 @@ class _OfflineCalculatorState extends State<OfflineCalculator> {
                     Column(
                       children: [
                         const SizedBox(height: 10),
-                        _selectDays(days, 1, 7),
+                        _selectDaysRow(),
                         const SizedBox(height: 10),
                         // _selectDays(days, 5, 7),
                       ],
@@ -291,32 +292,73 @@ class _OfflineCalculatorState extends State<OfflineCalculator> {
     );
   }
 
-  Widget _selectDays(List<String> days, int startIndex, int endIndex) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(endIndex - startIndex + 1, (index) {
-        final dayNum = startIndex + index;
-        final isSelected = selectedDays.contains(dayNum);
+  Widget _selectDaysRow() {
+    final days = ["S", "M", "T", "W", "Th", "F", "St"];
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5),
-          child: GestureDetector(
-            onTap: () => _toggleDay(dayNum),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor:
-                  isSelected ? AppColors.secondaryColor : Colors.grey[300],
-              child: Text(
-                days[dayNum - 1],
+    return Column(
+      children: [
+        // Row for "Select All" button
+        GestureDetector(
+          onTap: _toggleSelectAll,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.select_all,
+                  color: isAllSelected ? AppColors.primaryColor : Colors.black),
+              const SizedBox(width: 8),
+              Text(
+                selectDays,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black,
+                  color: isAllSelected ? AppColors.primaryColor : Colors.black,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
+            ],
           ),
-        );
-      }),
+        ),
+        const SizedBox(height: 10),
+        // Row for individual days
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(7, (index) {
+            final dayNum = index + 1;
+            final isSelected = selectedDays.contains(dayNum);
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: GestureDetector(
+                onTap: () => _toggleDay(dayNum),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor:
+                      isSelected ? AppColors.primaryColor : Colors.grey[300],
+                  child: Text(
+                    days[index],
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
     );
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      if (isAllSelected) {
+        // Deselect all days
+        selectedDays.clear();
+        isAllSelected = false;
+      } else {
+        // Select all days
+        selectedDays = [1, 2, 3, 4, 5, 6, 7];
+        isAllSelected = true;
+      }
+    });
   }
 }
 
