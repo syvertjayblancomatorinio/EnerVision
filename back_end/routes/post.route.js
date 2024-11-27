@@ -134,6 +134,58 @@ router.get('/posts/:userId/:postId', async (req, res) => {
         res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 });
+router.get('/posts/:postId', async (req, res) => {
+    try {
+
+        const post = posts.find(post => post._id.toString() === req.params.postId);
+
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        res.status(200).json({ message: 'Post retrieved successfully', post });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+});
+router.get('/getAPost/:postId',
+ async (req, res) => {
+    const { postId } = req.params;
+
+    try {
+        const post = await Posts.findById(postId);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+
+        res.status(200).json({ message: 'Post Retrieved successfully', post });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+router.get('/getPostSuggestions/:postId', async (req, res) => {
+    const { postId } = req.params;
+
+    try {
+        const post = await Posts.findById(postId)
+            .populate('suggestions'); // Populate the suggestions field
+
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        res.status(200).json({
+            message: 'Suggestions Retrieved successfully',
+            suggestions: post.suggestions, // Send the populated suggestions
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 
 
 // Delete a specific posts of a user

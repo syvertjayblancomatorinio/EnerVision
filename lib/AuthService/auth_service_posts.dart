@@ -233,6 +233,26 @@ class PostsService {
   // It's almost 3am and I still couldn't figure out how to add suggestions to the specific post hays kapoy na.
 
   // Helper method to calculate "time ago"
+  static Future<Map<String, dynamic>> getAPost(String postId) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/getAPost/$postId');
+    print('Sending Fetch request to: $url');
+    // String? token = await getToken();
+    // if (token != null) {
+    final response = await http.get(url, headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      // 'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode == 200) {
+      print('Post with ID $postId retrieved successfully.');
+      final postData = jsonDecode(response.body); // parse the post data
+      return postData; // return the fetched post data
+    } else {
+      final responseBody = jsonDecode(response.body);
+      print('Failed to fetch post. Server response: ${response.body}');
+      throw Exception('Failed to fetch post: ${responseBody['message']}');
+    }
+  }
 
   static Future<List<Map<String, dynamic>>> getPostsOld() async {
     final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');

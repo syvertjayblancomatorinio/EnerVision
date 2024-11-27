@@ -94,7 +94,7 @@ class _CommunityTabState extends State<CommunityTab> {
   @override
   void initState() {
     super.initState();
-    getPosts();
+    getPostsFromApi();
   }
 
   @override
@@ -411,15 +411,18 @@ class _CommunityTabState extends State<CommunityTab> {
                   decoration: greyBoxDecoration(),
                   child: Column(
                     children: [
-                      _buildUserPost(
-                        post['username'] ?? 'Unknown User',
-                        post['title'] ?? 'No Title',
-                        post['description'] ?? 'No Description',
-                        post['timeAgo'] ?? 'Some time ago',
-                        post['tags'] ?? 'No tags',
-                        '',
-                        '',
-                        index,
+                      GestureDetector(
+                        onTap: () => showPostDialog(index),
+                        child: _buildUserPost(
+                          post['username'] ?? 'Unknown User',
+                          post['title'] ?? 'No Title',
+                          post['description'] ?? 'No Description',
+                          post['timeAgo'] ?? 'Some time ago',
+                          post['tags'] ?? 'No tags',
+                          '',
+                          '',
+                          index,
+                        ),
                       ),
                       // Only show suggestions for the current post
                       if (post['suggestions'] != null &&
@@ -984,6 +987,8 @@ class _CommunityTabState extends State<CommunityTab> {
       builder: (BuildContext context) {
         return PostViewDialog(
           post: post,
+          // suggestions: suggestions,
+          index: index,
         );
       },
     );
