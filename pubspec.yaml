@@ -103,6 +103,16 @@ flutter:
      - assets/edit.png
      - assets/sign-up.png
      - assets/appInfoImage.png
+     - assets/lights.jpg
+     - assets/entertainment.jpg
+     - assets/cooling.jpg
+     - assets/laundry.jpg
+     - assets/cooking.jpg
+     - assets/electric.avif
+     - assets/renewable.jpg
+     - assets/efficiency.jpg
+     - assets/fossil.jpg
+     - assets/energy_storage.webp
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

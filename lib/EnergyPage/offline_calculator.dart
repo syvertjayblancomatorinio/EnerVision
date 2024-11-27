@@ -185,8 +185,6 @@ class _OfflineCalculatorState extends State<OfflineCalculator> {
   }
 
   Widget monthlyUsage() {
-    final days = ["S", "M", "T", "W", "Th", "F", "St"];
-
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setState) {
         return Container(
@@ -294,7 +292,6 @@ class _OfflineCalculatorState extends State<OfflineCalculator> {
 
   Widget _selectDaysRow() {
     final days = ["S", "M", "T", "W", "Th", "F", "St"];
-
     return Column(
       children: [
         // Row for "Select All" button
