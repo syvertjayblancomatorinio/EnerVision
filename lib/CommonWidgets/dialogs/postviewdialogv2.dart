@@ -5,33 +5,23 @@ import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
 import 'package:supabase_project/AuthService/base_url.dart';
-import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/CommonWidgets/static_page_shared_widgets.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 import '../../AuthService/auth_suggestions.dart';
 import '../../ConstantTexts/Theme.dart';
 import '../../EnergyEfficiency/Community/ellipse_icon.dart';
 import '../appbar-widget.dart';
-import 'package:hive/hive.dart';
-import 'package:event_bus/event_bus.dart';
-
-EventBus eventBus = EventBus();
-
-class PostUpdatedEvent {}
 
 class PostViewDialog extends StatefulWidget {
   final Map<String, dynamic> post;
   final int index;
-  final Function onPostsUpdated;
-
   const PostViewDialog({
     Key? key,
     required this.post,
     required this.index,
-    required this.onPostsUpdated,
   }) : super(key: key);
 
   @override
@@ -41,13 +31,7 @@ class PostViewDialog extends StatefulWidget {
 class _PostViewDialogState extends State<PostViewDialog> {
   final formatter = NumberFormat('#,##0.00', 'en_PHP');
   late List<Map<String, dynamic>> suggestions = [];
-  List<Map<String, dynamic>> localSuggestions = []; // Local suggestions
-
-  void addSuggestion(Map<String, dynamic> newSuggestion) {
-    setState(() {
-      suggestions.insert(0, newSuggestion); // Add to the top of the list
-    });
-  }
+  late List<Map<String, dynamic>> localSuggestions = [];
 
   String _formatDateTime(String? createdAt) {
     if (createdAt == null || createdAt.isEmpty) {
@@ -79,8 +63,7 @@ class _PostViewDialogState extends State<PostViewDialog> {
   AppControllers controller = AppControllers();
   List<Map<String, dynamic>> posts = [];
 
-  String username = '[Username]';
-
+  String? username;
   String _monthName(int month) {
     const months = [
       "January",
@@ -99,58 +82,16 @@ class _PostViewDialogState extends State<PostViewDialog> {
     return months[month - 1];
   }
 
+  void addSuggestion(Map<String, dynamic> newSuggestion) {
+    setState(() {
+      localSuggestions.insert(0, newSuggestion);
+    });
+    // Call API to save suggestion to the database here.
+  }
+
   @override
   void initState() {
     super.initState();
-    suggestions =
-        List<Map<String, dynamic>>.from(widget.post['suggestions'] ?? []);
-    _loadUsername();
-  }
-
-  Future<void> getPostsFromApi() async {
-    try {
-      // Fetch posts directly from the API
-      final List<Map<String, dynamic>>? fetchedPosts =
-          await PostsService.getPosts();
-      showSnackBar(context, 'Fetched posts from Api');
-      print('Fetched all posts: $fetchedPosts');
-
-      if (fetchedPosts != null && fetchedPosts.isNotEmpty) {
-        setState(() {
-          posts = fetchedPosts;
-        });
-
-        // Optionally, save the posts in Hive for future use
-        var box = await Hive.openBox('postsBox');
-        await box.put('allPosts', fetchedPosts);
-
-        // Fetch suggestions for each post (only if 'id' is not null)
-        for (var post in fetchedPosts) {
-          String? postId = post['id']; // Assuming the post has an 'id' field
-
-          if (postId != null) {
-            // Fetch suggestions for each post with a valid 'id'
-            await fetchSuggestions(postId);
-          } else {
-            print('Skipping post with null id');
-          }
-        }
-      } else {
-        throw Exception('No posts found or invalid post data format.');
-      }
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
-    } finally {}
-  }
-
-  Future<void> _loadUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedUsername = prefs.getString('username');
-
-    setState(() {
-      username = storedUsername ?? '[Username]';
-    });
   }
 
   @override
@@ -191,93 +132,12 @@ class _PostViewDialogState extends State<PostViewDialog> {
   }
 
   Widget buildSuggestionsList() {
-    if (suggestions.isEmpty) {
-      return const Text('No suggestions yet');
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: suggestions.length,
-      itemBuilder: (context, index) {
-        var suggestion = suggestions[index];
-        return Container(
-          padding: const EdgeInsets.only(left: 15, bottom: 5),
-          margin: const EdgeInsets.symmetric(vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(17.0),
-            border: Border.all(
-              color: Colors.grey[500]!,
-              width: 2.0,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    suggestion['suggestedBy'] ?? "Unknown User",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16.0,
-                      color: Color(0xFF1BBC9B),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    _formatDateTime(
-                      suggestion['createdAt'],
-                    ),
-                    style: const TextStyle(
-                      fontSize: 12.0,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_horiz),
-                    itemBuilder: (BuildContext context) {
-                      return {'Edit', 'Delete'}.map((String choice) {
-                        return PopupMenuItem<String>(
-                          value: choice,
-                          child: Text(choice),
-                        );
-                      }).toList();
-                    },
-                    onSelected: (String value) async {
-                      if (value == 'Delete') {
-                        // Handle delete logic
-                      } else if (value == 'Edit') {
-                        // Handle edit logic
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5.0),
-              Text(
-                suggestion['suggestionText'] ?? "No suggestion provided",
-                style: const TextStyle(
-                  fontSize: 14.0,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 5.0),
-            ],
-          ),
-        );
-      },
+    return Column(
+      children: widget.post['suggestions']?.isNotEmpty ?? false
+          ? [_suggestionsWidget()]
+          : [],
     );
   }
-
-  // Widget buildSuggestionsList() {
-  //   return Column(
-  //     children: widget.post['suggestions']?.isNotEmpty ?? false
-  //         ? [_suggestionsWidget()]
-  //         : [],
-  //   );
-  // }
 
   Widget _showPostTopBar(
     int index,
@@ -333,67 +193,103 @@ class _PostViewDialogState extends State<PostViewDialog> {
     );
   }
 
-  Widget _suggestionsWidget(List<Map<String, dynamic>> allSuggestions) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 450),
-      child: Scrollbar(
-        thumbVisibility: true,
-        controller: _scrollController,
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: allSuggestions.length,
-          itemBuilder: (context, suggestionIndex) {
-            var suggestion = allSuggestions[suggestionIndex];
-            return Container(
-              padding: const EdgeInsets.only(left: 15, bottom: 5),
-              margin: const EdgeInsets.symmetric(vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(17.0),
-                border: Border.all(
-                  color: Colors.grey[500]!,
-                  width: 2.0,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        suggestion['suggestedBy'] ?? 'Anonymous',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16.0,
-                          color: Color(0xFF1BBC9B),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        _formatDateTime(suggestion['createdAt']),
-                        style: const TextStyle(
-                          fontSize: 12.0,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5.0),
-                  Text(
-                    suggestion['suggestionText'] ?? "Text",
-                    style: const TextStyle(
-                      fontSize: 14.0,
-                      color: Colors.black,
+  Widget _suggestionsWidget() {
+    {
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 450),
+        child: ScrollbarTheme(
+          data: ScrollbarThemeData(
+            thumbColor: WidgetStateProperty.all(AppColors.primaryColor),
+            trackColor: WidgetStateProperty.all(Colors.grey[300]),
+            trackBorderColor: WidgetStateProperty.all(Colors.transparent),
+            thickness: WidgetStateProperty.all(10),
+            radius: const Radius.circular(100),
+            minThumbLength: 10,
+            thumbVisibility: WidgetStateProperty.all(true),
+          ),
+          child: Scrollbar(
+            thumbVisibility: true,
+            controller: _scrollController,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: widget.post['suggestions'].length,
+              itemBuilder: (context, suggestionIndex) {
+                var suggestion = widget.post['suggestions'][suggestionIndex] ??
+                    "Suggestions";
+                return Container(
+                  padding: const EdgeInsets.only(left: 15, bottom: 5),
+                  margin: const EdgeInsets.symmetric(vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(17.0),
+                    border: Border.all(
+                      color: Colors.grey[500]!,
+                      width: 2.0,
                     ),
                   ),
-                  const SizedBox(height: 5.0),
-                ],
-              ),
-            );
-          },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            suggestion['suggestedBy'] ?? username,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.0,
+                              color: Color(0xFF1BBC9B),
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            _formatDateTime(
+                              suggestion['createdAt'],
+                            ),
+                            style: const TextStyle(
+                              fontSize: 12.0,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_horiz),
+                            itemBuilder: (BuildContext context) {
+                              return {'Edit', 'Delete'}.map((String choice) {
+                                return PopupMenuItem<String>(
+                                  value: choice,
+                                  child: Text(choice),
+                                );
+                              }).toList();
+                            },
+                            onSelected: (String value) async {
+                              if (value == 'Delete') {
+                                // _confirmDeleteSuggestion(
+                                //     index); // Pass the correct index here
+                              } else if (value == 'Edit') {
+                                // Handle edit logic here
+                                print('Edit tapped');
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5.0),
+                      Text(
+                        suggestion['suggestionText'] ?? "Text",
+                        style: const TextStyle(
+                          fontSize: 14.0,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 5.0),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   Widget _buildSuggestionTextField(int index) {
@@ -440,32 +336,14 @@ class _PostViewDialogState extends State<PostViewDialog> {
                       color: Color(0xFF1BBC9B),
                       size: 24,
                     ),
-                    onPressed: () {
-                      if (controller.suggestionController.text.trim().isEmpty)
-                        return;
-
-                      // final currentUsername = username;
-
-                      final newSuggestion = {
-                        'suggestionText':
-                            controller.suggestionController.text.trim(),
-                        'suggestedBy': username,
-                        'createdAt': DateTime.now().toIso8601String(),
-                      };
-
-                      addSuggestion(newSuggestion);
-
-                      // Optionally send to the server
+                    onPressed: () async {
                       SuggestionService.addSuggestionNew(
                         context: context,
                         suggestionController: controller.suggestionController,
                         posts: posts,
                         postId: widget.post['id'],
                       );
-                      getPostsFromApi();
-                      eventBus.fire(PostUpdatedEvent());
-
-                      controller.suggestionController.clear();
+                      await fetchSuggestions(widget.post['id']);
                     },
                   );
                 }),

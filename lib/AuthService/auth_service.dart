@@ -121,23 +121,28 @@ class AuthService {
             responseBody['user'] != null &&
             responseBody['user']['_id'] != null) {
           String userId = responseBody['user']['_id'];
+          String username = responseBody['user']['username'] ?? "Guest";
           final token = responseBody['token'];
           bool hasProfile = responseBody['user']['hasProfile'] ?? false;
+
           if (token != null) {
             await saveToken(token);
           }
-          // Save the user ID to shared preferences
+
+          // Save the user ID and username to shared preferences
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('userId', userId);
+          await prefs.setString('username', username);
 
           // Navigate based on the profile existence
           if (hasProfile) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => const EnergyEfficiencyPage(
-                        selectedIndex: 0,
-                      )),
+                builder: (context) => const EnergyEfficiencyPage(
+                  selectedIndex: 0,
+                ),
+              ),
             );
           } else {
             Navigator.push(

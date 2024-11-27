@@ -20,6 +20,11 @@ import 'package:supabase_project/EnergyEfficiency/Community/empty_post_page.dart
 import 'package:supabase_project/EnergyEfficiency/Community/post_image.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/top_bar.dart';
 import 'package:hive/hive.dart';
+import 'package:event_bus/event_bus.dart';
+
+EventBus eventBus = EventBus();
+
+class PostUpdatedEvent {}
 
 class CommunityTab extends StatefulWidget {
   const CommunityTab({super.key});
@@ -96,12 +101,14 @@ class _CommunityTabState extends State<CommunityTab> {
   void initState() {
     super.initState();
     getPostsFromApi();
+    eventBus.on<PostUpdatedEvent>().listen((event) {
+      getPostsFromApi();
+    });
   }
 
   @override
   void dispose() {
-    _scrollController
-        .dispose(); // Step 2: Dispose of the controller when widget is disposed
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -164,6 +171,7 @@ class _CommunityTabState extends State<CommunityTab> {
       // Fetch posts directly from the API
       final List<Map<String, dynamic>>? fetchedPosts =
           await PostsService.getPosts();
+      showSnackBar(context, 'Fetched posts from Api');
       print('Fetched all posts: $fetchedPosts');
 
       if (fetchedPosts != null && fetchedPosts.isNotEmpty) {
@@ -208,6 +216,8 @@ class _CommunityTabState extends State<CommunityTab> {
       // Attempt to load posts from Hive (cached posts)
       List<Map<String, dynamic>> postsFromHive =
           await PostsService.getPostsFromHive();
+      showSnackBar(context, 'Fetched posts from Hive');
+
       print('Fetched all from hive: $postsFromHive');
 
       // If no posts exist in Hive, fetch from API
@@ -215,6 +225,7 @@ class _CommunityTabState extends State<CommunityTab> {
         final List<Map<String, dynamic>>? fetchedPosts =
             await PostsService.getPosts();
         print('Fetched all posts: $fetchedPosts');
+        showSnackBar(context, 'Fetched posts from API');
 
         if (fetchedPosts != null && fetchedPosts.isNotEmpty) {
           setState(() {
@@ -993,7 +1004,7 @@ class _CommunityTabState extends State<CommunityTab> {
         return PostViewDialog(
           post: post,
           // suggestions: suggestions,
-          index: index,
+          index: index, onPostsUpdated: getPostsFromApi,
         );
       },
     );
