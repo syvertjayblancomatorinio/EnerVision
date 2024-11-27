@@ -29,6 +29,8 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
     'Green Living',
     'Energy Conservation',
   ];
+  String? username;
+  bool isUserPost = true;
 
   List<dynamic> posts = [];
   List<bool> selectedTags = List.filled(4, false);
@@ -40,7 +42,7 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
   @override
   void initState() {
     super.initState();
-    getPosts();
+    getUsersPost();
   }
 
   Future<void> createPost(
@@ -90,6 +92,28 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
     } else {
       print('Failed to add post: ${response.statusCode}');
       await _showApplianceErrorDialog(context, 'Failed to add post.');
+    }
+  }
+
+  Future<void> getUsersPost() async {
+    setState(() {
+      isLoading = true;
+      isUserPost = true;
+    });
+    try {
+      final fetchedData = await PostsService.fetchUsersPosts();
+      print('Fetched data: $fetchedData'); // Log the fetched data
+
+      setState(() {
+        posts = List<Map<String, dynamic>>.from(fetchedData['posts']);
+        username = fetchedData['username'];
+      });
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 

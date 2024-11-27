@@ -1,9 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const Suggestion = require('../models/suggestions.model');
-const Post = require('../models/posts.model');
+const Posts = require('../models/posts.model');
 const asyncHandler = require('../centralized_codes/authMiddleware');
 const authenticate = require('../middleware');
+//const Posts = require('../routes/post.route');
+const authenticateToken = require('../middleware');
+
+
 // Add a new suggestion to a post
 router.post('/addSuggestions/:postId', async (req, res) => {
   try {
@@ -16,7 +20,7 @@ router.post('/addSuggestions/:postId', async (req, res) => {
     }
 
     // Check if the post exists
-    const post = await Post.findById(postId);
+    const post = await Posts.findById(postId);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
@@ -52,7 +56,7 @@ router.post('/addSuggestionToPost/:postId/suggestions', asyncHandler(async (req,
     }
 
     // Check if the post exists
-    const post = await Post.findById(postId);
+    const post = await Posts.findById(postId);
     if (!post) {
         return res.status(404).json({ message: 'Post not found' });
     }
@@ -134,14 +138,32 @@ router.put('/editSuggestion/:suggestionId',
     }
 });
 
-router.delete('/deleteSuggestion/:suggestionId', async (req, res) => {
+router.delete('/deleteSuggestion/:suggestionId', authenticateToken, async (req, res) => {
     const { suggestionId } = req.params;
+    const userId = req.user.id; // Extracted from the token by the authentication middleware
 
     try {
-        const suggestion = await Suggestion.findByIdAndDelete(suggestionId);
+        // Find the suggestion by ID
+        const suggestion = await Suggestion.findById(suggestionId);
+
+        // Check if suggestion exists
         if (!suggestion) {
             return res.status(404).json({ message: 'Suggestion not found' });
         }
+
+        // Check if the suggestion belongs to the authenticated user
+        if (suggestion.userId.toString() !== userId) {
+            return res.status(403).json({ message: 'You are not authorized to delete this suggestion' });
+        }
+
+        // Remove the suggestion from the post's suggestions array
+        await Posts.updateOne(
+            { suggestions: suggestionId },
+            { $pull: { suggestions: suggestionId } }
+        );
+
+        // Delete the suggestion
+        await suggestion.deleteOne();
 
         res.status(200).json({ message: 'Suggestion deleted successfully' });
     } catch (err) {

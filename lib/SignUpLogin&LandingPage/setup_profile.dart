@@ -222,7 +222,7 @@ class _SetupProfileState extends State<SetupProfile> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Name',
+                      'Full Name *',
                       style: TextStyle(
                         fontSize: 14.0,
                         fontWeight: FontWeight.bold,

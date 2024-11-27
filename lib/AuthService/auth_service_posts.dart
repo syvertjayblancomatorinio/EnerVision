@@ -26,7 +26,7 @@ class PostsService {
           List<Map<String, dynamic>> posts =
               List<Map<String, dynamic>>.from(data['posts']);
 
-          // Add 'timeAgo' to each post
+          // Add 'timeAgo' to each post and suggestions
           posts = posts.map((post) {
             if (post.containsKey('createdAt')) {
               final DateTime postDate = DateTime.parse(post['createdAt']);
@@ -34,13 +34,34 @@ class PostsService {
             } else {
               post['timeAgo'] = 'Unknown time';
             }
+
+            // Handle suggestions for the post
+            if (post.containsKey('suggestions')) {
+              post['suggestions'] = post['suggestions'].map((suggestion) {
+                return {
+                  'id': suggestion['id'],
+                  'content': suggestion['content'],
+                  'suggestionText': suggestion['suggestionText'] ?? '',
+                  'suggestedBy': suggestion['suggestedBy'] ?? 'Unknown',
+                  'createdAt': suggestion['createdAt'] ?? ''
+                };
+              }).toList();
+            }
+            if (post.containsKey('createdAt')) {
+              final DateTime postDate = DateTime.parse(post['createdAt']);
+              post['timeAgo'] = _timeAgo(postDate);
+            } else {
+              post['timeAgo'] = 'Unknown time';
+            }
+
             return post;
           }).toList();
 
+          // Save posts in Hive for future use
           var box = await Hive.openBox('postsBox');
           await box.put('allPosts', posts);
 
-          return posts; // Return only the posts as a list
+          return posts; // Return posts with suggestions
         } else {
           throw Exception('Unexpected response structure');
         }
@@ -212,6 +233,26 @@ class PostsService {
   // It's almost 3am and I still couldn't figure out how to add suggestions to the specific post hays kapoy na.
 
   // Helper method to calculate "time ago"
+  static Future<Map<String, dynamic>> getAPost(String postId) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/getAPost/$postId');
+    print('Sending Fetch request to: $url');
+    // String? token = await getToken();
+    // if (token != null) {
+    final response = await http.get(url, headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      // 'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode == 200) {
+      print('Post with ID $postId retrieved successfully.');
+      final postData = jsonDecode(response.body); // parse the post data
+      return postData; // return the fetched post data
+    } else {
+      final responseBody = jsonDecode(response.body);
+      print('Failed to fetch post. Server response: ${response.body}');
+      throw Exception('Failed to fetch post: ${responseBody['message']}');
+    }
+  }
 
   static Future<List<Map<String, dynamic>>> getPostsOld() async {
     final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts');
