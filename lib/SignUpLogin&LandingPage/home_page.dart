@@ -65,11 +65,18 @@ Widget yourEnergyContent(BuildContext context) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       const Padding(
-        padding: EdgeInsets.all(20.0),
+        padding: EdgeInsets.only(left: 20.0, top: 20.0),
         child: Text(
-          'Welcome to EnerVision,\nready to save energy?',
+          'Welcome to EnerVision!',
           style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.w500, color: Colors.black),
+              fontSize: 22, fontWeight: FontWeight.w500, color: Colors.black),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Text(
+          'Want to learn more about energy categories and energy-efficient appliances? Check out the contents below!',
+          style: TextStyle(fontSize: 16, color: Colors.grey[500]),
         ),
       ),
       const SizedBox(height: 10),

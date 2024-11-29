@@ -10,7 +10,6 @@ class PostsProvider with ChangeNotifier {
   List<Map<String, dynamic>> get posts => _posts;
 
   Future<void> getPostsFromApi() async {
-    // Fetch posts from API
     final fetchedPosts = await fetchPostsFromApi();
     _posts = fetchedPosts;
     notifyListeners();

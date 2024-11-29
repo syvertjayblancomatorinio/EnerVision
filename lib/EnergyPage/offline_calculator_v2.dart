@@ -17,14 +17,14 @@ import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import '../../Buttons/sign_up_button.dart';
 import '../CommonWidgets/controllers/app_controllers.dart';
 
-class OfflineCalculator extends StatefulWidget {
-  const OfflineCalculator({super.key});
+class OfflineCalculatorV2 extends StatefulWidget {
+  const OfflineCalculatorV2({super.key});
 
   @override
-  State<OfflineCalculator> createState() => _OfflineCalculatorState();
+  State<OfflineCalculatorV2> createState() => _OfflineCalculatorV2State();
 }
 
-class _OfflineCalculatorState extends State<OfflineCalculator> {
+class _OfflineCalculatorV2State extends State<OfflineCalculatorV2> {
   final AppControllers controller = AppControllers();
   List<int> selectedDays = [];
   late double result = 0;
@@ -85,19 +85,8 @@ class _OfflineCalculatorState extends State<OfflineCalculator> {
     return MaterialApp(
       theme: AppTheme.getAppTheme(),
       home: Scaffold(
-        appBar: customAppBar3(
-          showBackArrow: true,
-          showProfile: false,
-          showTitle: false,
-          onBackPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const LoginPage(),
-              ),
-            );
-          },
-        ),
+        bottomNavigationBar: const BottomNavigation(selectedIndex: 3),
+        appBar: AppBar(),
         body: SafeArea(child: content()),
       ),
     );

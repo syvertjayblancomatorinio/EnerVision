@@ -91,9 +91,9 @@ const saveMonthlyConsumption = async (userId, month, year) => {
 
 router.post('/addApplianceNewLogic', authenticateToken,asyncHandler(async (req, res) => {
     const { userId, applianceData } = req.body;
-    const { applianceName, applianceCategory, wattage, usagePatternPerDay, createdAt, selectedDays } = applianceData;
+    const { applianceName, wattage, usagePatternPerDay, createdAt, selectedDays } = applianceData;
 
-    if (!userId || !applianceData || !applianceName || !applianceCategory || !wattage || !usagePatternPerDay || !selectedDays) {
+    if (!userId || !applianceData || !applianceName || !wattage || !usagePatternPerDay || !selectedDays) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -132,7 +132,6 @@ router.post('/addApplianceNewLogic', authenticateToken,asyncHandler(async (req, 
 
     const newAppliance = new Appliance({
         applianceName: applianceName.trim(),
-        applianceCategory,
         wattage,
         usagePatternPerDay,
         createdAt: createdDate,

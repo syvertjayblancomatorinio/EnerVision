@@ -244,7 +244,7 @@ class _SetupProfileState extends State<SetupProfile> {
                         ),
                         decoration: const InputDecoration(
                           border: InputBorder.none,
-                          hintText: 'Enter Full Name',
+                          hintText: 'E.g. Juan Dela Cruz',
                           hintStyle: TextStyle(
                             color: Color(0xFF969696),
                             fontSize: 14.0,
@@ -509,7 +509,7 @@ class _SetupProfileState extends State<SetupProfile> {
                             10, // Adjusted to 10 digits since +63 is included
                         decoration: const InputDecoration(
                           border: InputBorder.none,
-                          hintText: 'Enter your Phone Number',
+                          hintText: 'E.g. 9911516018',
                           hintStyle: TextStyle(
                             color: Color(0xFF969696),
                             fontSize: 14.0,

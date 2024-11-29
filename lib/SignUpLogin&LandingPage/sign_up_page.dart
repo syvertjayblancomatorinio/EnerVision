@@ -117,6 +117,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               validator: Validators.compose([
                                 Validators.required('Username is required'),
                               ]),
+                              placeholderText: 'Username',
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
@@ -137,6 +138,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                     r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
                                     'Enter Valid Email')
                               ]),
+                              placeholderText: '123@gmail.com',
                             ),
                             const SizedBox(height: 20),
                             PasswordField(
@@ -151,6 +153,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 });
                                 user.password = value;
                               },
+                              placeholder: "Passw0rd!",
                               // validator: Validators.compose([
                               //   Validators.required('Password is required'),
                               //   Validators.patternString(

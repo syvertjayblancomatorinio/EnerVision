@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class MyTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
+  final String placeholderText;
   final bool obscureText;
   final IconData? prefixIcon;
   final int? maxLength;
@@ -26,6 +27,7 @@ class MyTextField extends StatefulWidget {
     this.onFieldSubmitted,
     this.onChanged,
     this.inputType,
+    required this.placeholderText,
   }) : super(key: key);
 
   @override
@@ -138,6 +140,8 @@ class _MyTextFieldState extends State<MyTextField> {
 class CustomTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
+  final String placeholderText;
+
   final Icon prefixIcon;
   final Function(String)? onChanged;
   final String? Function(String?)? validator;
@@ -153,6 +157,7 @@ class CustomTextField extends StatefulWidget {
     this.validator,
     this.obscureText = false,
     required this.keyboardType,
+    required this.placeholderText,
   }) : super(key: key);
 
   @override
@@ -268,6 +273,8 @@ class PasswordField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
   final Icon prefixIcon;
+  final String placeholder;
+
   final Function(String)? onChanged;
 
   const PasswordField({
@@ -276,6 +283,7 @@ class PasswordField extends StatefulWidget {
     required this.hintText,
     required this.prefixIcon,
     this.onChanged,
+    required this.placeholder,
   }) : super(key: key);
 
   @override

@@ -41,6 +41,7 @@ class _SuggestionExampleState extends State<SuggestionExample> {
               return null;
             }
           },
+          placeholderText: "Passw0rd!",
         ),
       ),
     );

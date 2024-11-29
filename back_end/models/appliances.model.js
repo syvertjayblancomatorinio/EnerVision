@@ -9,18 +9,18 @@ const applianceSchema = new Schema({
     usagePatternPerWeek: { type: Number, required: false },
     selectedDays: { type: [Number], required: true },
     monthlyCost: { type: Number, default: 0 },
-    applianceCategory: {
-        type: String,
-        enum: [
-            'Personal Devices',
-            'Kitchen Appliances',
-            'Cleaning & Laundry Appliances',
-            'Personal Care Appliances',
-            'Home Media and Office Appliances',
-            'Climate and Lighting Control Appliances'
-        ],
-        default: 'Personal Devices',
-    },
+//    applianceCategory: {
+//        type: String,
+//        enum: [
+//            'Personal Devices',
+//            'Kitchen Appliances',
+//            'Cleaning & Laundry Appliances',
+//            'Personal Care Appliances',
+//            'Home Media and Office Appliances',
+//            'Climate and Lighting Control Appliances'
+//        ],
+//        default: 'Personal Devices',
+//    },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: null },
     deletedAt: { type: Date, default: null },

@@ -7,6 +7,7 @@ import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
@@ -187,13 +188,14 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 30),
               _buildTitleSection(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               _buildDescriptionSection(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               _buildTagSection(context),
-              const SizedBox(height: 20),
-              _buildPhotoContainer(),
+              const SizedBox(height: 120),
+              // _buildPhotoContainer(),
               const SizedBox(height: 20),
               _buildUploadButton(),
             ],
@@ -255,15 +257,33 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
       onTap: () {
         _showTagSelectionDialog(context);
       },
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.label_outline, color: Colors.teal),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              displayTag,
-              style:
-                  const TextStyle(color: Colors.grey, fontFamily: 'Montserrat'),
+          const Text(
+            'Category',
+            textAlign: TextAlign.left,
+            style: TextStyle(
+                fontWeight: FontWeight.bold, fontFamily: 'Montserrat'),
+          ),
+          SizedBox(height: 10),
+          Container(
+            decoration: greyBoxDecoration(),
+            height: 50,
+            padding: EdgeInsets.only(left: 20),
+            child: Row(
+              children: [
+                const Icon(Icons.label_outline, color: Colors.teal),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Text(
+                    displayTag,
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                        color: Colors.grey[700], fontFamily: 'Montserrat'),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -100,10 +100,11 @@ class _CommunityTabState extends State<CommunityTab> {
   @override
   void initState() {
     super.initState();
-    getPostsFromApi();
-    eventBus.on<PostUpdatedEvent>().listen((event) {
-      getPostsFromApi();
-    });
+    getPosts();
+    //
+    // eventBus.on<PostUpdatedEvent>().listen((event) {
+    //   getPostsFromApi();
+    // });
   }
 
   @override
@@ -225,7 +226,7 @@ class _CommunityTabState extends State<CommunityTab> {
         final List<Map<String, dynamic>>? fetchedPosts =
             await PostsService.getPosts();
         print('Fetched all posts: $fetchedPosts');
-        showSnackBar(context, 'Fetched posts from API');
+        // showSnackBar(context, 'Fetched posts from API');
 
         if (fetchedPosts != null && fetchedPosts.isNotEmpty) {
           setState(() {
@@ -447,18 +448,15 @@ class _CommunityTabState extends State<CommunityTab> {
                   decoration: greyBoxDecoration(),
                   child: Column(
                     children: [
-                      GestureDetector(
-                        onTap: () => showPostDialog(index),
-                        child: _buildUserPost(
-                          post['username'] ?? 'Unknown User',
-                          post['title'] ?? 'No Title',
-                          post['description'] ?? 'No Description',
-                          post['timeAgo'] ?? 'Some time ago',
-                          post['tags'] ?? 'No tags',
-                          '',
-                          '',
-                          index,
-                        ),
+                      _buildUserPost(
+                        post['username'] ?? 'Unknown User',
+                        post['title'] ?? 'No Title',
+                        post['description'] ?? 'No Description',
+                        post['timeAgo'] ?? 'Some time ago',
+                        post['tags'] ?? 'No tags',
+                        '',
+                        '',
+                        index,
                       ),
                       // Only show suggestions for the current post
                       if (post['suggestions'] != null &&
@@ -690,20 +688,16 @@ class _CommunityTabState extends State<CommunityTab> {
         const Spacer(),
         ElevatedButton(
           onPressed: () {
-            if (_tappedIndex == index) {
-              setState(() {
-                _tappedIndex = null;
-              });
-            } else {
-              setState(() {
-                // postId = post['id'];
-                // postId = post['id'] ?? post['_id'];
-                print('Attempting: $postId');
-                //
-                // fetchSuggestions(postId);
-                _tappedIndex = index;
-              });
-            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PostViewDialog(
+                  post: post,
+                  // suggestions: suggestions,
+                  index: index, onPostsUpdated: getPostsFromApi,
+                ),
+              ),
+            );
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1BBC9B),
@@ -712,11 +706,69 @@ class _CommunityTabState extends State<CommunityTab> {
             ),
           ),
           child: Text(
-            _tappedIndex == index ? 'Hide Suggestions' : 'Add Suggestions',
+            'Add Suggestions',
           ),
         )
       ],
     );
+    // return Row(
+    //   children: [
+    //     Row(
+    //       children: List.generate(3, (index) {
+    //         return Padding(
+    //           padding: const EdgeInsets.symmetric(horizontal: 3.0),
+    //           child: CircleAvatar(
+    //             radius: 10.0,
+    //             backgroundImage: NetworkImage(validProfileImageUrl),
+    //             child: ClipOval(
+    //               child: Image.network(
+    //                 validProfileImageUrl,
+    //                 width: 20.0,
+    //                 height: 20.0,
+    //                 fit: BoxFit.cover,
+    //                 errorBuilder: (BuildContext context, Object error,
+    //                     StackTrace? stackTrace) {
+    //                   return Image.asset(
+    //                     placeholderImage,
+    //                     fit: BoxFit.cover,
+    //                   );
+    //                 },
+    //               ),
+    //             ),
+    //           ),
+    //         );
+    //       }),
+    //     ),
+    //     const Spacer(),
+    //     ElevatedButton(
+    //       onPressed: () {
+    //         if (_tappedIndex == index) {
+    //           setState(() {
+    //             _tappedIndex = null;
+    //           });
+    //         } else {
+    //           setState(() {
+    //             // postId = post['id'];
+    //             // postId = post['id'] ?? post['_id'];
+    //             print('Attempting: $postId');
+    //             //
+    //             // fetchSuggestions(postId);
+    //             _tappedIndex = index;
+    //           });
+    //         }
+    //       },
+    //       style: ElevatedButton.styleFrom(
+    //         backgroundColor: const Color(0xFF1BBC9B),
+    //         shape: RoundedRectangleBorder(
+    //           borderRadius: BorderRadius.circular(20.0),
+    //         ),
+    //       ),
+    //       child: Text(
+    //         _tappedIndex == index ? 'Hide Suggestions' : 'Add Suggestions',
+    //       ),
+    //     )
+    //   ],
+    // );
   }
 
   Widget _buildSuggestionTextField(int index) {

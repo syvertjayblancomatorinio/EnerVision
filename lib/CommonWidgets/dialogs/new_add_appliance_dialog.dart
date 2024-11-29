@@ -237,26 +237,26 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
             },
           ),
           const SizedBox(height: 10),
-          DropdownWithIcon(
-            labelText: 'Appliance Category',
-            items: const [
-              'Personal Devices',
-              'Kitchen Appliances',
-              'Cleaning & Laundry Appliances',
-              'Personal Care Appliances',
-              'Home Media and Office Appliances',
-              'Climate and Lighting Control Appliances'
-            ],
-            controller: widget.addApplianceCategoryController,
-            icon: Icons.arrow_drop_down,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please select an appliance category';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 10),
+          // DropdownWithIcon(
+          //   labelText: 'Appliance Category',
+          //   items: const [
+          //     'Personal Devices',
+          //     'Kitchen Appliances',
+          //     'Cleaning & Laundry Appliances',
+          //     'Personal Care Appliances',
+          //     'Home Media and Office Appliances',
+          //     'Climate and Lighting Control Appliances'
+          //   ],
+          //   controller: widget.addApplianceCategoryController,
+          //   icon: Icons.arrow_drop_down,
+          //   validator: (value) {
+          //     if (value == null || value.isEmpty) {
+          //       return 'Please select an appliance category';
+          //     }
+          //     return null;
+          //   },
+          // ),
+          // const SizedBox(height: 10),
           TextFormField(
             controller: widget.addWattageController,
             keyboardType: TextInputType.number,
