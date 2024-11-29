@@ -66,6 +66,12 @@ dev_dependencies:
   hive_flutter: ^1.1.0
   build_runner: ^2.0.0
   hive_generator: ^1.0.0
+  event_bus: ^2.0.1
+  flutter_launcher_icons: ^0.14.1
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/app_logo.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -79,6 +85,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
+
+
   assets:
      - assets/images/image1.png
      - assets/image1.png
@@ -112,6 +120,7 @@ flutter:
      - assets/renewable.jpg
      - assets/efficiency.jpg
      - assets/fossil.jpg
+     - assets/suggestionImage.png
      - assets/energy_storage.webp
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
+import 'package:supabase_project/EnergyPage/offline_calculator.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
 import 'package:supabase_project/ConstantTexts/user.dart';
 import 'package:supabase_project/buttons/sign_up_button.dart';
 import 'package:supabase_project/buttons/login_signUp.dart';
 import 'package:supabase_project/CommonWidgets/textfield.dart';
+import 'package:wc_form_validators/wc_form_validators.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,6 +22,8 @@ class _LoginPageState extends State<LoginPage> {
   bool _isButtonEnabled = true;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _showClearPasswordIcon = false;
+  bool _showClearEmailIcon = false;
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -52,18 +56,19 @@ class _LoginPageState extends State<LoginPage> {
               await _showErrorDialog(context);
             } else if (response.statusCode == 200) {
               _showSnackBar('Sign In Successful!');
-              // Handle successful login response here, e.g., navigate to the home page
             }
           }
         } catch (e) {
           print('Error during sign in: ${e.toString()}');
         }
       } else {
+        await _emptyErrorDialog(context);
+
         print('Form validation failed.');
       }
+
       print("Button tapped!");
     } finally {
-      // Re-enable the button after the task is complete
       setState(() {
         _isButtonEnabled = true;
       });
@@ -76,6 +81,15 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       title: 'Login Failed',
       message: "Email or Password \nis incorrect",
+      buttonText: 'OK',
+    );
+  }
+
+  Future<Object?> _emptyErrorDialog(BuildContext context) async {
+    await showCustomDialog(
+      context: context,
+      title: 'Login Failed',
+      message: "Input was empty",
       buttonText: 'OK',
     );
   }
@@ -117,93 +131,109 @@ class _LoginPageState extends State<LoginPage> {
                         'Enter your email and password',
                         style: TextStyle(
                           fontSize: 18,
-                          color: Colors.grey[700],
+                          color: Colors.grey[500],
                         ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
-                      MyTextField(
+                      CustomTextField(
                         controller: _emailController,
                         hintText: 'Email',
+                        keyboardType: TextInputType.emailAddress,
                         obscureText: false,
-                        prefixIcon: Icons.email_outlined,
+                        prefixIcon: const Icon(Icons.email_outlined),
                         onChanged: (value) {
+                          setState(() {
+                            _showClearEmailIcon = value.isNotEmpty;
+                          });
                           user.email = value;
                         },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Enter Email';
-                          } else if (RegExp(
-                                  r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-                              .hasMatch(value)) {
-                            return null;
-                          } else {
-                            return 'Enter Valid Email';
-                          }
-                        },
+                        validator: Validators.compose([
+                          Validators.required('Email is required'),
+                          // Validators.patternString(
+                          //     r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+                          //     'Enter Valid Email')
+                        ]),
+                        placeholderText: '123@gmail.com',
                       ),
                       const SizedBox(height: 20),
-                      MyTextField(
+                      PasswordField(
                         controller: _passwordController,
-                        obscureText: true,
                         hintText: 'Password',
-                        prefixIcon: Icons.lock_open_outlined,
+                        // keyboardType: TextInputType.text,
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        // obscureText: true,
                         onChanged: (value) {
+                          setState(() {
+                            _showClearPasswordIcon = value.isNotEmpty;
+                          });
                           user.password = value;
                         },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Enter Password';
-                          } else {
-                            return null;
-                          }
-                        },
+                        placeholder: "Passw0rd!",
+                        // validator: Validators.compose([
+                        //   Validators.required('Password is required'),
+                        //   Validators.patternString(
+                        //       r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$',
+                        //       'Password must be at least 8 characters long \n Must have at least one special character\n Must have at least one Uppercase character')
+                        // ]),
                       ),
-                      const SizedBox(height: 40),
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () {},
-                            child: const Icon(
-                              Icons.toggle_off_outlined,
-                              color: Colors.greenAccent,
-                              size: 25.0,
-                            ),
-                          ),
-                          const SizedBox(width: 5.0),
-                          GestureDetector(
-                            onTap: () {},
-                            child: const Text(
-                              'Remember Me',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontFamily: 'ProductSans',
-                                fontSize: 12.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () {},
-                            child: const Text(
-                              'Forgot Password?',
-                              style: TextStyle(
-                                color: Colors.red,
-                                fontFamily: 'ProductSans',
-                                fontSize: 12.0,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 20),
+                      // Row(
+                      //   children: [
+                      //     // GestureDetector(
+                      //     //   onTap: () {},
+                      //     //   child: const Icon(
+                      //     //     Icons.toggle_off_outlined,
+                      //     //     color: Colors.greenAccent,
+                      //     //     size: 25.0,
+                      //     //   ),
+                      //     // ),
+                      //     const SizedBox(width: 5.0),
+                      //     // GestureDetector(
+                      //     //   onTap: () {},
+                      //     //   child: const Text(
+                      //     //     'Remember Me',
+                      //     //     style: TextStyle(
+                      //     //       color: Colors.black,
+                      //     //       fontFamily: 'ProductSans',
+                      //     //       fontSize: 12.0,
+                      //     //       fontWeight: FontWeight.bold,
+                      //     //     ),
+                      //     //   ),
+                      //     // ),
+                      //     // const Spacer(),
+                      //     // GestureDetector(
+                      //     //   onTap: () {},
+                      //     //   child: const Text(
+                      //     //     'Forgot Password?',
+                      //     //     style: TextStyle(
+                      //     //       color: Colors.red,
+                      //     //       fontFamily: 'ProductSans',
+                      //     //       fontSize: 12.0,
+                      //     //     ),
+                      //     //   ),
+                      //     // ),
+                      //   ],
+                      // ),
+                      const SizedBox(height: 50),
                       SignUpButton(
                         onPressed: () async {
                           _onButtonPressed();
                         },
                         text: 'Sign In',
                       ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const OfflineCalculator()));
+                        },
+                        child: const Text(
+                          'Calculate Offline',
+                          style: TextStyle(color: Colors.black26),
+                        ),
+                      )
                     ],
                   ),
                 ),

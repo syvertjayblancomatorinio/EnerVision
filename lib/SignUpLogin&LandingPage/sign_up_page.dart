@@ -28,10 +28,9 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final AppControllers controllers = AppControllers();
+  bool _isPasswordVisible = false;
 
   bool _showClearIcon = false;
-  bool _showClearEmailIcon = false;
-  bool _showClearPasswordIcon = false;
   bool _isLoading = false;
 
   User user = User('', '', '');
@@ -118,6 +117,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               validator: Validators.compose([
                                 Validators.required('Username is required'),
                               ]),
+                              placeholderText: 'Username',
                             ),
                             const SizedBox(height: 20),
                             CustomTextField(
@@ -128,7 +128,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               prefixIcon: const Icon(Icons.email_outlined),
                               onChanged: (value) {
                                 setState(() {
-                                  _showClearEmailIcon = value.isNotEmpty;
+                                  _showClearIcon = value.isNotEmpty;
                                 });
                                 user.email = value;
                               },
@@ -138,6 +138,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                     r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
                                     'Enter Valid Email')
                               ]),
+                              placeholderText: '123@gmail.com',
                             ),
                             const SizedBox(height: 20),
                             PasswordField(
@@ -148,10 +149,11 @@ class _SignUpPageState extends State<SignUpPage> {
                               // obscureText: true,
                               onChanged: (value) {
                                 setState(() {
-                                  _showClearPasswordIcon = value.isNotEmpty;
+                                  _showClearIcon = value.isNotEmpty;
                                 });
                                 user.password = value;
                               },
+                              placeholder: "Passw0rd!",
                               // validator: Validators.compose([
                               //   Validators.required('Password is required'),
                               //   Validators.patternString(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class MyTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
+  final String placeholderText;
   final bool obscureText;
   final IconData? prefixIcon;
   final int? maxLength;
@@ -26,6 +27,7 @@ class MyTextField extends StatefulWidget {
     this.onFieldSubmitted,
     this.onChanged,
     this.inputType,
+    required this.placeholderText,
   }) : super(key: key);
 
   @override
@@ -138,6 +140,8 @@ class _MyTextFieldState extends State<MyTextField> {
 class CustomTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
+  final String placeholderText;
+
   final Icon prefixIcon;
   final Function(String)? onChanged;
   final String? Function(String?)? validator;
@@ -153,6 +157,7 @@ class CustomTextField extends StatefulWidget {
     this.validator,
     this.obscureText = false,
     required this.keyboardType,
+    required this.placeholderText,
   }) : super(key: key);
 
   @override
@@ -268,6 +273,8 @@ class PasswordField extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
   final Icon prefixIcon;
+  final String placeholder;
+
   final Function(String)? onChanged;
 
   const PasswordField({
@@ -276,6 +283,7 @@ class PasswordField extends StatefulWidget {
     required this.hintText,
     required this.prefixIcon,
     this.onChanged,
+    required this.placeholder,
   }) : super(key: key);
 
   @override
@@ -285,8 +293,9 @@ class PasswordField extends StatefulWidget {
 class _PasswordFieldState extends State<PasswordField> {
   bool _showClearIcon = false;
   bool _isValid = true;
-  bool _hasStartedTyping = false; // Tracks whether the user has started typing
+  bool _hasStartedTyping = false;
   String? _errorText;
+  bool _isPasswordVisible = false;
 
   final Map<String, bool> _passwordRequirements = {
     "At least 8 characters": false,
@@ -343,7 +352,7 @@ class _PasswordFieldState extends State<PasswordField> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextFormField(
-              obscureText: true,
+              obscureText: !_isPasswordVisible,
               controller: widget.controller,
               onChanged: (value) {
                 setState(() {
@@ -380,19 +389,37 @@ class _PasswordFieldState extends State<PasswordField> {
                   fontSize: 12.0,
                 ),
                 prefixIcon: widget.prefixIcon,
-                suffixIcon: _showClearIcon
-                    ? IconButton(
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Eye icon for toggling password visibility
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                    ),
+                    // Clear icon for clearing the field
+                    if (_showClearIcon)
+                      IconButton(
                         onPressed: () {
                           widget.controller.clear();
                           setState(() {
                             _showClearIcon = false;
                             _hasStartedTyping = false;
                           });
-                          _validatePassword('');
+                          _validatePassword(widget.controller as String);
                         },
                         icon: const Icon(Icons.clear),
-                      )
-                    : null,
+                      ),
+                  ],
+                ),
                 errorText: _errorText,
               ),
             ),

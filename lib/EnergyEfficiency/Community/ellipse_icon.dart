@@ -21,6 +21,23 @@ class BuildIcon extends StatelessWidget {
   }
 }
 
+class BuildIconNew extends StatelessWidget {
+  final Function(int) onTap; // Accepts a callback function to handle tap events
+
+  const BuildIconNew({
+    Key? key,
+    required this.onTap, // Make this parameter required
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      // onTap: () => onTap(index), // Use the callback when tapped
+      child: const Icon(Icons.more_vert),
+    );
+  }
+}
+
 class BuildTitle extends StatelessWidget {
   final String title;
 

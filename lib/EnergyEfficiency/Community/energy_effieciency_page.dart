@@ -27,6 +27,7 @@ class EnergyEfficiencyPage extends StatefulWidget {
 class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
   int _currentIndex = 0;
   String userId = '';
+  String username = '';
 
   @override
   void initState() {
@@ -46,7 +47,9 @@ class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
   Future<void> _printUserIdFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
+    final username = prefs.getString('username');
     print("Current User ID from SharedPreferences: $userId");
+    print("Current User ID from SharedPreferences: $username");
   }
 
   @override
