@@ -5,16 +5,9 @@ import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
-  // Ensure that widgets are initialized before using any Hive functionality
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Hive
   await Hive.initFlutter();
-
-  // Open your boxes (if needed)
-  var box = await Hive.openBox('myBox'); // Example box
-
-  // Run your app
+  var box = await Hive.openBox('myBox');
   runApp(MyApp());
 }
 
