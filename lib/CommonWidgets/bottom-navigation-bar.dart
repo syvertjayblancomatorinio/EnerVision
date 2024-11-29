@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
 import 'package:supabase_project/EnergyPage/EnergyTracker/energy_tracker.dart';
+import 'package:supabase_project/EnergyPage/pie_chart.dart';
 import 'package:supabase_project/MainFolder/calculator.dart';
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 import 'package:supabase_project/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
@@ -74,7 +75,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const OfflineCalculatorV2(),
+            builder: (context) => OfflineCalculatorV2(),
             // builder: (context) => EnergyPowerUsed(
             //   value: 'we',
             //   title: '23',

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/EnergyEfficiency/YourEnergy/device_category_page.dart';
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
+import '../AuthService/base_url.dart';
 import '../StaticPages/energy_efficiency_tab/Electric-Vehicles-Transportation.dart';
 import '../StaticPages/energy_efficiency_tab/energy-effieciency-widget.dart';
 import '../StaticPages/energy_efficiency_tab/energy-storage-systems.dart';
@@ -25,7 +26,7 @@ class _YourEnergyTabState extends State<YourEnergyTab> {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
-    final url = Uri.parse("http://10.0.2.2:8080/getUserProfile?userId=$userId");
+    final url = Uri.parse("${ApiConfig.baseUrl}/getUserProfile?userId=$userId");
 
     final response = await http.get(url);
 
