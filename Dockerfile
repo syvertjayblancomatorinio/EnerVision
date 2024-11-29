@@ -1,45 +1,48 @@
-FROM ubuntu:latest
-LABEL authors="SyvertJayMartorinio"
-
-ENTRYPOINT ["top", "-b"]
-
+# Stage 1: Base Image for Flutter Build
 FROM cirrusci/flutter:stable AS flutter_builder
-
 WORKDIR /app
 
+# Copy the Flutter app and install dependencies
 COPY . .
-
 RUN flutter pub get
 
-RUN flutter build apk --release  # or flutter build web
+# Build the Flutter APK (or Web)
+RUN flutter build apk --release  # Change to `flutter build web` for a web app
 
+# Stage 2: Base Image for Node.js API
 FROM node:16 AS node_builder
+WORKDIR /back_end
 
-WORKDIR /api
-
-COPY api/package*.json ./
-
+# Copy Node.js app dependencies and install them (adjusted to the back_end directory)
+COPY back_end/package*.json ./
 RUN npm install
 
-COPY api/ .
+# Copy the rest of the back_end files
+COPY back_end/ .
 
-# Expose the port your API runs on (e.g., 3000 for a typical Node.js app)
+# Expose the API port
 EXPOSE 3000
 
-# Start your Node.js app (adjust the command based on your app entry point)
+# Start the Node.js app
 CMD ["npm", "start"]
 
 # Stage 3: Final Image (optional)
-FROM node:16
+FROM ubuntu:latest
+LABEL authors="SyvertJayMartorinio"
 
-# Copy Flutter build artifacts (if you want to serve the app directly from Docker)
-COPY --from=flutter_builder /app/build/app/outputs/flutter-apk/app-release.apk /app-release.apk
-
-# Copy Node.js app files from the previous stage
-COPY --from=node_builder /api /api
-
-# Expose necessary ports
+# Expose the port your API runs on
 EXPOSE 3000
 
-# Set the entry point for both API and Flutter (if you need to run both in the same container)
+# Copy Flutter build artifacts (for APK or Web)
+COPY --from=flutter_builder /app/build/app/outputs/flutter-apk/app-release.apk /app-release.apk
+
+# Copy the Node.js backend files from the previous stage (adjusted to back_end directory)
+COPY --from=node_builder /back_end /back_end
+
+# Start the Node.js API (or another approach if you need both the API and Flutter app)
 CMD ["npm", "start"]
+
+# Optionally, use a process manager to run both Node.js and Flutter (if required)
+# RUN apt-get update && apt-get install -y supervisor
+# COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# CMD ["/usr/bin/supervisord"]
