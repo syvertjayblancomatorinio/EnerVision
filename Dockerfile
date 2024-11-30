@@ -3,25 +3,10 @@ FROM cirrusci/flutter:stable AS flutter_builder
 # Stage 1: Base Image for Flutter Build
 WORKDIR /app
 
-# Switch to stable channel and upgrade Flutter
-RUN flutter channel stable && flutter upgrade
-
-# Copy the Flutter app and install dependencies
-COPY . .
-RUN flutter pub get
 
 # Build the Flutter APK (or Web)
-RUN flutter build apk --release  # Change to `flutter build web` for a web app
+RUN flutter build web --release  # Change to `flutter build web` for a web app
 
-# Update Flutter SDK to get the latest Dart version
-RUN flutter upgrade
-
-# Copy the Flutter app and install dependencies
-COPY . .
-RUN flutter pub get
-
-# Build the Flutter APK (or Web)
-RUN flutter build apk --release  # Change to `flutter build web` for a web app
 
 # Stage 2: Base Image for Node.js API
 FROM node:16 AS node_builder
