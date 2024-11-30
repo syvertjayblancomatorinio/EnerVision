@@ -68,6 +68,10 @@ dev_dependencies:
   hive_generator: ^1.0.0
   event_bus: ^2.0.1
   flutter_launcher_icons: ^0.14.1
+  pie_chart: ^5.4.0
+  bar_chart: ^1.0.0+1
+  fl_chart: ^0.69.2
+  basic_utils: ^5.7.0
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true

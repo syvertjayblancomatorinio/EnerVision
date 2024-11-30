@@ -17,6 +17,7 @@ import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import '../../ConstantTexts/Theme.dart';
 import '../../YourEnergyCalculator&Compare/compare_device.dart';
+import '../AuthService/base_url.dart';
 import '../AuthService/kwh_rate.dart';
 import '../AuthService/preferences.dart';
 
@@ -334,7 +335,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     }
 
     final url = Uri.parse(
-        "http://10.0.2.2:8080/getAllUsersAppliances/$userId/appliances");
+        "${ApiConfig.baseUrl}/getAllUsersAppliances/$userId/appliances");
 
     final response = await http.get(url, headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
@@ -354,7 +355,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
   }
 
   Future<void> addAppliance() async {
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
+    final url = Uri.parse("${ApiConfig.baseUrl}/addApplianceNewLogic");
     String applianceName = toTitleCase(
       controllers.addApplianceNameController.text.trim(),
     );

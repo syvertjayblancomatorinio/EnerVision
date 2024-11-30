@@ -10,8 +10,10 @@ import 'package:supabase_project/CommonWidgets/dialogs/number_of_appliances_dial
 import 'package:supabase_project/MyEnergyDiary/common-widgets.dart';
 import 'package:supabase_project/MyEnergyDiary/date_picker.dart';
 import 'package:supabase_project/MyEnergyDiary/date_picker_new_ui.dart';
+import 'package:pie_chart/pie_chart.dart';
 
 import '../../../CommonWidgets/appliance_container/total_cost&kwh.dart';
+import '../../ConstantTexts/colors.dart';
 
 class LastMonthPage extends StatefulWidget {
   const LastMonthPage({super.key});
@@ -26,6 +28,8 @@ class _LastMonthPageState extends State<LastMonthPage> {
   DateTime selectedDate = DateTime.now();
   List<Map<String, dynamic>> appliances = [];
   final AppControllers controllers = AppControllers();
+  Map<String, double> dataMap = {};
+  bool isLoading = false;
 
   void showApplianceInformationDialog(BuildContext context) {
     if (appliances.isEmpty) {
@@ -65,6 +69,14 @@ class _LastMonthPageState extends State<LastMonthPage> {
           applianceCount = data['appliances']?.length ?? 0;
           appliances =
               List<Map<String, dynamic>>.from(data['appliances'] ?? []);
+          dataMap = {
+            for (var appliance in appliances)
+              if (appliance["monthlyCost"] != null &&
+                  appliance["applianceName"] != null)
+                appliance["applianceName"]: (appliance["monthlyCost"] is int
+                    ? (appliance["monthlyCost"] as int).toDouble()
+                    : appliance["monthlyCost"]) as double
+          };
         });
 
         print("Total Appliances: $applianceCount");
@@ -104,6 +116,14 @@ class _LastMonthPageState extends State<LastMonthPage> {
       setState(() {
         applianceCount = data['count'] ?? 0;
         appliances = List<Map<String, dynamic>>.from(data['appliances'] ?? []);
+        dataMap = {
+          for (var appliance in appliances)
+            if (appliance["monthlyCost"] != null &&
+                appliance["applianceName"] != null)
+              appliance["applianceName"]: (appliance["monthlyCost"] is int
+                  ? (appliance["monthlyCost"] as int).toDouble()
+                  : appliance["monthlyCost"]) as double
+        };
       });
     } else {
       throw Exception('Failed to load appliances');
@@ -139,7 +159,60 @@ class _LastMonthPageState extends State<LastMonthPage> {
         ),
         const SizedBox(height: 40),
         bottomPart(),
+        chart(),
       ],
+    );
+  }
+
+  Widget chart() {
+    return SafeArea(
+      child: isLoading
+          ? const Center(
+              child: CircularProgressIndicator()) // Show loading indicator
+          : appliances.isEmpty
+              ? const Center(child: Text("No data available."))
+              : Container(
+                  margin: const EdgeInsets.symmetric(vertical: 100),
+                  child: SingleChildScrollView(
+                    child: Center(
+                      child: Column(
+                        children: [
+                          dataMap.isNotEmpty
+                              ? PieChart(
+                                  dataMap: dataMap,
+                                  animationDuration:
+                                      const Duration(milliseconds: 500),
+                                  chartLegendSpacing: 30,
+                                  chartRadius:
+                                      MediaQuery.of(context).size.width / 1.5,
+                                  colorList: colorList,
+                                  initialAngleInDegree: 0,
+                                  chartType: ChartType.ring,
+                                  ringStrokeWidth: 32,
+                                  centerText: "Appliances",
+                                  legendOptions: const LegendOptions(
+                                    showLegendsInRow: false,
+                                    legendPosition: LegendPosition.right,
+                                    showLegends: true,
+                                    legendShape: BoxShape.circle,
+                                    legendTextStyle: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  chartValuesOptions: const ChartValuesOptions(
+                                    showChartValueBackground: true,
+                                    showChartValues: true,
+                                    showChartValuesInPercentage: true,
+                                    showChartValuesOutside: true,
+                                    decimalPlaces: 1,
+                                  ),
+                                )
+                              : const Center(child: Text("No data to display")),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+import 'package:pie_chart/pie_chart.dart';
 
 import '../../AuthService/base_url.dart';
 import '../../CommonWidgets/dialogs/loading_animation.dart';
@@ -25,11 +26,13 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
   Map<String, dynamic> monthlyData = {};
   List<Map<String, dynamic>> appliances = [];
   bool isLoading = false;
+  Map<String, double> dataMap = {};
 
   @override
   void initState() {
     super.initState();
     fetchAppliances();
+    fetchAppliances1();
     totalMonthlyCostOfUserAppliances();
     getUsersApplianceCount();
   }
@@ -98,6 +101,37 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     }
   }
 
+  Future<void> fetchAppliances1() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final appliancesData = await ApplianceService.fetchAppliance();
+      setState(() {
+        appliances = List<Map<String, dynamic>>.from(appliancesData);
+
+        // Prepare the dataMap for the pie chart
+        dataMap = {
+          for (var appliance in appliances)
+            if (appliance["monthlyCost"] != null &&
+                appliance["applianceName"] != null)
+              appliance["applianceName"]: (appliance["monthlyCost"] is int
+                  ? (appliance["monthlyCost"] as int).toDouble()
+                  : appliance["monthlyCost"]) as double
+        };
+
+        isLoading = false;
+      });
+    } catch (e) {
+      // Handle errors here
+      print("Error fetching appliances: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   Future<void> fetchAppliances() async {
     setState(() {
       isLoading = true;
@@ -105,6 +139,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
 
     try {
       final appliancesData = await ApplianceService.fetchAppliance();
+
       setState(() {
         appliances = List<Map<String, dynamic>>.from(appliancesData);
         isLoading = false;
@@ -167,29 +202,88 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         ),
       );
     } else {
-      return Center(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Device Usage Summary on the left
-            Expanded(
-              flex: 1,
-              child: deviceUsageSummary(
-                applianceCount: applianceCount,
-                co2Emission: co2Emission,
-                estimatedEnergy: estimatedEnergy,
-              ),
-            ),
-            const SizedBox(width: 20),
+      return SingleChildScrollView(
+        child: Center(
+          child: Column(
+            children: [
+              chart(),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Device Usage Summary on the left
+                  Expanded(
+                    flex: 1,
+                    child: deviceUsageSummary(
+                      applianceCount: applianceCount,
+                      co2Emission: co2Emission,
+                      estimatedEnergy: estimatedEnergy,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
 
-            Expanded(
-              flex: 2,
-              child: appliancesContent(),
-            ),
-          ],
+                  Expanded(
+                    flex: 2,
+                    child: appliancesContent(),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       );
     }
+  }
+
+  Widget chart() {
+    return SafeArea(
+      child: isLoading
+          ? const Center(
+              child: CircularProgressIndicator()) // Show loading indicator
+          : appliances.isEmpty
+              ? const Center(child: Text("No data available."))
+              : Container(
+                  margin: const EdgeInsets.symmetric(vertical: 100),
+                  child: SingleChildScrollView(
+                    child: Center(
+                      child: Column(
+                        children: [
+                          dataMap.isNotEmpty
+                              ? PieChart(
+                                  dataMap: dataMap,
+                                  animationDuration:
+                                      const Duration(milliseconds: 500),
+                                  chartLegendSpacing: 30,
+                                  chartRadius:
+                                      MediaQuery.of(context).size.width / 1.5,
+                                  colorList: colorList,
+                                  initialAngleInDegree: 0,
+                                  chartType: ChartType.ring,
+                                  ringStrokeWidth: 32,
+                                  centerText: "Appliances",
+                                  legendOptions: const LegendOptions(
+                                    showLegendsInRow: false,
+                                    legendPosition: LegendPosition.right,
+                                    showLegends: true,
+                                    legendShape: BoxShape.circle,
+                                    legendTextStyle: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  chartValuesOptions: const ChartValuesOptions(
+                                    showChartValueBackground: true,
+                                    showChartValues: true,
+                                    showChartValuesInPercentage: true,
+                                    showChartValuesOutside: true,
+                                    decimalPlaces: 1,
+                                  ),
+                                )
+                              : const Center(child: Text("No data to display")),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+    );
   }
 
   Widget headers() {

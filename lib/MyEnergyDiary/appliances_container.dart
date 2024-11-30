@@ -18,6 +18,7 @@ import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dar
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
+import '../AuthService/base_url.dart';
 import '../AuthService/kwh_rate.dart';
 import '../AuthService/preferences.dart';
 import '../CommonWidgets/controllers/app_controllers.dart';
@@ -455,7 +456,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   }
 
   Future<void> addAppliance() async {
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
+    final url = Uri.parse("${ApiConfig.baseUrl}/addApplianceNewLogic");
     String applianceName = toTitleCase(
       controllers.addApplianceNameController.text.trim(),
     );
