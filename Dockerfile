@@ -1,6 +1,17 @@
 # Stage 1: Base Image for Flutter Build
 FROM cirrusci/flutter:stable AS flutter_builder
-WORKDIR /back_end
+# Stage 1: Base Image for Flutter Build
+WORKDIR /app
+
+# Switch to stable channel and upgrade Flutter
+RUN flutter channel stable && flutter upgrade
+
+# Copy the Flutter app and install dependencies
+COPY . .
+RUN flutter pub get
+
+# Build the Flutter APK (or Web)
+RUN flutter build apk --release  # Change to `flutter build web` for a web app
 
 # Update Flutter SDK to get the latest Dart version
 RUN flutter upgrade
