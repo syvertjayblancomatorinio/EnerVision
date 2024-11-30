@@ -1,6 +1,9 @@
 # Stage 1: Base Image for Flutter Build
 FROM cirrusci/flutter:stable AS flutter_builder
-WORKDIR /app
+WORKDIR /back_end
+
+# Update Flutter SDK to get the latest Dart version
+RUN flutter upgrade
 
 # Copy the Flutter app and install dependencies
 COPY . .
@@ -41,8 +44,3 @@ COPY --from=node_builder /back_end /back_end
 
 # Start the Node.js API (or another approach if you need both the API and Flutter app)
 CMD ["npm", "start"]
-
-# Optionally, use a process manager to run both Node.js and Flutter (if required)
-# RUN apt-get update && apt-get install -y supervisor
-# COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-# CMD ["/usr/bin/supervisord"]
