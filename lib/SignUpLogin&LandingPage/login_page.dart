@@ -242,7 +242,7 @@ class _LoginPageState extends State<LoginPage> {
             PositionedButton(
               top: 50,
               right: 20,
-              buttonText: 'Sign Up',
+              buttonText: 'Register',
               targetPage: SignUpPage(),
             ),
           ],
