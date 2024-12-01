@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../AuthService/auth_suggestions.dart';
 import '../../ConstantTexts/Theme.dart';
 import '../../EnergyEfficiency/Community/ellipse_icon.dart';
+import '../../EnergyEfficiency/Community/energy_effieciency_page.dart';
 import '../appbar-widget.dart';
 import 'package:hive/hive.dart';
 import 'package:event_bus/event_bus.dart';
@@ -161,7 +162,15 @@ class _PostViewDialogState extends State<PostViewDialog> {
         showBackArrow: true,
         showProfile: false,
         title: '${widget.post['tags'] ?? 'N/A'}',
-        onBackPressed: () => Navigator.of(context).pop(),
+        onBackPressed: () {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => EnergyEfficiencyPage(
+                selectedIndex: 1,
+              ),
+            ),
+          );
+        },
       ),
       body: SingleChildScrollView(
         child: Container(

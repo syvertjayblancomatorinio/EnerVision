@@ -100,6 +100,7 @@ class _CommunityTabState extends State<CommunityTab> {
   @override
   void initState() {
     super.initState();
+
     getPosts();
     //
     // eventBus.on<PostUpdatedEvent>().listen((event) {

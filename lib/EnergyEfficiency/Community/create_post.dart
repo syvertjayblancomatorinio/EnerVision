@@ -380,7 +380,8 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
               isLoading = false;
             });
           } else {
-            _showApplianceErrorDialog(context, 'sdfs');
+            _showApplianceErrorDialog(context,
+                'Please add the required details before submitting your post.');
           }
         },
         child: isLoading

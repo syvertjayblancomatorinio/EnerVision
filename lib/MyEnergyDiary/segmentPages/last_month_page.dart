@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
@@ -31,6 +32,18 @@ class _LastMonthPageState extends State<LastMonthPage> {
   Map<String, double> dataMap = {};
   bool isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    getUsersApplianceCount();
+    DateTime now = DateTime.now();
+    selectedDate = DateTime(now.year, now.month - 1, now.day);
+    if (now.month == 1) {
+      selectedDate = DateTime(now.year - 1, 12, now.day);
+    }
+    getLastMonth(selectedDate);
+  }
+
   void showApplianceInformationDialog(BuildContext context) {
     if (appliances.isEmpty) {
       print('No appliances to show.');
@@ -57,7 +70,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
     final formattedYear = DateFormat('yyyy').format(selectedDate);
 
     final url = Uri.parse(
-        'http://10.0.2.2:8080/getMonthlyConsumption/$userId?month=$formattedMonth&year=$formattedYear');
+        'http://localhost:8080/$userId?month=$formattedMonth&year=$formattedYear');
 
     try {
       final response = await http.get(url);
@@ -109,7 +122,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
     final formattedYear = DateFormat('yyyy').format(selectedDate);
 
     final response = await http.get(Uri.parse(
-        'http://10.0.2.2:8080/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
+        '${ApiConfig.baseUrl}/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -128,18 +141,6 @@ class _LastMonthPageState extends State<LastMonthPage> {
     } else {
       throw Exception('Failed to load appliances');
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getUsersApplianceCount();
-    DateTime now = DateTime.now();
-    selectedDate = DateTime(now.year, now.month - 1, now.day);
-    if (now.month == 1) {
-      selectedDate = DateTime(now.year - 1, 12, now.day);
-    }
-    getLastMonth(selectedDate);
   }
 
   @override
@@ -274,7 +275,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
     final formattedYear = DateFormat('yyyy').format(date);
 
     final url = Uri.parse(
-        "http://10.0.2.2:8080/monthlyDataNew/$userId?month=$formattedMonth&year=$formattedYear");
+        "${ApiConfig.baseUrl}/monthlyDataNew/$userId?month=$formattedMonth&year=$formattedYear");
 
     try {
       final response = await http.get(
@@ -323,7 +324,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
   }
 
   Future<double> getUserKwhRate(String userId) async {
-    final url = Uri.parse("http://10.0.2.2:8080/user/$userId/kwhRate");
+    final url = Uri.parse("${ApiConfig.baseUrl}/user/$userId/kwhRate");
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
