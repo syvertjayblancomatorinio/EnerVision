@@ -213,7 +213,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                       context, 'Please fill in all fields.');
                                 }
                               },
-                              text: 'Sign Up',
+                              text: 'Register',
                             ),
                           ],
                         ),
