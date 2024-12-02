@@ -12,15 +12,15 @@ import 'package:supabase_project/CommonWidgets/dialogs/confirm_delete.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/post_view_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/create_post.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:supabase_project/EnergyEfficiency/Community/ellipse_icon.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/empty_post_page.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/post_image.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/top_bar.dart';
 import 'package:hive/hive.dart';
 import 'package:event_bus/event_bus.dart';
+import 'package:supabase_project/EnergyManagement/Community/top_bar.dart';
+
+import '../../zNotUsedFiles/post_authenticated/create_post.dart';
+import 'ellipse_icon.dart';
+import 'empty_post_page.dart';
 
 EventBus eventBus = EventBus();
 

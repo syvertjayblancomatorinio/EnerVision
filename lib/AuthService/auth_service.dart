@@ -6,11 +6,11 @@ import 'package:supabase_project/AuthService/preferences.dart';
 import 'package:supabase_project/AuthService/snack_bar.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
 import 'package:supabase_project/MainFolder/secondaryMain.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:flutter/foundation.dart';
 
+import '../EnergyManagement/Community/energy_effieciency_page.dart';
 import '../SignUpLogin&LandingPage/setup_profile.dart';
 import 'base_url.dart';
 

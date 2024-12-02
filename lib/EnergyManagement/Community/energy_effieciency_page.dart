@@ -1,16 +1,12 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_project/Buttons/energy_efficiency_buttons.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/community_tab.dart';
-import 'package:supabase_project/EnergyEfficiency/YourEnergy/your_energy_tab.dart';
 import '../../../CommonWidgets/appbar-widget.dart';
 import '../../../CommonWidgets/bottom-navigation-bar.dart';
 import '../../../ConstantTexts/Theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-
-import '../../MyEnergyDiary/segmentPages/today.dart';
+import '../YourEnergy/your_energy_tab.dart';
+import 'community_tab.dart';
 
 class EnergyEfficiencyPage extends StatefulWidget {
   const EnergyEfficiencyPage({

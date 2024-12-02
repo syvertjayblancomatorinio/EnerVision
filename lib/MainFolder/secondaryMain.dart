@@ -1,17 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/community_tab.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/create_post.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
-import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
-import 'package:supabase_project/StaticPages/aircon.dart';
-import 'package:supabase_project/MainFolder/secondary_compare.dart';
-import 'dart:async';
-
-import 'package:supabase_project/StaticPages/anne_aircon.dart';
-
-import 'package:flutter/material.dart';
 
 void main() {
   runApp(MyApp());
