@@ -394,8 +394,9 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                                           const ChartValuesOptions(
                                         showChartValueBackground: false,
                                         chartValueStyle:
-                                            TextStyle(color: Colors.white),
-                                        showChartValues: true,
+                                        TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w700),
+
+                                            showChartValues: true,
                                         showChartValuesInPercentage: true,
                                         showChartValuesOutside: false,
                                         decimalPlaces: 1,
