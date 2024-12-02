@@ -165,7 +165,7 @@ class _PostViewDialogState extends State<PostViewDialog> {
         onBackPressed: () {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => EnergyEfficiencyPage(
+              builder: (context) => const EnergyEfficiencyPage(
                 selectedIndex: 1,
               ),
             ),
@@ -174,7 +174,7 @@ class _PostViewDialogState extends State<PostViewDialog> {
       ),
       body: SingleChildScrollView(
         child: Container(
-          margin: EdgeInsets.all(10),
+          margin: const EdgeInsets.all(10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -304,9 +304,9 @@ class _PostViewDialogState extends State<PostViewDialog> {
             widget.post['imageUpload'] ?? '',
             index,
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           BuildTitle(title: title),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           BuildDescription(description: description),
           // PostImage(postImageUrl: postImageUrl),
           const SizedBox(height: 10.0),
@@ -471,8 +471,8 @@ class _PostViewDialogState extends State<PostViewDialog> {
                         posts: posts,
                         postId: widget.post['id'],
                       );
-                      getPostsFromApi();
-                      eventBus.fire(PostUpdatedEvent());
+                      // getPostsFromApi();
+                      // eventBus.fire(PostUpdatedEvent());
 
                       controller.suggestionController.clear();
                     },

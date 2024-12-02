@@ -101,10 +101,10 @@ class _CommunityTabState extends State<CommunityTab> {
   void initState() {
     super.initState();
 
-    getPosts();
+    // getPosts();
     //
     // eventBus.on<PostUpdatedEvent>().listen((event) {
-    //   getPostsFromApi();
+    getPostsFromApi();
     // });
   }
 
