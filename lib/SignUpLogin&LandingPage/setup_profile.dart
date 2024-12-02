@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:country_picker/country_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
 import 'package:supabase_project/ConstantTexts/final_texts.dart';
@@ -129,34 +130,39 @@ class _SetupProfileState extends State<SetupProfile> {
       ),
     );
   }
+Widget _backgroundImage() {
+    return
+      Stack(
+        children: [
+          Container(
+            height: 200,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+            ),
+          ),
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Image.asset(
+                'assets/image (6).png',
+                height: 228,
+                width: 500.0,
+                fit: BoxFit.fitWidth,
+              ),
+            ),
+          ),
+        ],
+      );
+}
 
-  Widget _content(BuildContext context) {
-    return Column(
-      children: [
-        Stack(
-          children: [
-            Container(
-              height: 200,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-              ),
-            ),
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Image.asset(
-                  'assets/image (6).png',
-                  height: 180,
-                  width: 500.0,
-                  fit: BoxFit.fitWidth,
-                ),
-              ),
-            ),
-          ],
-        ),
-        Stack(
+Widget profileImage() {
+    return
+      Positioned(
+        top: 100,
+        child: Stack(
           alignment: Alignment.center,
           children: [
+
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -174,8 +180,8 @@ class _SetupProfileState extends State<SetupProfile> {
                 radius: 80.0,
                 backgroundImage: _profilePicture != null
                     ? FileImage(_profilePicture!)
-                    : const AssetImage('assets/profile (2).png')
-                        as ImageProvider,
+                    : const AssetImage('assets/profile.jpg')
+                as ImageProvider,
               ),
             ),
             Positioned(
@@ -192,15 +198,24 @@ class _SetupProfileState extends State<SetupProfile> {
                     ),
                   ),
                   child: const CircleAvatar(
-                    radius: 20,
+                    radius: 25,
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.camera_alt, color: Color(0xFF00A991)),
+                    child: Icon(Icons.camera_alt, color: Color(0xFF00A991),size: 30,),
                   ),
                 ),
               ),
             ),
           ],
         ),
+      );
+
+}
+  Widget _content(BuildContext context) {
+    return Column(
+      children: [
+        _backgroundImage(),
+
+             profileImage(),
         const SizedBox(height: 20),
 
         // Title
@@ -425,63 +440,8 @@ class _SetupProfileState extends State<SetupProfile> {
 
                     const SizedBox(height: 16),
 
-                    const Text(
-                      'Barangay or Street',
-                      style: TextStyle(
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5.0),
 
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey), // Grey border
-                        borderRadius:
-                            BorderRadius.circular(10), // Rounded corners
-                      ),
-                      child: DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        value: _streetLineController.text.isEmpty
-                            ? null
-                            : _streetLineController.text,
-                        onChanged: (newValue) {
-                          setState(() {
-                            _streetLineController.text = newValue!;
-                          });
-                        },
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 16),
-                        ),
-                        items: barangays
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 14.0,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        validator: (value) => value == null
-                            ? 'Please select your Barangay or Street'
-                            : null,
-                        hint: Text(
-                          _streetLineController.text.isEmpty
-                              ? 'Select Barangay or Street'
-                              : _cityLineController.text,
-                          style: const TextStyle(
-                            color: Color(0xFF969696),
-                            fontSize: 14.0,
-                          ),
-                        ),
-                      ),
-                    ),
+                    barangay(),
                     const SizedBox(height: 16),
 
                     const Text(
@@ -572,6 +532,71 @@ class _SetupProfileState extends State<SetupProfile> {
       ],
     );
   }
+
+Widget barangay() {
+    return
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Barangay or Street',
+              style: TextStyle(
+                fontSize: 14.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 5.0),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey), // Grey border
+                borderRadius:
+                BorderRadius.circular(10), // Rounded corners
+              ),
+              child: DropdownButtonFormField<String>(
+                isExpanded: true,
+                value: _streetLineController.text.isEmpty
+                    ? null
+                    : _streetLineController.text,
+                onChanged: (newValue) {
+                  setState(() {
+                    _streetLineController.text = newValue!;
+                  });
+                },
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 16),
+                ),
+                items: barangays
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14.0,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                validator: (value) => value == null
+                    ? 'Please select your Barangay or Street'
+                    : null,
+                hint: Text(
+                  _streetLineController.text.isEmpty
+                      ? 'Select Barangay or Street'
+                      : _cityLineController.text,
+                  style: const TextStyle(
+                    color: Color(0xFF969696),
+                    fontSize: 14.0,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+}
 
   @override
   void dispose() {

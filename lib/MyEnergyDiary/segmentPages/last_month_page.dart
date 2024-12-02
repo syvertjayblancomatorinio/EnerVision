@@ -35,7 +35,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
   @override
   void initState() {
     super.initState();
-    getUsersApplianceCount();
+    // getUsersApplianceCount();
     DateTime now = DateTime.now();
     selectedDate = DateTime(now.year, now.month - 1, now.day);
     if (now.month == 1) {
@@ -57,7 +57,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
     );
   }
 
-  Future<void> getUsersApplianceCount() async {
+  Future<void> getUsersApplianceCount1() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
@@ -70,7 +70,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
     final formattedYear = DateFormat('yyyy').format(selectedDate);
 
     final url = Uri.parse(
-        'http://localhost:8080/$userId?month=$formattedMonth&year=$formattedYear');
+        '${ApiConfig.baseUrl}/$userId?month=$formattedMonth&year=$formattedYear');
 
     try {
       final response = await http.get(url);
@@ -109,7 +109,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
     }
   }
 
-  Future<void> getUsersApplianceCount1() async {
+  Future<void> getUsersApplianceCount() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
