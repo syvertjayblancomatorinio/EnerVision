@@ -100,10 +100,10 @@ class _CommunityTabState extends State<CommunityTab> {
   @override
   void initState() {
     super.initState();
-    // getPosts();
+    getPosts();
     //
     // eventBus.on<PostUpdatedEvent>().listen((event) {
-    getPostsFromApi();
+    // getPostsFromApi();
     // });
   }
 
@@ -141,7 +141,7 @@ class _CommunityTabState extends State<CommunityTab> {
           ),
         ),
         Positioned(
-          bottom: 0.0,
+          bottom: 40.0,
           right: 20.0,
           child: ElevatedButton(
             onPressed: () async {
@@ -246,7 +246,6 @@ class _CommunityTabState extends State<CommunityTab> {
             String? postId = post['id']; // Assuming the post has an 'id' field
 
             if (postId != null) {
-              // Fetch suggestions for each post with a valid 'id'
               await fetchSuggestions(postId);
             } else {
               print('Skipping post with null id');
@@ -256,7 +255,6 @@ class _CommunityTabState extends State<CommunityTab> {
           throw Exception('Invalid post data format.');
         }
       } else {
-        // If posts are available in Hive, display them
         setState(() {
           posts = postsFromHive;
         });
@@ -584,6 +582,7 @@ class _CommunityTabState extends State<CommunityTab> {
             Navigator.push(
               context,
               MaterialPageRoute(
+
                 builder: (context) => PostViewDialog(
                   post: post,
                   // suggestions: suggestions,

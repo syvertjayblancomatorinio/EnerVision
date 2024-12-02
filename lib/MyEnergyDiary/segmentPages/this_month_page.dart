@@ -1,13 +1,17 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:pie_chart/pie_chart.dart';
 
 import '../../AuthService/base_url.dart';
+import '../../CommonWidgets/dialogs/general_dialog.dart';
 import '../../CommonWidgets/dialogs/loading_animation.dart';
+import '../carousel.dart';
 
 class ThisMonthPage extends StatefulWidget {
   const ThisMonthPage({super.key});
@@ -27,14 +31,134 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
   List<Map<String, dynamic>> appliances = [];
   bool isLoading = false;
   Map<String, double> dataMap = {};
+  final now = DateTime.now();
 
   @override
   void initState() {
+    DateTime now = DateTime.now();
+    selectedDate = DateTime(now.year, now.month - 1, now.day);
+    if (now.month == 1) {
+      selectedDate = DateTime(now.year - 1, 12, now.day);
+    }
     super.initState();
-    fetchAppliances();
-    fetchAppliances1();
+    // fetchAppliances();
+    fetchAppliancesData();
+    // fetchAppliances1();
     totalMonthlyCostOfUserAppliances();
     getUsersApplianceCount();
+  }
+
+  Future<void> fetchAppliancesData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final appliancesData = await ApplianceService.fetchAppliance();
+
+      setState(() {
+        appliances = List<Map<String, dynamic>>.from(appliancesData);
+
+        // Sort appliances by monthlyCost in descending order
+        appliances.sort((a, b) {
+          double costA = (a["monthlyCost"] is int)
+              ? (a["monthlyCost"] as int).toDouble()
+              : a["monthlyCost"];
+          double costB = (b["monthlyCost"] is int)
+              ? (b["monthlyCost"] as int).toDouble()
+              : b["monthlyCost"];
+          return costB.compareTo(costA); // Descending order
+        });
+
+        // Prepare the dataMap for the pie chart
+        dataMap = {};
+        double othersCost = 0.0;
+
+        // Add top 8 appliances to the dataMaps
+        for (int i = 0; i < 4 && i < appliances.length; i++) {
+          var appliance = appliances[i];
+          if (appliance["monthlyCost"] != null &&
+              appliance["applianceName"] != null) {
+            dataMap[appliance["applianceName"]] =
+                (appliance["monthlyCost"] is int
+                    ? (appliance["monthlyCost"] as int).toDouble()
+                    : appliance["monthlyCost"]) as double;
+          }
+        }
+
+        // Sum the monthly costs of the remaining appliances and assign to "Others"
+        if (appliances.length > 8) {
+          for (int i = 8; i < appliances.length; i++) {
+            var appliance = appliances[i];
+            if (appliance["monthlyCost"] != null) {
+              othersCost += (appliance["monthlyCost"] is int
+                  ? (appliance["monthlyCost"] as int).toDouble()
+                  : appliance["monthlyCost"]) as double;
+            }
+          }
+          // Add "Others" category
+          dataMap["Others"] = othersCost;
+        }
+
+        isLoading = false;
+      });
+    } catch (e) {
+      // Handle errors here
+      print("Error fetching appliances: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> fetchAppliances1() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final appliancesData = await ApplianceService.fetchAppliance();
+      setState(() {
+        appliances = List<Map<String, dynamic>>.from(appliancesData);
+
+        // Prepare the dataMap for the pie chart
+        dataMap = {
+          for (var appliance in appliances)
+            if (appliance["monthlyCost"] != null &&
+                appliance["applianceName"] != null)
+              appliance["applianceName"]: (appliance["monthlyCost"] is int
+                  ? (appliance["monthlyCost"] as int).toDouble()
+                  : appliance["monthlyCost"]) as double
+        };
+
+        isLoading = false;
+      });
+    } catch (e) {
+      // Handle errors here
+      print("Error fetching appliances: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> fetchAppliances() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final appliancesData = await ApplianceService.fetchAppliance();
+
+      setState(() {
+        appliances = List<Map<String, dynamic>>.from(appliancesData);
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> getUsersApplianceCount() async {
@@ -101,56 +225,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     }
   }
 
-  Future<void> fetchAppliances1() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      final appliancesData = await ApplianceService.fetchAppliance();
-      setState(() {
-        appliances = List<Map<String, dynamic>>.from(appliancesData);
-
-        // Prepare the dataMap for the pie chart
-        dataMap = {
-          for (var appliance in appliances)
-            if (appliance["monthlyCost"] != null &&
-                appliance["applianceName"] != null)
-              appliance["applianceName"]: (appliance["monthlyCost"] is int
-                  ? (appliance["monthlyCost"] as int).toDouble()
-                  : appliance["monthlyCost"]) as double
-        };
-
-        isLoading = false;
-      });
-    } catch (e) {
-      // Handle errors here
-      print("Error fetching appliances: $e");
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> fetchAppliances() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      final appliancesData = await ApplianceService.fetchAppliance();
-
-      setState(() {
-        appliances = List<Map<String, dynamic>>.from(appliancesData);
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -158,7 +232,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         children: <Widget>[
           const SizedBox(height: 20),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            // padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -171,8 +245,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 20),
-                headers(),
                 const SizedBox(height: 20),
                 Center(child: content()),
               ],
@@ -187,9 +259,9 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     if (isLoading) {
       return const Center(
           child: LoadingWidget(
-        message: 'Fetching my appliances',
-        color: AppColors.primaryColor,
-      ));
+            message: 'Fetching my appliances',
+            color: AppColors.primaryColor,
+          ));
     } else if (appliances.isEmpty) {
       return Container(
         height: 450,
@@ -203,35 +275,67 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       );
     } else {
       return SingleChildScrollView(
-        child: Center(
-          child: Column(
-            children: [
-              chart(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
+          children: [
+            // Carousel at the top
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 520),
+              child: CarouselView(
+                itemExtent: 500,
+                shrinkExtent: 500,
                 children: [
-                  // Device Usage Summary on the left
-                  Expanded(
-                    flex: 1,
-                    child: deviceUsageSummary(
-                      applianceCount: applianceCount,
-                      co2Emission: co2Emission,
-                      estimatedEnergy: estimatedEnergy,
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-
-                  Expanded(
-                    flex: 2,
-                    child: appliancesContent(),
+                  chart(),
+                  Column(
+                    children: [
+                      pieChartTitle(),
+                      appliancesContent(),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            // Separate scrollable container for allAppliances
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: allAppliances(),
+            ),
+          ],
         ),
       );
     }
+  }
+
+
+  Widget allAppliances() {
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          headers(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: deviceUsageSummary(
+                    applianceCount: applianceCount,
+                    co2Emission: co2Emission,
+                    estimatedEnergy: estimatedEnergy,
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  flex: 2,
+                  child: appliancesContent(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget chart() {
@@ -241,87 +345,123 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
               child: CircularProgressIndicator()) // Show loading indicator
           : appliances.isEmpty
               ? const Center(child: Text("No data available."))
-              : Container(
-                  margin: const EdgeInsets.symmetric(vertical: 100),
-                  child: SingleChildScrollView(
-                    child: Center(
-                      child: Column(
-                        children: [
-                          dataMap.isNotEmpty
-                              ? PieChart(
-                                  dataMap: dataMap,
-                                  animationDuration:
-                                      const Duration(milliseconds: 500),
-                                  chartLegendSpacing: 30,
-                                  chartRadius:
-                                      MediaQuery.of(context).size.width / 1.5,
-                                  colorList: colorList,
-                                  initialAngleInDegree: 0,
-                                  chartType: ChartType.ring,
-                                  ringStrokeWidth: 32,
-                                  centerText: "Appliances",
-                                  legendOptions: const LegendOptions(
-                                    showLegendsInRow: false,
-                                    legendPosition: LegendPosition.right,
-                                    showLegends: true,
-                                    legendShape: BoxShape.circle,
-                                    legendTextStyle: TextStyle(
-                                      fontWeight: FontWeight.bold,
+              : SingleChildScrollView(
+                  child: Center(
+                    child: Column(
+                      children: [
+                        dataMap.isNotEmpty
+                            ? Column(
+                                children: [
+                                  pieChartTitle(),
+                                  SizedBox(
+                                    height: MediaQuery.of(context).size.height * 0.15,
+                                  ),
+
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20),
+                                    child: PieChart(
+                                      dataMap: dataMap,
+                                      animationDuration:
+                                          const Duration(milliseconds: 500),
+                                      chartLegendSpacing: 30,
+                                      chartRadius:
+                                          MediaQuery.of(context).size.width /
+                                              1.5,
+                                      colorList: colorList,
+                                      initialAngleInDegree: 0,
+                                      chartType: ChartType.disc,
+                                      ringStrokeWidth: 32,
+                                      centerWidget: Container(
+                                        height: 60,
+                                        width: 60,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(50),
+                                        ),
+                                      ),
+                                      legendOptions: const LegendOptions(
+                                        showLegendsInRow: false,
+                                        legendPosition: LegendPosition.right,
+                                        showLegends: true,
+                                        legendShape: BoxShape.circle,
+                                        legendTextStyle: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      chartValuesOptions:
+                                          const ChartValuesOptions(
+                                        showChartValueBackground: false,
+                                        chartValueStyle:
+                                            TextStyle(color: Colors.white),
+                                        showChartValues: true,
+                                        showChartValuesInPercentage: true,
+                                        showChartValuesOutside: false,
+                                        decimalPlaces: 1,
+                                      ),
                                     ),
                                   ),
-                                  chartValuesOptions: const ChartValuesOptions(
-                                    showChartValueBackground: true,
-                                    showChartValues: true,
-                                    showChartValuesInPercentage: true,
-                                    showChartValuesOutside: true,
-                                    decimalPlaces: 1,
-                                  ),
-                                )
-                              : const Center(child: Text("No data to display")),
-                        ],
-                      ),
+                                ],
+                              )
+                            : const Center(child: Text("No data to display")),
+                      ],
                     ),
                   ),
                 ),
     );
   }
 
-  Widget headers() {
-    return const Row(
-      children: [
-        Text(
-          'Device Usage Summary',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+  Widget pieChartTitle() {
+    String formattedDate = DateFormat('MMMM yyyy').format(now);
+    return Container(
+      padding: const EdgeInsets.all(10),
+      color: AppColors.primaryColor,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'Summary |',
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
           ),
-        ),
-        Spacer(),
-        Text(
-          'Devices',
-          style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryColor),
-        ),
-      ],
+          const SizedBox(width: 10),
+          Text(
+            formattedDate,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget applianceContentNew() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        const Text(
-          'Devices',
-          style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryColor),
-        ),
-        const SizedBox(height: 20),
-        appliancesContent(),
-      ],
+  Widget headers() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      color: AppColors.primaryColor,
+      child: const Row(
+        children: [
+          SizedBox(
+            width: 20,
+          ),
+          Text(
+            'Device Usage Summary',
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          Spacer(),
+          Text(
+            'Devices',
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          SizedBox(
+            width: 20,
+          ),
+        ],
+      ),
     );
   }
 
@@ -329,9 +469,9 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     if (isLoading) {
       return const Center(
           child: LoadingWidget(
-        message: 'Fetching my appliances',
-        color: AppColors.primaryColor,
-      ));
+            message: 'Fetching my appliances',
+            color: AppColors.primaryColor,
+          ));
     } else if (appliances.isEmpty) {
       return const Text(
         'You haven\'t added any appliances yet. Start by adding appliances to track your energy usage and see estimated costs.',
@@ -340,7 +480,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     } else {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 10),
-        // decoration: greyBoxDecoration(),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(
@@ -357,121 +496,97 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
             ),
           ],
         ),
-        height: 450,
+        height: 450, // Constrain height to enable scrolling within this box
         child: ScrollbarTheme(
           data: ScrollbarThemeData(
-            thumbColor: WidgetStateProperty.all(AppColors.primaryColor),
-            trackColor:
-                WidgetStateProperty.all(Colors.grey[300]), // Track color
-            trackBorderColor: WidgetStateProperty.all(Colors.transparent),
-            thickness: WidgetStateProperty.all(10), // Adjust thickness
-            radius: const Radius.circular(20), // Rounded edges
-            thumbVisibility:
-                WidgetStateProperty.all(true), // Always show the scrollbar
+            thumbColor: MaterialStateProperty.all(AppColors.primaryColor),
+            trackColor: MaterialStateProperty.all(Colors.grey[300]),
+            trackBorderColor: MaterialStateProperty.all(Colors.transparent),
+            thickness: MaterialStateProperty.all(5),
+            radius: const Radius.circular(20),
+            thumbVisibility: MaterialStateProperty.all(true),
           ),
           child: Scrollbar(
             thumbVisibility: true,
             child: ListView(
               children: appliances.asMap().entries.map((entry) {
                 var appliance = entry.value;
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.symmetric(vertical: 10),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(
-                              color: const Color(0xFFADE7DB),
-                              width: 1.5,
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x40000000),
-                                offset: Offset(0, 4),
-                                blurRadius: 10,
-                                spreadRadius: 0,
-                              ),
-                            ],
-                          ),
-                          width: MediaQuery.of(context).size.width * 0.472,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                return Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                      color: const Color(0xFFADE7DB),
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x40000000),
+                        offset: Offset(0, 4),
+                        blurRadius: 10,
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${appliance['applianceName'] ?? 'Unknown'}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.width * 0.04, // Responsive font size
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.secondaryColor,
+                        ),
+                      ),
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.01), // Responsive spacing
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Column(
                             children: [
                               Text(
-                                '${appliance['applianceName'] ?? 'Unknown'}',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 16,
+                                'PHP ${appliance['monthlyCost'].toStringAsFixed(2) ?? 'N/A'}',
+                                style: TextStyle(
+                                  fontSize: MediaQuery.of(context).size.width * 0.03, // Responsive font size
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.secondaryColor,
                                 ),
                               ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          'PHP ${appliance['monthlyCost'].toStringAsFixed(2) ?? 'N/A'}',
-                                          style: const TextStyle(
-                                            fontSize: 10.0,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Monthly Cost",
-                                          style: TextStyle(
-                                            fontSize: 8.0,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        Column(
-                                          children: [
-                                            const SizedBox(width: 5),
-                                            Text(
-                                              '${appliance['wattage'].toStringAsFixed(2) ?? 'N/A'}',
-                                              style: const TextStyle(
-                                                fontSize: 10.0,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              "Wattage",
-                                              style: TextStyle(
-                                                fontSize: 8.0,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                "Monthly Cost",
+                                style: TextStyle(
+                                  fontSize: MediaQuery.of(context).size.width * 0.02, // Responsive font size
+                                  color: Colors.grey[600],
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          Column(
+                            children: [
+                              Text(
+                                '${appliance['wattage'].toStringAsFixed(2) ?? 'N/A'}',
+                                style: TextStyle(
+                                  fontSize: MediaQuery.of(context).size.width * 0.03, // Responsive font size
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                "Wattage",
+                                style: TextStyle(
+                                  fontSize: MediaQuery.of(context).size.width * 0.02, // Responsive font size
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
                 );
               }).toList(),
             ),
@@ -480,6 +595,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       );
     }
   }
+
 
   Widget deviceUsageSummary({
     required int applianceCount,
@@ -516,7 +632,10 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                       : 'N/A',
                 ),
                 const SizedBox(height: 16),
-                GestureDetector(
+                GestureDetector(   onTap: () {
+                  showApplianceInformationDialog();
+                },
+
                   onPanDown: (details) {
                     // This is triggered when the user touches the screen and starts panning.
                     print(
@@ -533,6 +652,76 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
             ),
           ],
         ),
+      ],
+    );
+  }
+  void showApplianceInformationDialog() {
+    showCustomGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      pageBuilder: Center(
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 16,
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.monetization_on,
+                  color: AppColors.primaryColor,
+                  size: 50,
+                ),
+                const SizedBox(height: 20),
+
+                Text(
+                  monthlyData['totalMonthlyCost'] != null
+                      ? 'PHP ${double.parse(monthlyData['totalMonthlyCost'].toString()).toStringAsFixed(2)}'
+                      : 'N/A',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+                 Text(
+                  "Estimated Monthly Cost",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[500],
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+
+  Widget applianceContentNew() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        const Text(
+          'Devices',
+          style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryColor),
+        ),
+        const SizedBox(height: 20),
+        appliancesContent(),
       ],
     );
   }

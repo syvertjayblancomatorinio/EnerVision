@@ -21,7 +21,7 @@ app.use(express.json()); // Middleware to parse JSON
 
 
 mongoose.connect(
-//process.env.MONGO_URI
+// process.env.MONGO_URI
 "mongodb://localhost:27017/enervision"
 ).then(() => {
   console.log('Connected to MongoDB');
@@ -53,6 +53,7 @@ app.use('/', require('./routes/profiles.route'));
 app.use('/', require('./routes/account.route'));
 app.use('/', require('./routes/chats.route'));
 app.use('/', require('./routes/faqs.route'));
+app.use('/', require('./routes/energy_providers.route'));
 app.use('/', require('./routes/compared_appliance.route'));
 app.use('/', require('./routes/monthly_consumption.route'));
 app.use('/', require('./routes/device_info.route'));

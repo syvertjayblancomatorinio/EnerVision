@@ -81,7 +81,7 @@ class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
             child: Column(
               children: <Widget>[
                 const Text(
-                  'Energy Efficiency',
+                  'Energy Management',
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     color: AppColors.primaryColor,
