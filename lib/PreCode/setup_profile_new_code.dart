@@ -13,14 +13,14 @@ import 'package:path/path.dart';
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
 
-class SetupProfile extends StatefulWidget {
-  const SetupProfile({super.key});
+class SetupProfileNewCode extends StatefulWidget {
+  const SetupProfileNewCode({super.key});
 
   @override
-  State<SetupProfile> createState() => _SetupProfileState();
+  State<SetupProfileNewCode> createState() => _SetupProfileNewCodeState();
 }
 
-class _SetupProfileState extends State<SetupProfile> {
+class _SetupProfileNewCodeState extends State<SetupProfileNewCode> {
   File? _profilePicture;
   final _formKey = GlobalKey<FormState>();
   final _cityLineController = TextEditingController();
