@@ -123,8 +123,8 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const username = req.decoded?.username || 'user'; // Fallback to 'user' if username is not available
-    cb(null, `${username}-${Date.now()}${path.extname(file.originalname)}`); // Use timestamp for uniqueness
+    const username = req.decoded?.username || 'user';
+    cb(null, `${username}-${Date.now()}${path.extname(file.originalname)}`);
   },
 });
 
@@ -184,21 +184,26 @@ console.log("JWT_SECRET:", process.env.JWT_SECRET); // This will help you verify
     const token = jwt.sign(
       { id: user._id, username: user.username },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '1d' }
     );
 
     // Check if the user has a profile
     const profile = await UserProfile.findOne({ userId: user._id });
+      console.log('User token', token);
 
     // Successful login response
     return res.status(200).json({
       token,
+
       user: {
         _id: user._id,
         username: user.username,
         hasProfile: profile ? true : false,
       },
+
     });
+
+
 
   } catch (err) {
     console.error("Error during signin: ", err.message);
@@ -228,8 +233,9 @@ router.post("/signup", async (req, res) => {
       const token = jwt.sign(
         { id: newUser._id, username: newUser.username },
         process.env.JWT_SECRET,  // Make sure your secret is in the environment variables
-        { expiresIn: '1h' }  // Set the token expiration (1 hour in this example)
+          { expiresIn: '1d' } // Set the token expiration (1 hour in this example)
       );
+        console.log('User token', token);
 
       // Send the response with the user info and token
       res.status(201).json({
@@ -241,6 +247,8 @@ router.post("/signup", async (req, res) => {
         },
         token: token
       });
+        console.log('User token', token);
+
     } else {
       res.status(400).json({ message: "Email is already in use" });
     }

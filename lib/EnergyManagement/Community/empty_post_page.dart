@@ -38,7 +38,7 @@ class Body extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ShareYourStoryPage()),
+                  MaterialPageRoute(builder: (context) => CreatePostPage()),
                 );
               },
               style: ElevatedButton.styleFrom(
