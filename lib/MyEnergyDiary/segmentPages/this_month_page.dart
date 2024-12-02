@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:pie_chart/pie_chart.dart';
 
 import '../../AuthService/base_url.dart';
+import '../../CommonWidgets/dialogs/general_dialog.dart';
 import '../../CommonWidgets/dialogs/loading_animation.dart';
 import '../carousel.dart';
 
@@ -277,7 +279,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
           children: [
             // Carousel at the top
             ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 700),
+              constraints: const BoxConstraints(maxHeight: 520),
               child: CarouselView(
                 itemExtent: 500,
                 shrinkExtent: 500,
@@ -286,10 +288,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                   Column(
                     children: [
                       pieChartTitle(),
-                      SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.1, // Responsive height
-                      ),
-
                       appliancesContent(),
                     ],
                   ),
@@ -356,7 +354,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                                 children: [
                                   pieChartTitle(),
                                   SizedBox(
-                                    height: MediaQuery.of(context).size.height * 0.2,
+                                    height: MediaQuery.of(context).size.height * 0.15,
                                   ),
 
                                   Padding(
@@ -634,7 +632,10 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                       : 'N/A',
                 ),
                 const SizedBox(height: 16),
-                GestureDetector(
+                GestureDetector(   onTap: () {
+                  showApplianceInformationDialog();
+                },
+
                   onPanDown: (details) {
                     // This is triggered when the user touches the screen and starts panning.
                     print(
@@ -654,6 +655,60 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       ],
     );
   }
+  void showApplianceInformationDialog() {
+    showCustomGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      pageBuilder: Center(
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 16,
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.monetization_on,
+                  color: AppColors.primaryColor,
+                  size: 50,
+                ),
+                const SizedBox(height: 20),
+
+                Text(
+                  monthlyData['totalMonthlyCost'] != null
+                      ? 'PHP ${double.parse(monthlyData['totalMonthlyCost'].toString()).toStringAsFixed(2)}'
+                      : 'N/A',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+                 Text(
+                  "Estimated Monthly Cost",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[500],
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+
   Widget applianceContentNew() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
