@@ -12,7 +12,7 @@ import 'package:http/http.dart' as http;
 
 import '../../AuthService/auth_suggestions.dart';
 import '../../ConstantTexts/Theme.dart';
-import '../../EnergyEfficiency/Community/ellipse_icon.dart';
+import '../../EnergyManagement/Community/ellipse_icon.dart';
 import '../appbar-widget.dart';
 
 class PostViewDialog extends StatefulWidget {

@@ -171,7 +171,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                   child: ListTile(
                     leading: ClipOval(
                       child: Image.asset(
-                        appliance['imagePath'] ?? 'assets/deviceImage.png',
+                        appliance['imagePath'] ?? 'assets/appliance.jpg',
                         height: 50,
                         width: 50,
                         fit: BoxFit.cover,
