@@ -16,6 +16,7 @@ import 'package:supabase_project/StaticPages/anne_aircon.dart';
 import '../EnergyPage/EnergyTracker/energy_tracker_widget.dart';
 import '../EnergyPage/offline_calculator.dart';
 import '../EnergyPage/offline_calculator_v2.dart';
+import '../MyEnergyDiary/carousel.dart';
 import '../PreCode/addSuggestion.dart';
 
 class BottomNavigation extends StatefulWidget {
@@ -75,7 +76,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OfflineCalculatorV2(),
+            builder: (context) => CarouselExampleApp(),
             // builder: (context) => EnergyPowerUsed(
             //   value: 'we',
             //   title: '23',

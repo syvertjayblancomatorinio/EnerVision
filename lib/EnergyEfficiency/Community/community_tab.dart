@@ -100,10 +100,10 @@ class _CommunityTabState extends State<CommunityTab> {
   @override
   void initState() {
     super.initState();
-    // getPosts();
+    getPosts();
     //
     // eventBus.on<PostUpdatedEvent>().listen((event) {
-    getPostsFromApi();
+    // getPostsFromApi();
     // });
   }
 
@@ -582,6 +582,7 @@ class _CommunityTabState extends State<CommunityTab> {
             Navigator.push(
               context,
               MaterialPageRoute(
+
                 builder: (context) => PostViewDialog(
                   post: post,
                   // suggestions: suggestions,
