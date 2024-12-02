@@ -18,6 +18,24 @@ final List<Color> colorList = [
   Color(0xFFFFFF00), // Yellow
   Color(0xFF008000), // Green
   Color(0xFFFFA500), // Orange
+  Colors.blue,
+  Colors.teal,
+  Colors.cyan,
+  Colors.indigo,
+  Colors.lightBlue,
+  Colors.purple,
+  Colors.red,
+  Colors.orange,
+  Colors.yellow,
+  Colors.amber,
+  Colors.deepOrange,
+  Colors.pink,
+  Colors.blue,
+  Colors.orange,
+  Colors.green,
+  Colors.red,
+  Colors.purple,
+  Colors.cyan,
 ];
 
 // final List<Color> colorList = [
