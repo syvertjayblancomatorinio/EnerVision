@@ -57,59 +57,8 @@ class _LastMonthPageState extends State<LastMonthPage> {
     );
   }
 
+
   Future<void> getUsersApplianceCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      print("User ID is null. Cannot fetch monthly consumption.");
-      return;
-    }
-
-    final formattedMonth = DateFormat('MM').format(selectedDate);
-    final formattedYear = DateFormat('yyyy').format(selectedDate);
-
-    final url = Uri.parse(
-        'http://localhost:8080/$userId?month=$formattedMonth&year=$formattedYear');
-
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        setState(() {
-          applianceCount = data['appliances']?.length ?? 0;
-          appliances =
-              List<Map<String, dynamic>>.from(data['appliances'] ?? []);
-          dataMap = {
-            for (var appliance in appliances)
-              if (appliance["monthlyCost"] != null &&
-                  appliance["applianceName"] != null)
-                appliance["applianceName"]: (appliance["monthlyCost"] is int
-                    ? (appliance["monthlyCost"] as int).toDouble()
-                    : appliance["monthlyCost"]) as double
-          };
-        });
-
-        print("Total Appliances: $applianceCount");
-        print("Appliances: $appliances");
-      } else if (response.statusCode == 404) {
-        setState(() {
-          applianceCount = 0;
-          appliances = [];
-        });
-        print("No monthly consumption data found for the specified period.");
-      } else {
-        print(
-            "Failed to load monthly consumption. Status code: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Error fetching monthly consumption: $e");
-    }
-  }
-
-  Future<void> getUsersApplianceCount1() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
