@@ -10,6 +10,7 @@ import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart'
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/micaella.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -136,91 +137,98 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       child: ListView(
         children: appliances.asMap().entries.map((entry) {
           var appliance = entry.value;
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                margin: const EdgeInsets.all(20),
-                padding:
-                const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40),
-                decoration: greyBoxDecoration(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 130),
-                      child: Text(
-                        '${appliance['applianceName'] ?? 'Unknown'}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+          int index = entry.key;
+
+          return GestureDetector(
+            onTap: () {
+              showApplianceInformationDialog(index);
+            },
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  margin: const EdgeInsets.all(20),
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40),
+                  decoration: greyBoxDecoration(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 130),
+                        child: Text(
+                          '${appliance['applianceName'] ?? 'Unknown'}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.battery_charging_full),
-                            const SizedBox(width: 5),
-                            Text('${appliance['wattage'] ?? 'N/A'} W'),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Icon(Icons.watch_later_outlined),
-                            const SizedBox(width: 5),
-                            Text(
-                                '${appliance['usagePatternPerDay'] ?? 'N/A'} hours'),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_month_outlined),
-                            const SizedBox(width: 5),
-                            Text(
-                              appliance['createdAt'] != null
-                                  ? DateFormat('MM/dd').format(
-                                  DateTime.parse(appliance['createdAt']))
-                                  : 'null',
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    // const SizedBox(height: 40),
-                  ],
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.battery_charging_full),
+                              const SizedBox(width: 5),
+                              Text('${appliance['wattage'] ?? 'N/A'} W'),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              const Icon(Icons.watch_later_outlined),
+                              const SizedBox(width: 5),
+                              Text(
+                                  '${appliance['usagePatternPerDay'] ?? 'N/A'} hours'),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              const Icon(Icons.calendar_month_outlined),
+                              const SizedBox(width: 5),
+                              Text(
+                                appliance['createdAt'] != null
+                                    ? DateFormat('MM/dd').format(
+                                    DateTime.parse(appliance['createdAt']))
+                                    : 'null',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      // const SizedBox(height: 40),
+                    ],
+                  ),
                 ),
-              ),
-              // Appliance Image (overlapping the container)
-              deviceImages(appliance),
-              // Compare Button (overlapping at the bottom-right)
-              // Positioned(
-              //   bottom: -10,
-              //   right: 30,
-              //   child: ElevatedButton(
-              //     onPressed: () {
-              //       Navigator.push(
-              //         context,
-              //         MaterialPageRoute(
-              //           builder: (context) => const CompareDevice(),
-              //         ),
-              //       );
-              //     },
-              //     style: ElevatedButton.styleFrom(
-              //       padding: const EdgeInsets.symmetric(
-              //           horizontal: 30, vertical: 10),
-              //       shape: RoundedRectangleBorder(
-              //         borderRadius: BorderRadius.circular(12),
-              //       ),
-              //     ),
-              //     child: const Text('Compare'),
-              //   ),
-              // ),
-            ],
+                // Appliance Image (overlapping the container)
+                deviceImages(appliance),
+                // Compare Button (overlapping at the bottom-right)
+                // Positioned(
+                //   bottom: -10,
+                //   right: 30,
+                //   child: ElevatedButton(
+                //     onPressed: () {
+                //       Navigator.push(
+                //         context,
+                //         MaterialPageRoute(
+                //           builder: (context) => const CompareDevice(),
+                //         ),
+                //       );
+                //     },
+                //     style: ElevatedButton.styleFrom(
+                //       padding: const EdgeInsets.symmetric(
+                //           horizontal: 30, vertical: 10),
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(12),
+                //       ),
+                //     ),
+                //     child: const Text('Compare'),
+                //   ),
+                // ),
+              ],
+            ),
           );
         }).toList(),
       ),
@@ -233,7 +241,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: Image.asset(
-          appliance['imagePath'] ?? 'assets/deviceImage.png',
+          appliance['imagePath'] ?? 'assets/appliance.jpg',
           width: 102,
           height: 86,
           fit: BoxFit.cover,
@@ -312,6 +320,27 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       });
     }
   }
+  void showApplianceInformationDialog(int index) {
+    var appliance = appliances[index];
+
+    controllers.editApplianceNameController.text =
+        appliance['applianceName'] ?? '';
+    controllers.editWattageController.text =
+        appliance['wattage']?.toString() ?? '';
+    controllers.editUsagePatternController.text =
+        appliance['usagePatternPerDay']?.toString() ?? '';
+    controllers.editWeeklyPatternController.text =
+        appliance['selectedDays']?.toString() ?? '';
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ApplianceInformationDialog(
+          appliance: appliance,
+        );
+      },
+    );
+  }
+
   Future<void> addAppliance() async {
     final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
     String applianceName = toTitleCase(
