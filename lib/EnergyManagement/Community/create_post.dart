@@ -12,12 +12,14 @@ import 'package:supabase_project/ConstantTexts/Theme.dart';
 import '../../CommonWidgets/dialogs/error_dialog.dart';
 import 'energy_effieciency_page.dart';
 
-class ShareYourStoryPage extends StatefulWidget {
+class CreatePostPage extends StatefulWidget {
+  const CreatePostPage({super.key});
+
   @override
-  _ShareYourStoryPageState createState() => _ShareYourStoryPageState();
+  _CreatePostPageState createState() => _CreatePostPageState();
 }
 
-class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
+class _CreatePostPageState extends State<CreatePostPage> {
   XFile? _image;
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();

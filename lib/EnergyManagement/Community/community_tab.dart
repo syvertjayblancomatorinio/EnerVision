@@ -19,6 +19,7 @@ import 'package:event_bus/event_bus.dart';
 import 'package:supabase_project/EnergyManagement/Community/top_bar.dart';
 
 import '../../zNotUsedFiles/post_authenticated/create_post.dart';
+import 'create_post.dart';
 import 'ellipse_icon.dart';
 import 'empty_post_page.dart';
 
@@ -1003,7 +1004,7 @@ class _CommunityTabState extends State<CommunityTab> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ShareYourStoryPage()),
+                MaterialPageRoute(builder: (context) => CreatePostPage()),
               );
             },
             child: const Text('Create a new post'),

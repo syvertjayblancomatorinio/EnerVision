@@ -174,6 +174,65 @@ router.delete('/deleteSuggestion/:suggestionId', authenticateToken, async (req, 
 
 
 
+router.put('/editUserSuggestion/:suggestionId', authenticateToken, async (req, res) => {
+    const { suggestionId } = req.params;
+    const { suggestionText } = req.body;
+    const userId = req.user.id; // Extracted from the token by the authentication middleware
+
+    try {
+        const suggestion = await Suggestion.findById(suggestionId);
+        if (!suggestion) {
+            return res.status(404).json({ message: 'Suggestion not found' });
+        }
+
+        // Check if the suggestion belongs to the logged-in user
+        if (suggestion.userId.toString() !== userId) {
+            return res.status(403).json({ message: 'You are not authorized to edit this suggestion' });
+        }
+
+        suggestion.suggestionText = suggestionText;
+        await suggestion.save();
+
+        res.status(200).json({ message: 'Suggestion updated successfully', suggestion });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.delete('/deleteUserSuggestion/:suggestionId', authenticateToken, async (req, res) => {
+    const { suggestionId } = req.params;
+    const userId = req.user.id; // Extracted from the token by the authentication middleware
+
+    try {
+        // Find the suggestion by ID
+        const suggestion = await Suggestion.findById(suggestionId);
+
+        // Check if suggestion exists
+        if (!suggestion) {
+            return res.status(404).json({ message: 'Suggestion not found' });
+        }
+
+        // Check if the suggestion belongs to the authenticated user
+        if (suggestion.userId.toString() !== userId) {
+            return res.status(403).json({ message: 'You are not authorized to delete this suggestion' });
+        }
+
+        // Remove the suggestion from the post's suggestions array
+        await Posts.updateOne(
+            { suggestions: suggestionId },
+            { $pull: { suggestions: suggestionId } }
+        );
+
+        // Delete the suggestion
+        await suggestion.deleteOne();
+
+        res.status(200).json({ message: 'Suggestion deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 /*
 // Update a specific suggestion of a user
 router.put('/suggestions/:userId/:suggestionId', async (req, res) => {

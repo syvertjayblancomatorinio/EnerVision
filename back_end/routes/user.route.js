@@ -123,8 +123,8 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const username = req.decoded?.username || 'user'; // Fallback to 'user' if username is not available
-    cb(null, `${username}-${Date.now()}${path.extname(file.originalname)}`); // Use timestamp for uniqueness
+    const username = req.decoded?.username || 'user';
+    cb(null, `${username}-${Date.now()}${path.extname(file.originalname)}`);
   },
 });
 
