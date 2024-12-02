@@ -162,10 +162,10 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
   void _validateInputs() {
     setState(() {});
   }
-
   bool _isValidInput() {
     return _titleController.text.trim().isNotEmpty &&
-        _descriptionController.text.trim().isNotEmpty;
+        _descriptionController.text.trim().isNotEmpty &&
+        finalSelectedTags.isNotEmpty;
   }
 
   @override
@@ -380,7 +380,8 @@ class _ShareYourStoryPageState extends State<ShareYourStoryPage> {
               isLoading = false;
             });
           } else {
-            _showApplianceErrorDialog(context, 'sdfs');
+            _showApplianceErrorDialog(context,
+                'Please add the required details, including a tag, before submitting your post.');
           }
         },
         child: isLoading

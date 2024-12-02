@@ -21,8 +21,8 @@ app.use(express.json()); // Middleware to parse JSON
 
 
 mongoose.connect(
-//"mongodb://localhost:27017/enervision"
- process.env.MONGO_URI
+//process.env.MONGO_URI
+"mongodb://localhost:27017/enervision"
 ).then(() => {
   console.log('Connected to MongoDB');
   console.log("MONGO_URI:", process.env.MONGO_URI); // Should show the Mongo URI
@@ -57,21 +57,7 @@ app.use('/', require('./routes/compared_appliance.route'));
 app.use('/', require('./routes/monthly_consumption.route'));
 app.use('/', require('./routes/device_info.route'));
 
-// Upload avatar route (ensure Avatar model is defined and imported)
-app.post('/uploadAvatar', async (req, res) => {
-  const { userId, imageUrl } = req.body;
 
-  try {
-    const avatar = await Avatar.findOneAndUpdate(
-      { userId: userId },
-      { imageUrl: imageUrl },
-      { new: true, upsert: true }
-    );
-    res.status(200).json(avatar);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to upload avatar' });
-  }
-});
 // Cron job to save monthly consumption on the last day of each month
 cron.schedule('0 0 1 * *', async () => {
     const users = await User.find(); // Get all users

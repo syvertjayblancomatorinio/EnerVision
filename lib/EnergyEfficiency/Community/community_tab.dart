@@ -100,10 +100,10 @@ class _CommunityTabState extends State<CommunityTab> {
   @override
   void initState() {
     super.initState();
-    getPosts();
+    // getPosts();
     //
     // eventBus.on<PostUpdatedEvent>().listen((event) {
-    //   getPostsFromApi();
+    getPostsFromApi();
     // });
   }
 
@@ -310,113 +310,11 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
-  // Widget _buildSuggestionsList() {
-  //   if (isLoading) {
-  //     return const SizedBox(
-  //       height: 200,
-  //       child: LoadingWidget(
-  //         message: 'Fetching all Suggestions',
-  //         color: AppColors.primaryColor,
-  //       ),
-  //     );
-  //   } else if (suggestions.isEmpty) {
-  //     return SizedBox(
-  //       height: 30,
-  //       child: Text(
-  //         'No Suggestions Yet.',
-  //         textAlign: TextAlign.center,
-  //         style: TextStyle(
-  //           fontSize: 16,
-  //           color: Colors.grey[700],
-  //         ),
-  //       ),
-  //     );
-  //   } else {
-  //     final limitedSuggestions = suggestions.take(3).toList();
-  //
-  //     return ConstrainedBox(
-  //       constraints: const BoxConstraints(maxHeight: 200),
-  //       child: ScrollbarTheme(
-  //         data: ScrollbarThemeData(
-  //           thumbColor: WidgetStateProperty.all(AppColors.primaryColor),
-  //           trackColor: WidgetStateProperty.all(Colors.grey[300]),
-  //           trackBorderColor: WidgetStateProperty.all(Colors.transparent),
-  //           thickness: WidgetStateProperty.all(10),
-  //           radius: const Radius.circular(20),
-  //           thumbVisibility: WidgetStateProperty.all(true),
-  //         ),
-  //         child: Scrollbar(
-  //           thumbVisibility: true,
-  //           child: ListView.builder(
-  //             shrinkWrap: true,
-  //             itemCount: limitedSuggestions.length,
-  //             itemBuilder: (context, index) {
-  //               final suggestion = limitedSuggestions[index];
-  //               return Container(
-  //                 padding: const EdgeInsets.only(left: 15, bottom: 5),
-  //                 margin: const EdgeInsets.symmetric(vertical: 5),
-  //                 decoration: BoxDecoration(
-  //                   color: Colors.white,
-  //                   borderRadius: BorderRadius.circular(7.0),
-  //                   border: Border.all(color: Colors.grey[300]!),
-  //                 ),
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Row(
-  //                       children: [
-  //                         Text(
-  //                           suggestion['username'],
-  //                           style: const TextStyle(
-  //                             fontWeight: FontWeight.bold,
-  //                             fontSize: 16.0,
-  //                             color: Color(0xFF1BBC9B),
-  //                           ),
-  //                         ),
-  //                         const Spacer(),
-  //                         Text(
-  //                           _formatDateTime(
-  //                               DateTime.parse(suggestion['createdAt'])),
-  //                           style: const TextStyle(
-  //                             fontSize: 12.0,
-  //                             color: Colors.grey,
-  //                           ),
-  //                         ),
-  //                         PopupMenuButton(
-  //                           icon: const Icon(Icons.more_horiz),
-  //                           itemBuilder: (BuildContext context) {
-  //                             return {'Edit', 'Delete'}.map((String choice) {
-  //                               return PopupMenuItem<String>(
-  //                                 value: choice,
-  //                                 child: Text(choice),
-  //                               );
-  //                             }).toList();
-  //                           },
-  //                         ),
-  //                       ],
-  //                     ),
-  //                     const SizedBox(height: 5.0),
-  //                     Text(
-  //                       suggestion['suggestionText'],
-  //                       style: const TextStyle(
-  //                         fontSize: 14.0,
-  //                         color: Colors.black,
-  //                       ),
-  //                     ),
-  //                     const SizedBox(height: 5.0),
-  //                   ],
-  //                 ),
-  //               );
-  //             },
-  //           ),
-  //         ),
-  //       ),
-  //     );
-  //   }
-  // }
 
   Widget _content() {
     List<dynamic> sortedPosts = List.from(posts);
+
+    // Sort posts by `timeAgo` (latest to oldest)
     sortedPosts.sort((a, b) {
       DateTime? timeA = DateTime.tryParse(a['timeAgo'] ?? '');
       DateTime? timeB = DateTime.tryParse(b['timeAgo'] ?? '');
@@ -443,6 +341,16 @@ class _CommunityTabState extends State<CommunityTab> {
                 var post = entry.value;
                 int index = entry.key;
 
+                // Sort suggestions by `createdAt` (latest to oldest)
+                if (post['suggestions'] != null &&
+                    post['suggestions'].isNotEmpty) {
+                  post['suggestions'].sort((a, b) {
+                    DateTime? timeA = DateTime.tryParse(a['createdAt'] ?? '');
+                    DateTime? timeB = DateTime.tryParse(b['createdAt'] ?? '');
+                    return (timeB ?? DateTime.now()).compareTo(timeA ?? DateTime.now());
+                  });
+                }
+
                 return Container(
                   margin: const EdgeInsets.all(10.0),
                   decoration: greyBoxDecoration(),
@@ -465,12 +373,9 @@ class _CommunityTabState extends State<CommunityTab> {
                           constraints: const BoxConstraints(maxHeight: 200),
                           child: ScrollbarTheme(
                             data: ScrollbarThemeData(
-                              thumbColor: WidgetStateProperty.all(
-                                  AppColors.primaryColor),
-                              trackColor:
-                                  WidgetStateProperty.all(Colors.grey[300]),
-                              trackBorderColor:
-                                  WidgetStateProperty.all(Colors.transparent),
+                              thumbColor: WidgetStateProperty.all(AppColors.primaryColor),
+                              trackColor: WidgetStateProperty.all(Colors.grey[300]),
+                              trackBorderColor: WidgetStateProperty.all(Colors.transparent),
                               thickness: WidgetStateProperty.all(10),
                               radius: const Radius.circular(20),
                               thumbVisibility: WidgetStateProperty.all(true),
@@ -482,29 +387,22 @@ class _CommunityTabState extends State<CommunityTab> {
                                 shrinkWrap: true,
                                 itemCount: post['suggestions'].length,
                                 itemBuilder: (context, suggestionIndex) {
-                                  var suggestion = post['suggestions']
-                                          [suggestionIndex] ??
-                                      "Suggestions";
+                                  var suggestion = post['suggestions'][suggestionIndex] ?? "Suggestions";
                                   return Container(
-                                    padding: const EdgeInsets.only(
-                                        left: 15, bottom: 5),
-                                    margin:
-                                        const EdgeInsets.symmetric(vertical: 5),
+                                    padding: const EdgeInsets.only(left: 15, bottom: 5),
+                                    margin: const EdgeInsets.symmetric(vertical: 5),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(7.0),
-                                      border:
-                                          Border.all(color: Colors.grey[300]!),
+                                      border: Border.all(color: Colors.grey[300]!),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
                                             Text(
-                                              suggestion['suggestedBy'] ??
-                                                  username,
+                                              suggestion['suggestedBy'] ?? username,
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16.0,
@@ -513,18 +411,15 @@ class _CommunityTabState extends State<CommunityTab> {
                                             ),
                                             const Spacer(),
                                             Text(
-                                              _formatDateTime(
-                                                  suggestion['createdAt']),
+                                              _formatDateTime(suggestion['createdAt']),
                                               style: const TextStyle(
                                                 fontSize: 12.0,
                                                 color: Colors.grey,
                                               ),
                                             ),
                                             PopupMenuButton<String>(
-                                              icon:
-                                                  const Icon(Icons.more_horiz),
-                                              itemBuilder:
-                                                  (BuildContext context) {
+                                              icon: const Icon(Icons.more_horiz),
+                                              itemBuilder: (BuildContext context) {
                                                 return {'Edit', 'Delete'}
                                                     .map((String choice) {
                                                   return PopupMenuItem<String>(
@@ -535,8 +430,7 @@ class _CommunityTabState extends State<CommunityTab> {
                                               },
                                               onSelected: (String value) async {
                                                 if (value == 'Delete') {
-                                                  _confirmDeleteSuggestion(
-                                                      index);
+                                                  _confirmDeleteSuggestion(index);
                                                 } else if (value == 'Edit') {
                                                   // Handle edit logic here
                                                   print('Edit tapped');
@@ -547,8 +441,7 @@ class _CommunityTabState extends State<CommunityTab> {
                                         ),
                                         const SizedBox(height: 5.0),
                                         Text(
-                                          suggestion['suggestionText'] ??
-                                              "Text",
+                                          suggestion['suggestionText'] ?? "Text",
                                           style: const TextStyle(
                                             fontSize: 14.0,
                                             color: Colors.black,

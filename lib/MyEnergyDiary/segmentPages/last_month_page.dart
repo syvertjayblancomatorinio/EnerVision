@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
@@ -31,6 +32,18 @@ class _LastMonthPageState extends State<LastMonthPage> {
   Map<String, double> dataMap = {};
   bool isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    getUsersApplianceCount();
+    DateTime now = DateTime.now();
+    selectedDate = DateTime(now.year, now.month - 1, now.day);
+    if (now.month == 1) {
+      selectedDate = DateTime(now.year - 1, 12, now.day);
+    }
+    getLastMonth(selectedDate);
+  }
+
   void showApplianceInformationDialog(BuildContext context) {
     if (appliances.isEmpty) {
       print('No appliances to show.');
@@ -44,59 +57,8 @@ class _LastMonthPageState extends State<LastMonthPage> {
     );
   }
 
+
   Future<void> getUsersApplianceCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      print("User ID is null. Cannot fetch monthly consumption.");
-      return;
-    }
-
-    final formattedMonth = DateFormat('MM').format(selectedDate);
-    final formattedYear = DateFormat('yyyy').format(selectedDate);
-
-    final url = Uri.parse(
-        'http://10.0.2.2:8080/getMonthlyConsumption/$userId?month=$formattedMonth&year=$formattedYear');
-
-    try {
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        setState(() {
-          applianceCount = data['appliances']?.length ?? 0;
-          appliances =
-              List<Map<String, dynamic>>.from(data['appliances'] ?? []);
-          dataMap = {
-            for (var appliance in appliances)
-              if (appliance["monthlyCost"] != null &&
-                  appliance["applianceName"] != null)
-                appliance["applianceName"]: (appliance["monthlyCost"] is int
-                    ? (appliance["monthlyCost"] as int).toDouble()
-                    : appliance["monthlyCost"]) as double
-          };
-        });
-
-        print("Total Appliances: $applianceCount");
-        print("Appliances: $appliances");
-      } else if (response.statusCode == 404) {
-        setState(() {
-          applianceCount = 0;
-          appliances = [];
-        });
-        print("No monthly consumption data found for the specified period.");
-      } else {
-        print(
-            "Failed to load monthly consumption. Status code: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("Error fetching monthly consumption: $e");
-    }
-  }
-
-  Future<void> getUsersApplianceCount1() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
@@ -109,7 +71,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
     final formattedYear = DateFormat('yyyy').format(selectedDate);
 
     final response = await http.get(Uri.parse(
-        'http://10.0.2.2:8080/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
+        '${ApiConfig.baseUrl}/getNewUsersCount/$userId/appliances?month=$formattedMonth&year=$formattedYear'));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -128,18 +90,6 @@ class _LastMonthPageState extends State<LastMonthPage> {
     } else {
       throw Exception('Failed to load appliances');
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getUsersApplianceCount();
-    DateTime now = DateTime.now();
-    selectedDate = DateTime(now.year, now.month - 1, now.day);
-    if (now.month == 1) {
-      selectedDate = DateTime(now.year - 1, 12, now.day);
-    }
-    getLastMonth(selectedDate);
   }
 
   @override
@@ -274,7 +224,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
     final formattedYear = DateFormat('yyyy').format(date);
 
     final url = Uri.parse(
-        "http://10.0.2.2:8080/monthlyDataNew/$userId?month=$formattedMonth&year=$formattedYear");
+        "${ApiConfig.baseUrl}/monthlyDataNew/$userId?month=$formattedMonth&year=$formattedYear");
 
     try {
       final response = await http.get(
@@ -323,7 +273,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
   }
 
   Future<double> getUserKwhRate(String userId) async {
-    final url = Uri.parse("http://10.0.2.2:8080/user/$userId/kwhRate");
+    final url = Uri.parse("${ApiConfig.baseUrl}/user/$userId/kwhRate");
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {

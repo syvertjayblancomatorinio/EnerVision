@@ -84,7 +84,7 @@ router.post('/addSuggestionToPost/:postId/suggestions', asyncHandler(async (req,
 // Retrieve all suggestions for a specific post
 router.get('/getAllPostsSuggestions/:postId', async (req, res) => {
   try {
-  const post = await Post.findById(req.params.postId)
+  const post = await Posts.findById(req.params.postId)
       .populate({
           path: 'suggestions',
           options: { sort: { createdAt: -1 } }, // Sort by createdAt, latest first
