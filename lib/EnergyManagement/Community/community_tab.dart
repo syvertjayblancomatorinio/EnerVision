@@ -18,6 +18,7 @@ import 'package:hive/hive.dart';
 import 'package:event_bus/event_bus.dart';
 import 'package:supabase_project/EnergyManagement/Community/top_bar.dart';
 
+import '../../AuthService/auth_appliances.dart';
 import '../../zNotUsedFiles/post_authenticated/create_post.dart';
 import 'create_post.dart';
 import 'ellipse_icon.dart';
@@ -42,6 +43,7 @@ class _CommunityTabState extends State<CommunityTab> {
   bool showUsersPosts = false;
   bool isUserPost = false;
   String placeholderImage = 'assets/image (6).png';
+  String? userId;
 
   int? activeSuggestionIndex;
   int? _tappedIndex;
@@ -54,6 +56,10 @@ class _CommunityTabState extends State<CommunityTab> {
   List<TextEditingController> editControllers = [];
   List<Map<String, dynamic>> posts = [];
   late List<Map<String, dynamic>> suggestions = [];
+
+  String? editingSuggestionId; // Tracks the ID of the suggestion being edited
+  TextEditingController _editingController = TextEditingController();
+
   String _formatDateTime(String? createdAt) {
     if (createdAt == null || createdAt.isEmpty) {
       return "Unknown date";
@@ -80,6 +86,37 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
+  void _startEditing(String suggestionId, String currentText) {
+    setState(() {
+      editingSuggestionId = suggestionId;
+      _editingController.text = currentText;
+    });
+    print(suggestionId);
+  }
+
+  void _saveEditing(String suggestionId) {
+    // Save the updated suggestion and clear the editing state
+    updateSuggestion(_editingController, suggestionId);
+
+    print(
+        'Saving suggestion $suggestionId with text: ${_editingController.text}');
+    setState(() {
+      editingSuggestionId = null;
+    });
+  }
+
+
+  String loggedUsername = '[Username]';
+  Future<void> _loadUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedUsername = prefs.getString('username');
+
+    setState(() {
+      loggedUsername = storedUsername ?? '[Username]';
+      print('bilat $loggedUsername');
+    });
+  }
+
   String _monthName(int month) {
     const months = [
       "January",
@@ -102,6 +139,7 @@ class _CommunityTabState extends State<CommunityTab> {
   void initState() {
     super.initState();
     getPosts();
+    _loadUsername();
     //
     // eventBus.on<PostUpdatedEvent>().listen((event) {
     // getPostsFromApi();
@@ -111,16 +149,42 @@ class _CommunityTabState extends State<CommunityTab> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _editingController.dispose();
     super.dispose();
   }
 
   Future<void> deleteSuggestion(String suggestionId) async {
     try {
       await SuggestionService.deleteSuggestion(suggestionId);
+      showSnackBar(context, 'Suggestion deleted successfully');
       print('Suggestion deleted successfully');
-      // Optionally, update your UI state here (e.g., remove the suggestion from the list)
     } catch (e) {
       print("Error deleting Suggestion: $e");
+    }
+  }
+
+  Future<void> updateSuggestion(
+    TextEditingController suggestionController,
+    String suggestionId,
+  ) async {
+    try {
+      // if (updates.containsKey('applianceName')) {
+      //   updates['applianceName'] = toTitleCase(updates['applianceName']);
+      // }
+      await SuggestionService.editSuggestion(
+          context, suggestionController, suggestionId);
+      showSnackBar(context, 'Update Success');
+    } catch (e) {
+      showSnackBar(context, 'Appliance can only be updated once a month.');
+    }
+  }
+
+  Future<void> deleteUserSuggestion(String applianceId) async {
+    try {
+      await ApplianceService.deleteAppliance(applianceId);
+      print('Appliance deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
     }
   }
 
@@ -309,7 +373,6 @@ class _CommunityTabState extends State<CommunityTab> {
     }
   }
 
-
   Widget _content() {
     List<dynamic> sortedPosts = List.from(posts);
 
@@ -346,7 +409,8 @@ class _CommunityTabState extends State<CommunityTab> {
                   post['suggestions'].sort((a, b) {
                     DateTime? timeA = DateTime.tryParse(a['createdAt'] ?? '');
                     DateTime? timeB = DateTime.tryParse(b['createdAt'] ?? '');
-                    return (timeB ?? DateTime.now()).compareTo(timeA ?? DateTime.now());
+                    return (timeB ?? DateTime.now())
+                        .compareTo(timeA ?? DateTime.now());
                   });
                 }
 
@@ -372,9 +436,12 @@ class _CommunityTabState extends State<CommunityTab> {
                           constraints: const BoxConstraints(maxHeight: 200),
                           child: ScrollbarTheme(
                             data: ScrollbarThemeData(
-                              thumbColor: WidgetStateProperty.all(AppColors.primaryColor),
-                              trackColor: WidgetStateProperty.all(Colors.grey[300]),
-                              trackBorderColor: WidgetStateProperty.all(Colors.transparent),
+                              thumbColor: WidgetStateProperty.all(
+                                  AppColors.primaryColor),
+                              trackColor:
+                                  WidgetStateProperty.all(Colors.grey[300]),
+                              trackBorderColor:
+                                  WidgetStateProperty.all(Colors.transparent),
                               thickness: WidgetStateProperty.all(10),
                               radius: const Radius.circular(20),
                               thumbVisibility: WidgetStateProperty.all(true),
@@ -386,22 +453,29 @@ class _CommunityTabState extends State<CommunityTab> {
                                 shrinkWrap: true,
                                 itemCount: post['suggestions'].length,
                                 itemBuilder: (context, suggestionIndex) {
-                                  var suggestion = post['suggestions'][suggestionIndex] ?? "Suggestions";
+                                  var suggestion = post['suggestions']
+                                          [suggestionIndex] ??
+                                      "Suggestions";
                                   return Container(
-                                    padding: const EdgeInsets.only(left: 15, bottom: 5),
-                                    margin: const EdgeInsets.symmetric(vertical: 5),
+                                    padding: const EdgeInsets.only(
+                                        left: 15, bottom: 5),
+                                    margin:
+                                        const EdgeInsets.symmetric(vertical: 5),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(7.0),
-                                      border: Border.all(color: Colors.grey[300]!),
+                                      border:
+                                          Border.all(color: Colors.grey[300]!),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
                                             Text(
-                                              suggestion['suggestedBy'] ?? username,
+                                              suggestion['suggestedBy'] ??
+                                                  username,
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16.0,
@@ -410,16 +484,25 @@ class _CommunityTabState extends State<CommunityTab> {
                                             ),
                                             const Spacer(),
                                             Text(
-                                              _formatDateTime(suggestion['createdAt']),
+                                              _formatDateTime(
+                                                  suggestion['createdAt']),
                                               style: const TextStyle(
                                                 fontSize: 12.0,
                                                 color: Colors.grey,
                                               ),
                                             ),
                                             PopupMenuButton<String>(
-                                              icon: const Icon(Icons.more_horiz),
-                                              itemBuilder: (BuildContext context) {
-                                                return {'Edit', 'Delete'}
+                                              icon:
+                                                  const Icon(Icons.more_horiz),
+                                              itemBuilder:
+                                                  (BuildContext context) {
+                                                bool isOwner =
+                                                    suggestion['suggestedBy'] ==
+                                                        loggedUsername;
+                                                final options = isOwner
+                                                    ? {'Edit', 'Delete'}
+                                                    : {'Report'};
+                                                return options
                                                     .map((String choice) {
                                                   return PopupMenuItem<String>(
                                                     value: choice,
@@ -428,19 +511,110 @@ class _CommunityTabState extends State<CommunityTab> {
                                                 }).toList();
                                               },
                                               onSelected: (String value) async {
-                                                if (value == 'Delete') {
-                                                  _confirmDeleteSuggestion(index);
-                                                } else if (value == 'Edit') {
-                                                  // Handle edit logic here
-                                                  print('Edit tapped');
+                                                if (value == 'Edit') {
+                                                  _startEditing(
+                                                    suggestion['id'],
+                                                    suggestion[
+                                                        'suggestionText'],
+                                                  );
+                                                } else if (value == 'Delete') {
+                                                  _confirmDeleteAppliance(
+                                                      suggestion['id']);
+                                                  // deleteSuggestion(suggestion['id']);
+                                                  print(
+                                                      'Deleting suggestion ${suggestion['id']}');
+                                                } else if (value == 'Report') {
+                                                  print(
+                                                      'Reporting suggestion ${suggestion['id']}');
                                                 }
                                               },
                                             ),
                                           ],
                                         ),
                                         const SizedBox(height: 5.0),
+                                        if (editingSuggestionId ==
+                                            suggestion[
+                                                'id']) // Show TextField if editing
+                                          Column(
+                                            children: [
+                                              Container(
+                                                margin: const EdgeInsets.only(
+                                                    left: 10, right: 20),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          7.0),
+                                                  border: Border.all(
+                                                      color: Colors.grey[300]!),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    const Padding(
+                                                      padding: EdgeInsets.only(
+                                                          left: 10.0,
+                                                          right: 20),
+                                                      child: Image(
+                                                        image: AssetImage(
+                                                            'assets/suggestionImage.png'),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 5.0),
+                                                    Expanded(
+                                                      child: TextField(
+                                                        controller:
+                                                            _editingController,
+                                                        decoration:
+                                                            const InputDecoration(
+                                                          border:
+                                                              InputBorder.none,
+                                                          hintText:
+                                                              'Edit your suggestions...',
+                                                          hintStyle: TextStyle(
+                                                            color: Colors.grey,
+                                                            fontSize: 12.0,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Builder(builder: (context) {
+                                                      return IconButton(
+                                                        icon: const Icon(
+                                                          Icons.send_rounded,
+                                                          color:
+                                                              Color(0xFF1BBC9B),
+                                                          size: 24,
+                                                        ),
+                                                        onPressed: () async {
+                                                          _saveEditing(
+                                                              suggestion[
+                                                              'id']);
+
+                                                        }
+                                                      );
+                                                    }),
+                                                  ],
+                                                ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    editingSuggestionId = null;
+                                                  });
+                                                },
+                                                child: Text(
+                                                  'Cancel',
+                                                  style: TextStyle(
+                                                      color: Colors.grey[500]),
+                                                ),
+
+                                              ),
+                                            ],
+                                          ),
+                                        const SizedBox(height: 5.0),
                                         Text(
-                                          suggestion['suggestionText'] ?? "Text",
+                                          suggestion['suggestionText'] ??
+                                              "Text",
                                           style: const TextStyle(
                                             fontSize: 14.0,
                                             color: Colors.black,
@@ -462,6 +636,75 @@ class _CommunityTabState extends State<CommunityTab> {
           ],
         ),
       ),
+    );
+  }
+
+  void _confirmDeleteAppliance(String suggestionId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 16,
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.warning,
+                  color: AppColors.primaryColor,
+                  size: 50,
+                ),
+                const SizedBox(height: 20),
+                _popupTitle('Delete Suggestion?'),
+                const SizedBox(height: 10),
+                _popupDescription(
+                  'Are you sure you want to delete your suggestion? This cannot be undone.',
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        print('attempting to delete suggestion $suggestionId');
+                        await deleteSuggestion(suggestionId);
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontFamily: 'Montserrat',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -583,7 +826,6 @@ class _CommunityTabState extends State<CommunityTab> {
             Navigator.push(
               context,
               MaterialPageRoute(
-
                 builder: (context) => PostViewDialog(
                   post: post,
                   // suggestions: suggestions,
@@ -728,31 +970,6 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  // Future<void> fetchSuggestions(String postId) async {
-  //   setState(() {
-  //     isLoading = true;
-  //     error = null;
-  //   });
-  //
-  //   try {
-  //     final suggestionsData = await SuggestionService.getComments(postId);
-  //     setState(() {
-  //       suggestions = suggestionsData;
-  //       print(
-  //         'suggestions data loaded $suggestionsData',
-  //       );
-  //     });
-  //   } catch (e) {
-  //     print('Error: $e');
-  //     setState(() {
-  //       error = 'Failed to load suggestions. Please try again later.';
-  //     });
-  //   } finally {
-  //     setState(() {
-  //       isLoading = false;
-  //     });
-  //   }
-  // }
   Widget _popupTitle(String title) {
     return Text(
       title,
