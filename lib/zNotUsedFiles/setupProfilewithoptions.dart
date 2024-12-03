@@ -8,7 +8,8 @@ import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
+
+import '../EnergyManagement/Community/energy_effieciency_page.dart';
 
 class SetupProfile extends StatefulWidget {
   const SetupProfile({super.key});

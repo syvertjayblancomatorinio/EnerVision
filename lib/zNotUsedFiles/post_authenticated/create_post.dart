@@ -10,8 +10,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
 import '../../CommonWidgets/dialogs/error_dialog.dart';
+import '../../EnergyManagement/Community/energy_effieciency_page.dart';
 
 class ShareYourStoryPage extends StatefulWidget {
   @override

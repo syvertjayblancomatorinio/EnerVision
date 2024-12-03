@@ -1,23 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/energy_effieciency_page.dart';
-import 'package:supabase_project/EnergyPage/EnergyTracker/energy_tracker.dart';
-import 'package:supabase_project/EnergyPage/pie_chart.dart';
-import 'package:supabase_project/MainFolder/calculator.dart';
+import 'package:supabase_project/EnergyPage/offline_calculator_v2.dart';
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 import 'package:supabase_project/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
-import 'package:supabase_project/MyEnergyDiary/segmentPages/new_monthly.dart';
-import 'package:supabase_project/PreCode/community_guidelines.dart';
-import 'package:supabase_project/PreCode/micaella.dart';
 import 'package:supabase_project/Settings/app-settings-widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_project/StaticPages/anne_aircon.dart';
-
-import '../EnergyPage/EnergyTracker/energy_tracker_widget.dart';
-import '../EnergyPage/offline_calculator.dart';
-import '../EnergyPage/offline_calculator_v2.dart';
+import '../EnergyManagement/Community/energy_effieciency_page.dart';
 import '../MyEnergyDiary/carousel.dart';
-import '../PreCode/addSuggestion.dart';
 
 class BottomNavigation extends StatefulWidget {
   final int selectedIndex;
@@ -76,7 +65,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CarouselExampleApp(),
+            builder: (context) => const OfflineCalculatorV2(),
             // builder: (context) => EnergyPowerUsed(
             //   value: 'we',
             //   title: '23',

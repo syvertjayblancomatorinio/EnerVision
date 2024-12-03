@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/create_post.dart';
+import 'package:supabase_project/EnergyManagement/Community/create_post.dart';
 
 class Body extends StatelessWidget {
-  const Body({Key? key}) : super(key: key);
+  const Body({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class Body extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ShareYourStoryPage()),
+                  MaterialPageRoute(builder: (context) => CreatePostPage()),
                 );
               },
               style: ElevatedButton.styleFrom(

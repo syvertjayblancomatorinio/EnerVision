@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyEfficiency/Community/community_tab.dart';
 import 'package:supabase_project/PreCode/accountPage.dart';
-import 'package:supabase_project/PreCode/change_password.dart';
 import 'package:supabase_project/PreCode/community_guidelines.dart';
 import 'package:supabase_project/PreCode/micaella.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
-import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
 import '../ConstantTexts/Theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

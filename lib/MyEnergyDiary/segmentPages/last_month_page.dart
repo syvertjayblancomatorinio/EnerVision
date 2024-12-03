@@ -205,10 +205,34 @@ class _LastMonthPageState extends State<LastMonthPage> {
         ),
         const SizedBox(height: 40),
         bottomPart(),
-        const SizedBox(height: 100),
+        const SizedBox(height: 40),
         chart(),
-        const SizedBox(height: 50),
+        const SizedBox(height: 100),
       ],
+    );
+  }
+  Widget pieChartTitle() {
+    String formattedDate = DateFormat('MMMM yyyy').format(selectedDate);
+    return Container(
+      padding: const EdgeInsets.all(10),
+      color: AppColors.primaryColor,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'Summary |',
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            formattedDate,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ],
+      ),
     );
   }
 
@@ -218,52 +242,58 @@ class _LastMonthPageState extends State<LastMonthPage> {
           ? const Center(
           child: CircularProgressIndicator())
           : appliances.isEmpty
-          ? const Center(child: Text("No data available."))
+          ? const Center(child: Text(""))
           : SingleChildScrollView(
         child: Center(
           child: Column(
             children: [
               dataMap.isNotEmpty
-                  ? PieChart(
-                    dataMap: dataMap,
-                    animationDuration:
-                    const Duration(milliseconds: 500),
-                    chartLegendSpacing: 30,
-                    chartRadius:
-                    MediaQuery.of(context).size.width /
-                        1.5,
-                    colorList: colorList,
-                    initialAngleInDegree: 0,
-                    chartType: ChartType.disc,
-                    ringStrokeWidth: 32,
-                    centerWidget: Container(
-                      height: 60,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius:
-                        BorderRadius.circular(50),
+                  ? Column(
+                    children: [
+                      pieChartTitle(),
+                      const SizedBox(height: 80),
+                      PieChart(
+                        dataMap: dataMap,
+                        animationDuration:
+                        const Duration(milliseconds: 500),
+                        chartLegendSpacing: 30,
+                        chartRadius:
+                        MediaQuery.of(context).size.width /
+                            1.5,
+                        colorList: colorList,
+                        initialAngleInDegree: 0,
+                        chartType: ChartType.disc,
+                        ringStrokeWidth: 32,
+                        centerWidget: Container(
+                          height: 60,
+                          width: 60,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                            BorderRadius.circular(50),
+                          ),
+                        ),
+                        legendOptions: const LegendOptions(
+                          showLegendsInRow: false,
+                          legendPosition: LegendPosition.right,
+                          showLegends: true,
+                          legendShape: BoxShape.circle,
+                          legendTextStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        chartValuesOptions:
+                        const ChartValuesOptions(
+                          showChartValueBackground: false,
+                          chartValueStyle:
+                          TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w700),
+                          showChartValues: true,
+                          showChartValuesInPercentage: true,
+                          showChartValuesOutside: false,
+                          decimalPlaces: 1,
+                        ),
                       ),
-                    ),
-                    legendOptions: const LegendOptions(
-                      showLegendsInRow: false,
-                      legendPosition: LegendPosition.right,
-                      showLegends: true,
-                      legendShape: BoxShape.circle,
-                      legendTextStyle: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    chartValuesOptions:
-                    const ChartValuesOptions(
-                      showChartValueBackground: false,
-                      chartValueStyle:
-                      TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w700),
-                      showChartValues: true,
-                      showChartValuesInPercentage: true,
-                      showChartValuesOutside: false,
-                      decimalPlaces: 1,
-                    ),
+                    ],
                   )
                   : const Center(child: Text("No data to display")),
             ],
