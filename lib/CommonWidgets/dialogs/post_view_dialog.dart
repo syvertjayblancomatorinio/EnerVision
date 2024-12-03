@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../AuthService/auth_suggestions.dart';
 import '../../ConstantTexts/Theme.dart';
+import '../../ConstantTexts/colors.dart';
 import '../../EnergyManagement/Community/ellipse_icon.dart';
 import '../../EnergyManagement/Community/energy_effieciency_page.dart';
 import '../appbar-widget.dart';
@@ -160,14 +161,17 @@ class _PostViewDialogState extends State<PostViewDialog> {
         showProfile: false,
         title: '${widget.post['tags'] ?? 'N/A'}',
         onBackPressed: () {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const EnergyEfficiencyPage(
-                selectedIndex: 1,
-              ),
-            ),
-          );
+          Navigator.pop(context);
         },
+        // onBackPressed: () {
+        //   Navigator.of(context).pushReplacement(
+        //     MaterialPageRoute(
+        //       builder: (context) => const EnergyEfficiencyPage(
+        //         selectedIndex: 1,
+        //       ),
+        //     ),
+        //   );
+        // },
       ),
       body: SingleChildScrollView(
         child: Container(
@@ -197,6 +201,44 @@ class _PostViewDialogState extends State<PostViewDialog> {
   }
 
   Widget buildSuggestionsList() {
+    return suggestions.isNotEmpty
+        ? ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: 500),
+            child: ScrollbarTheme(
+              data: ScrollbarThemeData(
+                thumbColor: MaterialStateProperty.all(AppColors.primaryColor),
+                trackColor: MaterialStateProperty.all(Colors.grey[300]),
+                trackBorderColor: MaterialStateProperty.all(Colors.transparent),
+                thickness: MaterialStateProperty.all(5),
+                radius: const Radius.circular(20),
+                thumbVisibility: MaterialStateProperty.all(true),
+              ),
+              child: Scrollbar(
+                thumbVisibility: true,
+                controller: _scrollController,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: suggestions.length,
+                  itemBuilder: (context, index) {
+                    return SuggestionTile(
+                      suggestion: suggestions[index],
+                      onActionSelected: (action) async {
+                        if (action == 'Delete') {
+                          // Handle delete action
+                        } else if (action == 'Edit') {
+                          // Handle edit action
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          )
+        : const Text('No suggestions yet.');
+  }
+
+  Widget buildSuggestionsList1() {
     if (suggestions.isEmpty) {
       return const Text('No suggestions yet');
     }
@@ -667,6 +709,110 @@ class KeyValueRow extends StatelessWidget {
             style: const TextStyle(
               fontSize: 14,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class SuggestionTile extends StatelessWidget {
+  final Map<String, dynamic> suggestion;
+  final void Function(String) onActionSelected;
+
+  const SuggestionTile({
+    Key? key,
+    required this.suggestion,
+    required this.onActionSelected,
+  }) : super(key: key);
+  String _formatDateTime(String? createdAt) {
+    if (createdAt == null || createdAt.isEmpty) {
+      return "Unknown date";
+    }
+
+    try {
+      final DateTime dateTime = DateTime.parse(createdAt);
+      final DateTime now = DateTime.now();
+      final Duration difference = now.difference(dateTime);
+
+      if (difference.inMinutes < 60) {
+        return "${difference.inMinutes} minutes ago";
+      } else if (difference.inHours < 24) {
+        return "${difference.inHours} hours ago";
+      } else if (difference.inDays < 7) {
+        return "${difference.inDays} days ago";
+      } else {
+        // Format as "day month year" for older dates
+        return "${dateTime.day} ${_monthName(dateTime.month)} ${dateTime.year}";
+      }
+    } catch (e) {
+      print('Error parsing date: $e');
+      return "Invalid date";
+    }
+  }
+
+  String _monthName(int month) {
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ];
+    return months[month - 1];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                suggestion['suggestedBy'] ?? 'Unknown User',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.teal,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                _formatDateTime(suggestion['createdAt']),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_horiz),
+                itemBuilder: (_) => ['Edit', 'Delete']
+                    .map((action) => PopupMenuItem(
+                          value: action,
+                          child: Text(action),
+                        ))
+                    .toList(),
+                onSelected: onActionSelected,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            suggestion['suggestionText'] ?? 'No content provided.',
+            style: const TextStyle(fontSize: 14),
           ),
         ],
       ),

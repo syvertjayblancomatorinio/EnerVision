@@ -644,8 +644,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         );
       },
     );
-    print('attempting to edit appliace $appliance');
-
   }
 
   void _confirmDeleteAppliance(int index) {

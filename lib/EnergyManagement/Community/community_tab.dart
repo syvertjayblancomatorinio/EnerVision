@@ -19,6 +19,8 @@ import 'package:event_bus/event_bus.dart';
 import 'package:supabase_project/EnergyManagement/Community/top_bar.dart';
 
 import '../../AuthService/auth_appliances.dart';
+import '../../CommonWidgets/date_utils/date.dart';
+import '../../ConstantTexts/image.dart';
 import '../../zNotUsedFiles/post_authenticated/create_post.dart';
 import 'create_post.dart';
 import 'ellipse_icon.dart';
@@ -36,77 +38,54 @@ class CommunityTab extends StatefulWidget {
 }
 
 class _CommunityTabState extends State<CommunityTab> {
+
+// Controllers
   AppControllers controller = AppControllers();
-  final AppControllers controllers = AppControllers();
   final ScrollController _scrollController = ScrollController();
+
+// User-related state
+  String? userId;
+  String? username;
+  String loggedUsername = defaultLoggedUsername;
+  String? editingSuggestionId;
+
+// UI state booleans
   bool isLoading = false;
   bool showUsersPosts = false;
   bool isUserPost = false;
-  String placeholderImage = 'assets/image (6).png';
-  String? userId;
 
+// Other state
+  String placeholderImage = defaultPlaceholderImage;
+  String? error;
+
+// Index tracking
   int? activeSuggestionIndex;
   int? _tappedIndex;
   int? editingIndex;
 
-  String? username;
-  String postId = '';
-  String? error;
-
-  List<TextEditingController> editControllers = [];
-  List<Map<String, dynamic>> posts = [];
+// Data
+  late List<Map<String, dynamic>> posts = [];
   late List<Map<String, dynamic>> suggestions = [];
-
-  String? editingSuggestionId; // Tracks the ID of the suggestion being edited
-  TextEditingController _editingController = TextEditingController();
-
-  String _formatDateTime(String? createdAt) {
-    if (createdAt == null || createdAt.isEmpty) {
-      return "Unknown date";
-    }
-
-    try {
-      final DateTime dateTime = DateTime.parse(createdAt);
-      final DateTime now = DateTime.now();
-      final Duration difference = now.difference(dateTime);
-
-      if (difference.inMinutes < 60) {
-        return "${difference.inMinutes} minutes ago";
-      } else if (difference.inHours < 24) {
-        return "${difference.inHours} hours ago";
-      } else if (difference.inDays < 7) {
-        return "${difference.inDays} days ago";
-      } else {
-        // Format as "day month year" for older dates
-        return "${dateTime.day} ${_monthName(dateTime.month)} ${dateTime.year}";
-      }
-    } catch (e) {
-      print('Error parsing date: $e');
-      return "Invalid date";
-    }
-  }
 
   void _startEditing(String suggestionId, String currentText) {
     setState(() {
       editingSuggestionId = suggestionId;
-      _editingController.text = currentText;
+      controller.suggestionController.text = currentText;
     });
     print(suggestionId);
   }
 
   void _saveEditing(String suggestionId) {
     // Save the updated suggestion and clear the editing state
-    updateSuggestion(_editingController, suggestionId);
+    updateSuggestion(controller.suggestionController, suggestionId);
 
     print(
-        'Saving suggestion $suggestionId with text: ${_editingController.text}');
+        'Saving suggestion $suggestionId with text: ${controller.suggestionController.text}');
     setState(() {
       editingSuggestionId = null;
     });
   }
 
-
-  String loggedUsername = '[Username]';
   Future<void> _loadUsername() async {
     final prefs = await SharedPreferences.getInstance();
     final storedUsername = prefs.getString('username');
@@ -117,39 +96,22 @@ class _CommunityTabState extends State<CommunityTab> {
     });
   }
 
-  String _monthName(int month) {
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December"
-    ];
-    return months[month - 1];
-  }
 
   @override
   void initState() {
-    super.initState();
     getPosts();
     _loadUsername();
     //
     // eventBus.on<PostUpdatedEvent>().listen((event) {
     // getPostsFromApi();
     // });
+    super.initState();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _editingController.dispose();
+    controller.dispose();
     super.dispose();
   }
 
@@ -337,8 +299,9 @@ class _CommunityTabState extends State<CommunityTab> {
         }
       }
     } catch (e) {
-      print('Failed to fetch posts: $e');
-      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
+      getPostsFromApi();
+      // print('Failed to fetch posts: $e');
+      // showSnackBar(context, 'Failed to fetch posts. Please try again later.');
     } finally {
       setState(() {
         isLoading = false;
@@ -374,6 +337,16 @@ class _CommunityTabState extends State<CommunityTab> {
   }
 
   Widget _content() {
+    if (isLoading) {
+      // Prioritize showing the loading widget
+      return const Center(
+        child: LoadingWidget(
+          message: 'Getting Post',
+          color: AppColors.primaryColor,
+        ),
+      );
+    }
+
     List<dynamic> sortedPosts = List.from(posts);
 
     // Sort posts by `timeAgo` (latest to oldest)
@@ -383,258 +356,227 @@ class _CommunityTabState extends State<CommunityTab> {
       return (timeB ?? DateTime.now()).compareTo(timeA ?? DateTime.now());
     });
 
+    if (sortedPosts.isEmpty) {
+      return const Center(child: Body());
+    }
+
     return SizedBox(
       height: 520,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            if (isLoading)
-              const Center(
-                child: LoadingWidget(
-                  message: 'Getting Post',
-                  color: AppColors.primaryColor,
+      child: ListView.builder(
+        itemCount: sortedPosts.length,
+        itemBuilder: (context, index) {
+          var post = sortedPosts[index];
+
+          // Sort suggestions by `createdAt` (latest to oldest)
+          if (post['suggestions'] != null && post['suggestions'].isNotEmpty) {
+            post['suggestions'].sort((a, b) {
+              DateTime? timeA = DateTime.tryParse(a['createdAt'] ?? '');
+              DateTime? timeB = DateTime.tryParse(b['createdAt'] ?? '');
+              return (timeB ?? DateTime.now())
+                  .compareTo(timeA ?? DateTime.now());
+            });
+          }
+
+          return Container(
+            margin: const EdgeInsets.all(10.0),
+            decoration: greyBoxDecoration(),
+            child: Column(
+              children: [
+                _buildUserPost(
+                  post['username'] ?? 'Unknown User',
+                  post['title'] ?? 'No Title',
+                  post['description'] ?? 'No Description',
+                  post['timeAgo'] ?? 'Some time ago',
+                  post['tags'] ?? 'No tags',
+                  '',
+                  '',
+                  index,
                 ),
-              )
-            else if (sortedPosts.isEmpty)
-              const Center(child: Body())
-            else
-              ...sortedPosts.asMap().entries.map((entry) {
-                var post = entry.value;
-                int index = entry.key;
-
-                // Sort suggestions by `createdAt` (latest to oldest)
+                // Display suggestions for the current post
                 if (post['suggestions'] != null &&
-                    post['suggestions'].isNotEmpty) {
-                  post['suggestions'].sort((a, b) {
-                    DateTime? timeA = DateTime.tryParse(a['createdAt'] ?? '');
-                    DateTime? timeB = DateTime.tryParse(b['createdAt'] ?? '');
-                    return (timeB ?? DateTime.now())
-                        .compareTo(timeA ?? DateTime.now());
-                  });
-                }
-
-                return Container(
-                  margin: const EdgeInsets.all(10.0),
-                  decoration: greyBoxDecoration(),
-                  child: Column(
+                    post['suggestions'].isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    // mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      _buildUserPost(
-                        post['username'] ?? 'Unknown User',
-                        post['title'] ?? 'No Title',
-                        post['description'] ?? 'No Description',
-                        post['timeAgo'] ?? 'Some time ago',
-                        post['tags'] ?? 'No tags',
-                        '',
-                        '',
-                        index,
+                      const Padding(
+                        padding: EdgeInsets.only(top: 30, left: 10.0),
+                        child: Text(
+                          'Suggestions',
+                        ),
                       ),
-                      // Only show suggestions for the current post
-                      if (post['suggestions'] != null &&
-                          post['suggestions'].isNotEmpty)
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 200),
-                          child: ScrollbarTheme(
-                            data: ScrollbarThemeData(
-                              thumbColor: WidgetStateProperty.all(
-                                  AppColors.primaryColor),
-                              trackColor:
-                                  WidgetStateProperty.all(Colors.grey[300]),
-                              trackBorderColor:
-                                  WidgetStateProperty.all(Colors.transparent),
-                              thickness: WidgetStateProperty.all(10),
-                              radius: const Radius.circular(20),
-                              thumbVisibility: WidgetStateProperty.all(true),
-                            ),
-                            child: Scrollbar(
-                              thumbVisibility: true,
-                              controller: _scrollController,
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: post['suggestions'].length,
-                                itemBuilder: (context, suggestionIndex) {
-                                  var suggestion = post['suggestions']
-                                          [suggestionIndex] ??
-                                      "Suggestions";
-                                  return Container(
-                                    padding: const EdgeInsets.only(
-                                        left: 15, bottom: 5),
-                                    margin:
-                                        const EdgeInsets.symmetric(vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(7.0),
-                                      border:
-                                          Border.all(color: Colors.grey[300]!),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                              suggestion['suggestedBy'] ??
-                                                  username,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16.0,
-                                                color: Color(0xFF1BBC9B),
-                                              ),
-                                            ),
-                                            const Spacer(),
-                                            Text(
-                                              _formatDateTime(
-                                                  suggestion['createdAt']),
-                                              style: const TextStyle(
-                                                fontSize: 12.0,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                            PopupMenuButton<String>(
-                                              icon:
-                                                  const Icon(Icons.more_horiz),
-                                              itemBuilder:
-                                                  (BuildContext context) {
-                                                bool isOwner =
-                                                    suggestion['suggestedBy'] ==
-                                                        loggedUsername;
-                                                final options = isOwner
-                                                    ? {'Edit', 'Delete'}
-                                                    : {'Report'};
-                                                return options
-                                                    .map((String choice) {
-                                                  return PopupMenuItem<String>(
-                                                    value: choice,
-                                                    child: Text(choice),
-                                                  );
-                                                }).toList();
-                                              },
-                                              onSelected: (String value) async {
-                                                if (value == 'Edit') {
-                                                  _startEditing(
-                                                    suggestion['id'],
-                                                    suggestion[
-                                                        'suggestionText'],
-                                                  );
-                                                } else if (value == 'Delete') {
-                                                  _confirmDeleteAppliance(
-                                                      suggestion['id']);
-                                                  // deleteSuggestion(suggestion['id']);
-                                                  print(
-                                                      'Deleting suggestion ${suggestion['id']}');
-                                                } else if (value == 'Report') {
-                                                  print(
-                                                      'Reporting suggestion ${suggestion['id']}');
-                                                }
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5.0),
-                                        if (editingSuggestionId ==
-                                            suggestion[
-                                                'id']) // Show TextField if editing
-                                          Column(
-                                            children: [
-                                              Container(
-                                                margin: const EdgeInsets.only(
-                                                    left: 10, right: 20),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          7.0),
-                                                  border: Border.all(
-                                                      color: Colors.grey[300]!),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    const Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 10.0,
-                                                          right: 20),
-                                                      child: Image(
-                                                        image: AssetImage(
-                                                            'assets/suggestionImage.png'),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 5.0),
-                                                    Expanded(
-                                                      child: TextField(
-                                                        controller:
-                                                            _editingController,
-                                                        decoration:
-                                                            const InputDecoration(
-                                                          border:
-                                                              InputBorder.none,
-                                                          hintText:
-                                                              'Edit your suggestions...',
-                                                          hintStyle: TextStyle(
-                                                            color: Colors.grey,
-                                                            fontSize: 12.0,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    Builder(builder: (context) {
-                                                      return IconButton(
-                                                        icon: const Icon(
-                                                          Icons.send_rounded,
-                                                          color:
-                                                              Color(0xFF1BBC9B),
-                                                          size: 24,
-                                                        ),
-                                                        onPressed: () async {
-                                                          _saveEditing(
-                                                              suggestion[
-                                                              'id']);
-
-                                                        }
-                                                      );
-                                                    }),
-                                                  ],
-                                                ),
-                                              ),
-                                              TextButton(
-                                                onPressed: () {
-                                                  setState(() {
-                                                    editingSuggestionId = null;
-                                                  });
-                                                },
-                                                child: Text(
-                                                  'Cancel',
-                                                  style: TextStyle(
-                                                      color: Colors.grey[500]),
-                                                ),
-
-                                              ),
-                                            ],
-                                          ),
-                                        const SizedBox(height: 5.0),
-                                        Text(
-                                          suggestion['suggestionText'] ??
-                                              "Text",
-                                          style: const TextStyle(
-                                            fontSize: 14.0,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 5.0),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 220),
+                        child: ScrollbarTheme(
+                          data: ScrollbarThemeData(
+                            thumbColor: MaterialStateProperty.all(
+                                AppColors.primaryColor),
+                            trackColor:
+                                MaterialStateProperty.all(Colors.grey[300]),
+                            trackBorderColor:
+                                MaterialStateProperty.all(Colors.transparent),
+                            thickness: MaterialStateProperty.all(5),
+                            radius: const Radius.circular(20),
+                            thumbVisibility: MaterialStateProperty.all(true),
+                          ),
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            controller: _scrollController,
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: post['suggestions'].length,
+                              itemBuilder: (context, suggestionIndex) {
+                                var suggestion =
+                                    post['suggestions'][suggestionIndex] ?? {};
+                                return _buildSuggestionTile(
+                                  suggestion,
+                                  post['username'] ?? '',
+                                );
+                              },
                             ),
                           ),
                         ),
+                      ),
                     ],
                   ),
-                );
-              }),
-          ],
-        ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+// Helper function to build suggestion tile
+  Widget _buildSuggestionTile(
+      Map<String, dynamic> suggestion, String username) {
+    return Container(
+      padding: const EdgeInsets.only(left: 15, bottom: 5),
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(7.0),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                suggestion['suggestedBy'] ?? username,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16.0,
+                  color: Color(0xFF1BBC9B),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                formatDateTime(suggestion['createdAt']),
+                style: const TextStyle(
+                  fontSize: 12.0,
+                  color: Colors.grey,
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_horiz),
+                itemBuilder: (BuildContext context) {
+                  bool isOwner = suggestion['suggestedBy'] == loggedUsername;
+                  final options = isOwner ? {'Edit', 'Delete'} : {'Report'};
+                  return options.map((String choice) {
+                    return PopupMenuItem<String>(
+                      value: choice,
+                      child: Text(choice),
+                    );
+                  }).toList();
+                },
+                onSelected: (String value) async {
+                  if (value == 'Edit') {
+                    _startEditing(
+                      suggestion['id'],
+                      suggestion['suggestionText'],
+                    );
+                  } else if (value == 'Delete') {
+                    _confirmDeleteAppliance(suggestion['id']);
+                    print('Deleting suggestion ${suggestion['id']}');
+                  } else if (value == 'Report') {
+                    print('Reporting suggestion ${suggestion['id']}');
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 5.0),
+          if (editingSuggestionId ==
+              suggestion['id']) // Show TextField if editing
+            Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(left: 10, right: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(7.0),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Row(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 10.0, right: 20),
+                        child: Image(
+                          image: AssetImage('assets/suggestionImage.png'),
+                        ),
+                      ),
+                      const SizedBox(width: 5.0),
+                      Expanded(
+                        child: TextField(
+                          controller: controller.suggestionController,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Edit your suggestions...',
+                            hintStyle: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.send_rounded,
+                          color: Color(0xFF1BBC9B),
+                          size: 24,
+                        ),
+                        onPressed: () async {
+                          _saveEditing(suggestion['id']);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      editingSuggestionId = null;
+                    });
+                  },
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey[500]),
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(height: 5.0),
+          Text(
+            suggestion['suggestionText'] ?? "Text",
+            style: const TextStyle(
+              fontSize: 14.0,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 5.0),
+        ],
       ),
     );
   }
@@ -840,70 +782,12 @@ class _CommunityTabState extends State<CommunityTab> {
               borderRadius: BorderRadius.circular(20.0),
             ),
           ),
-          child: Text(
+          child: const Text(
             'Add Suggestions',
           ),
         )
       ],
     );
-    // return Row(
-    //   children: [
-    //     Row(
-    //       children: List.generate(3, (index) {
-    //         return Padding(
-    //           padding: const EdgeInsets.symmetric(horizontal: 3.0),
-    //           child: CircleAvatar(
-    //             radius: 10.0,
-    //             backgroundImage: NetworkImage(validProfileImageUrl),
-    //             child: ClipOval(
-    //               child: Image.network(
-    //                 validProfileImageUrl,
-    //                 width: 20.0,
-    //                 height: 20.0,
-    //                 fit: BoxFit.cover,
-    //                 errorBuilder: (BuildContext context, Object error,
-    //                     StackTrace? stackTrace) {
-    //                   return Image.asset(
-    //                     placeholderImage,
-    //                     fit: BoxFit.cover,
-    //                   );
-    //                 },
-    //               ),
-    //             ),
-    //           ),
-    //         );
-    //       }),
-    //     ),
-    //     const Spacer(),
-    //     ElevatedButton(
-    //       onPressed: () {
-    //         if (_tappedIndex == index) {
-    //           setState(() {
-    //             _tappedIndex = null;
-    //           });
-    //         } else {
-    //           setState(() {
-    //             // postId = post['id'];
-    //             // postId = post['id'] ?? post['_id'];
-    //             print('Attempting: $postId');
-    //             //
-    //             // fetchSuggestions(postId);
-    //             _tappedIndex = index;
-    //           });
-    //         }
-    //       },
-    //       style: ElevatedButton.styleFrom(
-    //         backgroundColor: const Color(0xFF1BBC9B),
-    //         shape: RoundedRectangleBorder(
-    //           borderRadius: BorderRadius.circular(20.0),
-    //         ),
-    //       ),
-    //       child: Text(
-    //         _tappedIndex == index ? 'Hide Suggestions' : 'Add Suggestions',
-    //       ),
-    //     )
-    //   ],
-    // );
   }
 
   Widget _buildSuggestionTextField(int index) {
@@ -958,7 +842,6 @@ class _CommunityTabState extends State<CommunityTab> {
                       posts: posts,
                       index: index,
                     );
-                    await fetchSuggestions(postId);
                   },
                 ),
               ],
@@ -1221,7 +1104,7 @@ class _CommunityTabState extends State<CommunityTab> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CreatePostPage()),
+                MaterialPageRoute(builder: (context) => const CreatePostPage()),
               );
             },
             child: const Text('Create a new post'),
