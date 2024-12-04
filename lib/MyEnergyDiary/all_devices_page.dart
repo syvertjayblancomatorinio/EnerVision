@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
+import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kwh.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
@@ -304,7 +305,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       return;
     }
     final url = Uri.parse(
-        "http://10.0.2.2:8080/getAllUsersAppliances/$userId/appliances");
+        "${ApiConfig.baseUrl}/getAllUsersAppliances/$userId/appliances");
     final response = await http.get(url, headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     });
@@ -342,7 +343,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
   }
 
   Future<void> addAppliance() async {
-    final url = Uri.parse("http://10.0.2.2:8080/addApplianceNewLogic");
+    final url = Uri.parse("${ApiConfig.baseUrl}/addApplianceNewLogic");
     String applianceName = toTitleCase(
       controllers.addApplianceNameController.text.trim(),
     );
@@ -394,7 +395,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     Future<void> fetchProviders() async {
       try {
         final response =
-        await http.get(Uri.parse('http://10.0.2.2:8080/api/providers'));
+        await http.get(Uri.parse('${ApiConfig.baseUrl}/api/providers'));
         if (response.statusCode == 200) {
           final List<dynamic> providerList = json.decode(response.body);
           print('Energy providers fetched from MongoDB:');

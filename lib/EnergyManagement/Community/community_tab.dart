@@ -38,7 +38,6 @@ class CommunityTab extends StatefulWidget {
 }
 
 class _CommunityTabState extends State<CommunityTab> {
-
 // Controllers
   AppControllers controller = AppControllers();
   final ScrollController _scrollController = ScrollController();
@@ -67,36 +66,6 @@ class _CommunityTabState extends State<CommunityTab> {
   late List<Map<String, dynamic>> posts = [];
   late List<Map<String, dynamic>> suggestions = [];
 
-  void _startEditing(String suggestionId, String currentText) {
-    setState(() {
-      editingSuggestionId = suggestionId;
-      controller.suggestionController.text = currentText;
-    });
-    print(suggestionId);
-  }
-
-  void _saveEditing(String suggestionId) {
-    // Save the updated suggestion and clear the editing state
-    updateSuggestion(controller.suggestionController, suggestionId);
-
-    print(
-        'Saving suggestion $suggestionId with text: ${controller.suggestionController.text}');
-    setState(() {
-      editingSuggestionId = null;
-    });
-  }
-
-  Future<void> _loadUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedUsername = prefs.getString('username');
-
-    setState(() {
-      loggedUsername = storedUsername ?? '[Username]';
-      print('bilat $loggedUsername');
-    });
-  }
-
-
   @override
   void initState() {
     getPosts();
@@ -113,41 +82,6 @@ class _CommunityTabState extends State<CommunityTab> {
     _scrollController.dispose();
     controller.dispose();
     super.dispose();
-  }
-
-  Future<void> deleteSuggestion(String suggestionId) async {
-    try {
-      await SuggestionService.deleteSuggestion(suggestionId);
-      showSnackBar(context, 'Suggestion deleted successfully');
-      print('Suggestion deleted successfully');
-    } catch (e) {
-      print("Error deleting Suggestion: $e");
-    }
-  }
-
-  Future<void> updateSuggestion(
-    TextEditingController suggestionController,
-    String suggestionId,
-  ) async {
-    try {
-      // if (updates.containsKey('applianceName')) {
-      //   updates['applianceName'] = toTitleCase(updates['applianceName']);
-      // }
-      await SuggestionService.editSuggestion(
-          context, suggestionController, suggestionId);
-      showSnackBar(context, 'Update Success');
-    } catch (e) {
-      showSnackBar(context, 'Appliance can only be updated once a month.');
-    }
-  }
-
-  Future<void> deleteUserSuggestion(String applianceId) async {
-    try {
-      await ApplianceService.deleteAppliance(applianceId);
-      print('Appliance deleted successfully');
-    } catch (e) {
-      print('Error deleting appliance: $e');
-    }
   }
 
   @override
@@ -191,151 +125,6 @@ class _CommunityTabState extends State<CommunityTab> {
     );
   }
 
-  Future<void> getPostsFromApi() async {
-    setState(() {
-      isLoading = true;
-    });
-    try {
-      // Fetch posts directly from the API
-      final List<Map<String, dynamic>>? fetchedPosts =
-          await PostsService.getPosts();
-      showSnackBar(context, 'Fetched posts from Api');
-      print('Fetched all posts: $fetchedPosts');
-
-      if (fetchedPosts != null && fetchedPosts.isNotEmpty) {
-        setState(() {
-          posts = fetchedPosts;
-        });
-
-        // Optionally, save the posts in Hive for future use
-        var box = await Hive.openBox('postsBox');
-        await box.put('allPosts', fetchedPosts);
-
-        // Fetch suggestions for each post (only if 'id' is not null)
-        for (var post in fetchedPosts) {
-          String? postId = post['id']; // Assuming the post has an 'id' field
-
-          if (postId != null) {
-            // Fetch suggestions for each post with a valid 'id'
-            await fetchSuggestions(postId);
-          } else {
-            print('Skipping post with null id');
-          }
-        }
-      } else {
-        throw Exception('No posts found or invalid post data format.');
-      }
-    } catch (e) {
-      print('Failed to fetch posts: $e');
-      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> getPosts() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      // Attempt to load posts from Hive (cached posts)
-      List<Map<String, dynamic>> postsFromHive =
-          await PostsService.getPostsFromHive();
-      showSnackBar(context, 'Fetched posts from Hive');
-
-      print('Fetched all from hive: $postsFromHive');
-
-      // If no posts exist in Hive, fetch from API
-      if (postsFromHive.isEmpty) {
-        final List<Map<String, dynamic>>? fetchedPosts =
-            await PostsService.getPosts();
-        print('Fetched all posts: $fetchedPosts');
-        // showSnackBar(context, 'Fetched posts from API');
-
-        if (fetchedPosts != null && fetchedPosts.isNotEmpty) {
-          setState(() {
-            posts = fetchedPosts;
-          });
-
-          // Save the fetched posts in Hive for future use
-          var box = await Hive.openBox('postsBox');
-          await box.clear(); // Clear previous posts if necessary
-
-          for (var post in fetchedPosts) {
-            await box.put(post['id'], post); // Each post saved under its own ID
-          }
-
-          // Fetch suggestions for each post (only if 'id' is not null)
-          for (var post in fetchedPosts) {
-            String? postId = post['id']; // Assuming the post has an 'id' field
-
-            if (postId != null) {
-              await fetchSuggestions(postId);
-            } else {
-              print('Skipping post with null id');
-            }
-          }
-        } else {
-          throw Exception('Invalid post data format.');
-        }
-      } else {
-        setState(() {
-          posts = postsFromHive;
-        });
-
-        // Fetch suggestions for each post (only if 'id' is not null)
-        for (var post in postsFromHive) {
-          String? postId = post['id']; // Assuming the post has an 'id' field
-
-          if (postId != null) {
-            // Fetch suggestions for each post with a valid 'id'
-            await fetchSuggestions(postId);
-          } else {
-            print('Skipping post with null id');
-          }
-        }
-      }
-    } catch (e) {
-      getPostsFromApi();
-      // print('Failed to fetch posts: $e');
-      // showSnackBar(context, 'Failed to fetch posts. Please try again later.');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> fetchSuggestions(String postId) async {
-    setState(() {
-      isLoading = true;
-      error = null;
-    });
-
-    try {
-      final suggestionsData = await SuggestionService.getComments(postId);
-      setState(() {
-        suggestions = suggestionsData;
-        print(
-          'Suggestions data loaded for post $postId: $suggestionsData',
-        );
-      });
-    } catch (e) {
-      print('Error: $e');
-      setState(() {
-        error =
-            'Failed to load suggestions for post $postId. Please try again later.';
-      });
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
   Widget _content() {
     if (isLoading) {
       // Prioritize showing the loading widget
@@ -359,92 +148,96 @@ class _CommunityTabState extends State<CommunityTab> {
     if (sortedPosts.isEmpty) {
       return const Center(child: Body());
     }
+    if (sortedPosts.isNotEmpty){
+      isLoading = false;
+      return SizedBox(
+        height: 520,
+        child: ListView.builder(
+          itemCount: sortedPosts.length,
+          itemBuilder: (context, index) {
+            var post = sortedPosts[index];
 
-    return SizedBox(
-      height: 520,
-      child: ListView.builder(
-        itemCount: sortedPosts.length,
-        itemBuilder: (context, index) {
-          var post = sortedPosts[index];
+            // Sort suggestions by `createdAt` (latest to oldest)
+            if (post['suggestions'] != null && post['suggestions'].isNotEmpty) {
+              post['suggestions'].sort((a, b) {
+                DateTime? timeA = DateTime.tryParse(a['createdAt'] ?? '');
+                DateTime? timeB = DateTime.tryParse(b['createdAt'] ?? '');
+                return (timeB ?? DateTime.now())
+                    .compareTo(timeA ?? DateTime.now());
+              });
+            }
 
-          // Sort suggestions by `createdAt` (latest to oldest)
-          if (post['suggestions'] != null && post['suggestions'].isNotEmpty) {
-            post['suggestions'].sort((a, b) {
-              DateTime? timeA = DateTime.tryParse(a['createdAt'] ?? '');
-              DateTime? timeB = DateTime.tryParse(b['createdAt'] ?? '');
-              return (timeB ?? DateTime.now())
-                  .compareTo(timeA ?? DateTime.now());
-            });
-          }
-
-          return Container(
-            margin: const EdgeInsets.all(10.0),
-            decoration: greyBoxDecoration(),
-            child: Column(
-              children: [
-                _buildUserPost(
-                  post['username'] ?? 'Unknown User',
-                  post['title'] ?? 'No Title',
-                  post['description'] ?? 'No Description',
-                  post['timeAgo'] ?? 'Some time ago',
-                  post['tags'] ?? 'No tags',
-                  '',
-                  '',
-                  index,
-                ),
-                // Display suggestions for the current post
-                if (post['suggestions'] != null &&
-                    post['suggestions'].isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    // mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 30, left: 10.0),
-                        child: Text(
-                          'Suggestions',
-                        ),
-                      ),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 220),
-                        child: ScrollbarTheme(
-                          data: ScrollbarThemeData(
-                            thumbColor: MaterialStateProperty.all(
-                                AppColors.primaryColor),
-                            trackColor:
-                                MaterialStateProperty.all(Colors.grey[300]),
-                            trackBorderColor:
-                                MaterialStateProperty.all(Colors.transparent),
-                            thickness: MaterialStateProperty.all(5),
-                            radius: const Radius.circular(20),
-                            thumbVisibility: MaterialStateProperty.all(true),
+            return Container(
+              margin: const EdgeInsets.all(10.0),
+              decoration: greyBoxDecoration(),
+              child: Column(
+                children: [
+                  _buildUserPost(
+                    post['username'] ?? 'Unknown User',
+                    post['title'] ?? 'No Title',
+                    post['description'] ?? 'No Description',
+                    post['timeAgo'] ?? 'Some time ago',
+                    post['tags'] ?? 'No tags',
+                    '',
+                    '',
+                    index,
+                  ),
+                  // Display suggestions for the current post
+                  if (post['suggestions'] != null &&
+                      post['suggestions'].isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      // mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 30, left: 10.0),
+                          child: Text(
+                            'Suggestions',
                           ),
-                          child: Scrollbar(
-                            thumbVisibility: true,
-                            controller: _scrollController,
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: post['suggestions'].length,
-                              itemBuilder: (context, suggestionIndex) {
-                                var suggestion =
-                                    post['suggestions'][suggestionIndex] ?? {};
-                                return _buildSuggestionTile(
-                                  suggestion,
-                                  post['username'] ?? '',
-                                );
-                              },
+                        ),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 220),
+                          child: ScrollbarTheme(
+                            data: ScrollbarThemeData(
+                              thumbColor: MaterialStateProperty.all(
+                                  AppColors.primaryColor),
+                              trackColor:
+                              MaterialStateProperty.all(Colors.grey[300]),
+                              trackBorderColor:
+                              MaterialStateProperty.all(Colors.transparent),
+                              thickness: MaterialStateProperty.all(5),
+                              radius: const Radius.circular(20),
+                              thumbVisibility: MaterialStateProperty.all(true),
+                            ),
+                            child: Scrollbar(
+                              thumbVisibility: true,
+                              controller: _scrollController,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: post['suggestions'].length,
+                                itemBuilder: (context, suggestionIndex) {
+                                  var suggestion =
+                                      post['suggestions'][suggestionIndex] ??
+                                          {};
+                                  return _buildSuggestionTile(
+                                    suggestion,
+                                    post['username'] ?? '',
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
+                      ],
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+  }
+    return Container();
   }
 
 // Helper function to build suggestion tile
@@ -875,6 +668,275 @@ class _CommunityTabState extends State<CommunityTab> {
         fontFamily: 'Montserrat',
       ),
     );
+  }
+  Future<void> getPostsFromApi() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Load cached posts from Hive first
+      List<Map<String, dynamic>> cachedPosts = await PostsService.getPostsFromHive();
+
+      if (cachedPosts.isNotEmpty) {
+        setState(() {
+          posts = cachedPosts;
+        });
+      }
+
+      // Fetch posts from API in batches
+      await fetchPostsInBatches();
+
+      // Optionally, save all fetched posts to Hive for later use
+      var box = await Hive.openBox('postsBox');
+      await box.clear(); // Optional: Clear previous cache
+      for (var post in posts) {
+        await box.put(post['id'], post);
+      }
+    } catch (e) {
+      print('Failed to fetch posts: $e');
+      showSnackBar(context, 'Failed to fetch posts. Please try again later.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> fetchPostsInBatches({int batchSize = 2}) async {
+    // Fetch posts in smaller batches from the API
+    setState(() {
+      isLoading = true;  // Start the loading state when fetching begins
+    });
+
+    final List<Map<String, dynamic>>? fetchedPosts = await PostsService.getPosts();
+    if (fetchedPosts != null && fetchedPosts.isNotEmpty) {
+      for (int i = 0; i < fetchedPosts.length; i += batchSize) {
+        setState(() {
+          posts.addAll(fetchedPosts.sublist(
+            i,
+            (i + batchSize) > fetchedPosts.length
+                ? fetchedPosts.length
+                : (i + batchSize),
+          ));
+        });
+
+        // Allow the UI to update before continuing to the next batch
+        await Future.delayed(const Duration(milliseconds: 200)); // Simulate async delay
+      }
+    }
+
+    // After all batches are processed, stop the loading state
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  // Future<void> getPosts() async {
+  //   setState(() {
+  //     isLoading = true;
+  //   });
+  //
+  //   try {
+  //     // Attempt to load posts from Hive (cached posts)
+  //     List<Map<String, dynamic>> postsFromHive =
+  //         await PostsService.getPostsFromHive();
+  //     showSnackBar(context, 'Fetched posts from Hive');
+  //
+  //     print('Fetched all from hive: $postsFromHive');
+  //
+  //     if (postsFromHive.isEmpty) {
+  //       await fetchPostsInBatches(batchSize: 2);
+  //
+  //       if (posts.isNotEmpty) {
+  //         var box = await Hive.openBox('postsBox');
+  //         await box.clear(); // Clear previous posts if necessary
+  //
+  //         for (var post in posts) {
+  //           await box.put(post['id'] ?? post['_id'], post);
+  //         }
+  //
+  //         for (var post in posts) {
+  //           String? postId = post['id'] ?? post['_id'];
+  //
+  //           if (postId != null) {
+  //             await fetchSuggestions(postId);
+  //           } else {
+  //             print('Skipping post with null id');
+  //           }
+  //         }
+  //       } else {
+  //         throw Exception('Invalid post data format.');
+  //       }
+  //     } else {
+  //       setState(() {
+  //         posts = postsFromHive;
+  //       });
+  //
+  //       // Fetch suggestions for each post (only if 'id' is not null)
+  //       for (var post in postsFromHive) {
+  //         String? postId =
+  //             post['id'] ?? post['_id']; // Assuming the post has an 'id' field
+  //
+  //         if (postId != null) {
+  //           // Fetch suggestions for each post with a valid 'id'
+  //           await fetchSuggestions(postId);
+  //         } else {
+  //           print('Skipping post with null id');
+  //         }
+  //       }
+  //     }
+  //   } catch (e) {
+  //     getPostsFromApi();
+  //   } finally {
+  //     setState(() {
+  //       isLoading = false;
+  //     });
+  //   }
+  // }
+  Future<void> getPosts() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Load cached posts from Hive first
+      List<Map<String, dynamic>> cachedPosts = await PostsService.getPostsFromHive();
+
+      if (cachedPosts.isNotEmpty) {
+        setState(() {
+          posts = cachedPosts;
+        });
+      }
+
+      // Fetch posts from API incrementally
+      await fetchPostsInBatches();
+
+      // Save all fetched posts to Hive for later use
+      var box = await Hive.openBox('postsBox');
+      await box.clear(); // Optional: Clear previous cache
+      for (var post in posts) {
+        await box.put(post['id'], post);
+      }
+    } catch (e) {
+      debugPrint('Error fetching posts: $e');
+      showSnackBar(context, 'Failed to load posts. Try again later.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+
+  // Future<void> fetchSuggestions(String postId) async {
+  //   try {
+  //     final List<Map<String, dynamic>>? suggestions = await PostsService.getSuggestions(postId);
+  //
+  //     if (suggestions != null && suggestions.isNotEmpty) {
+  //       setState(() {
+  //         posts = posts.map((post) {
+  //           if (post['id'] == postId) {
+  //             post['suggestions'] = suggestions;
+  //           }
+  //           return post;
+  //         }).toList();
+  //       });
+  //     }
+  //   } catch (e) {
+  //     debugPrint('Failed to fetch suggestions for post $postId: $e');
+  //   }
+  // }
+
+  Future<void> fetchSuggestions(String postId) async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      final suggestionsData = await SuggestionService.getComments(postId);
+      setState(() {
+        suggestions = suggestionsData;
+        print(
+          'Suggestions data loaded for post $postId: $suggestionsData',
+        );
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        error =
+            'Failed to load suggestions for post $postId. Please try again later.';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> deleteSuggestion(String suggestionId) async {
+    try {
+      await SuggestionService.deleteSuggestion(suggestionId);
+      showSnackBar(context, 'Suggestion deleted successfully');
+      print('Suggestion deleted successfully');
+    } catch (e) {
+      print("Error deleting Suggestion: $e");
+    }
+  }
+
+  Future<void> updateSuggestion(
+    TextEditingController suggestionController,
+    String suggestionId,
+  ) async {
+    try {
+      // if (updates.containsKey('applianceName')) {
+      //   updates['applianceName'] = toTitleCase(updates['applianceName']);
+      // }
+      await SuggestionService.editSuggestion(
+          context, suggestionController, suggestionId);
+      showSnackBar(context, 'Update Success');
+    } catch (e) {
+      showSnackBar(context, 'Appliance can only be updated once a month.');
+    }
+  }
+
+  void _startEditing(String suggestionId, String currentText) {
+    setState(() {
+      editingSuggestionId = suggestionId;
+      controller.suggestionController.text = currentText;
+    });
+    print(suggestionId);
+  }
+
+  void _saveEditing(String suggestionId) {
+    // Save the updated suggestion and clear the editing state
+    updateSuggestion(controller.suggestionController, suggestionId);
+
+    print(
+        'Saving suggestion $suggestionId with text: ${controller.suggestionController.text}');
+    setState(() {
+      editingSuggestionId = null;
+    });
+  }
+
+  Future<void> _loadUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedUsername = prefs.getString('username');
+
+    setState(() {
+      loggedUsername = storedUsername ?? '[Username]';
+      print('bilat $loggedUsername');
+    });
+  }
+
+  Future<void> deleteUserSuggestion(String applianceId) async {
+    try {
+      await ApplianceService.deleteAppliance(applianceId);
+      print('Appliance deleted successfully');
+    } catch (e) {
+      print('Error deleting appliance: $e');
+    }
   }
 
   void _confirmDeleteSuggestion(int index) {

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:country_picker/country_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
@@ -77,7 +78,7 @@ class _SetupProfileState extends State<SetupProfile> {
     }
     String? token = await getToken();
 
-    final url = Uri.parse("http://10.0.2.2:8080/updateUserProfile");
+    final url = Uri.parse("${ApiConfig.baseUrl}/updateUserProfile");
     if (token != null) {
       try {
         String fullName = toTitleCase(_nameController.text.trim());
