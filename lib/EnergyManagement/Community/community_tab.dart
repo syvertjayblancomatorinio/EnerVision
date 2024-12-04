@@ -395,10 +395,10 @@ class _CommunityTabState extends State<CommunityTab> {
                   size: 50,
                 ),
                 const SizedBox(height: 20),
-                _popupTitle('Delete Suggestion?'),
+                _popupTitle('Are you sure you want to delete this suggestion?'),
                 const SizedBox(height: 10),
                 _popupDescription(
-                  'Are you sure you want to delete your suggestion? This cannot be undone.',
+                  'This action cannot be undone.',
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -647,13 +647,17 @@ class _CommunityTabState extends State<CommunityTab> {
   }
 
   Widget _popupTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.black,
-        fontFamily: 'Montserrat',
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+          fontFamily: 'Montserrat',
+        ),
       ),
     );
   }
