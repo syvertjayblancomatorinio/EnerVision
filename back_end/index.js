@@ -21,8 +21,8 @@ app.use(express.json()); // Middleware to parse JSON
 
 
 mongoose.connect(
-// process.env.MONGO_URI
-"mongodb://localhost:27017/enervision"
+process.env.MONGO_URI
+// "mongodb://localhost:27017/enervision"
 ).then(() => {
   console.log('Connected to MongoDB');
   console.log("MONGO_URI:", process.env.MONGO_URI); // Should show the Mongo URI

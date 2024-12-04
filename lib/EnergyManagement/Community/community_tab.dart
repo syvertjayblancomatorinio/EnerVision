@@ -543,7 +543,7 @@ class _CommunityTabState extends State<CommunityTab> {
                       ),
                       IconButton(
                         icon: const Icon(
-                          Icons.send_rounded,
+                          Icons.check,
                           color: Color(0xFF1BBC9B),
                           size: 24,
                         ),
@@ -1081,13 +1081,12 @@ class _CommunityTabState extends State<CommunityTab> {
     setState(() {
       showUsersPosts = !showUsersPosts;
 
-      // Clear previous posts to prevent data mixing
-      posts.clear(); // Assuming `posts` is your list of posts being displayed
+      posts.clear();
 
       if (showUsersPosts) {
-        getUsersPost(); // Fetch posts for the logged-in user
+        getUsersPost();
       } else {
-        getPosts(); // Fetch all posts
+        getPosts();
       }
     });
   }
