@@ -9,6 +9,7 @@ import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:pie_chart/pie_chart.dart';
 
 import '../../AuthService/base_url.dart';
+import '../../CommonWidgets/box_decorations.dart';
 import '../../CommonWidgets/dialogs/general_dialog.dart';
 import '../../CommonWidgets/dialogs/loading_animation.dart';
 import '../carousel.dart';
@@ -32,6 +33,12 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
   bool isLoading = false;
   Map<String, double> dataMap = {};
   final now = DateTime.now();
+  final ScrollController _scrollController = ScrollController();
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -75,7 +82,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         double othersCost = 0.0;
 
         // Add top 8 appliances to the dataMaps
-        for (int i = 0; i < 4 && i < appliances.length; i++) {
+        for (int i = 0; i < 5 && i < appliances.length; i++) {
           var appliance = appliances[i];
           if (appliance["monthlyCost"] != null &&
               appliance["applianceName"] != null) {
@@ -87,8 +94,8 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         }
 
         // Sum the monthly costs of the remaining appliances and assign to "Others"
-        if (appliances.length > 8) {
-          for (int i = 8; i < appliances.length; i++) {
+        if (appliances.length > 5) {
+          for (int i = 5; i < appliances.length; i++) {
             var appliance = appliances[i];
             if (appliance["monthlyCost"] != null) {
               othersCost += (appliance["monthlyCost"] is int
@@ -227,31 +234,50 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          const SizedBox(height: 20),
-          Container(
-            // padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 20),
-                const Text(
-                  'Home Usage',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Column(
+            children: <Widget>[
+              const SizedBox(height: 20),
+              Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Home Usage',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Center(child: content()),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                Center(child: content()),
-              ],
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          bottom: 60.0,
+          right: 20.0,
+          child: ElevatedButton(
+            onPressed: () {
+              showPieChartDialog(context);
+            },
+            style: ElevatedButton.styleFrom(
+              shape: const CircleBorder(),
+              padding: const EdgeInsets.all(20),
+            ),
+            child: const Icon(
+              Icons.pie_chart,
+              size: 30,
+              color: Colors.white,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -259,9 +285,9 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     if (isLoading) {
       return const Center(
           child: LoadingWidget(
-            message: 'Fetching my appliances',
-            color: AppColors.primaryColor,
-          ));
+        message: 'Fetching my appliances',
+        color: AppColors.primaryColor,
+      ));
     } else if (appliances.isEmpty) {
       return Container(
         height: 450,
@@ -274,37 +300,30 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         ),
       );
     } else {
-      return SingleChildScrollView(
-        child: Column(
-          children: [
-            // Carousel at the top
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 520),
-              child: CarouselView(
-                itemExtent: 500,
-                shrinkExtent: 500,
+      return Stack(
+        children: [
+          SingleChildScrollView(
+            controller: _scrollController,
+
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 40),
+
+              child: Column(
                 children: [
-                  chart(),
-                  Column(
-                    children: [
-                      pieChartTitle(),
-                      appliancesContent(),
-                    ],
+                  // Separate scrollable container for allAppliances
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: allAppliances(),
                   ),
+
                 ],
               ),
             ),
-            // Separate scrollable container for allAppliances
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: allAppliances(),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
     }
   }
-
 
   Widget allAppliances() {
     return Expanded(
@@ -338,103 +357,72 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     );
   }
 
+
   Widget chart() {
     return SafeArea(
       child: isLoading
-          ? const Center(
-              child: CircularProgressIndicator()) // Show loading indicator
+          ? const Center(child: CircularProgressIndicator())
           : appliances.isEmpty
-              ? const Center(child: Text("No data available."))
-              : SingleChildScrollView(
-                  child: Center(
-                    child: Column(
-                      children: [
-                        dataMap.isNotEmpty
-                            ? Column(
-                                children: [
-                                  pieChartTitle(),
-                                  SizedBox(
-                                    height: MediaQuery.of(context).size.height * 0.15,
-                                  ),
-
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20),
-                                    child: PieChart(
-                                      dataMap: dataMap,
-                                      animationDuration:
-                                          const Duration(milliseconds: 500),
-                                      chartLegendSpacing: 30,
-                                      chartRadius:
-                                          MediaQuery.of(context).size.width /
-                                              1.5,
-                                      colorList: colorList,
-                                      initialAngleInDegree: 0,
-                                      chartType: ChartType.disc,
-                                      ringStrokeWidth: 32,
-                                      centerWidget: Container(
-                                        height: 60,
-                                        width: 60,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(50),
-                                        ),
-                                      ),
-                                      legendOptions: const LegendOptions(
-                                        showLegendsInRow: false,
-                                        legendPosition: LegendPosition.right,
-                                        showLegends: true,
-                                        legendShape: BoxShape.circle,
-                                        legendTextStyle: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      chartValuesOptions:
-                                          const ChartValuesOptions(
-                                        showChartValueBackground: false,
-                                        chartValueStyle:
-                                        TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w700),
-
-                                            showChartValues: true,
-                                        showChartValuesInPercentage: true,
-                                        showChartValuesOutside: false,
-                                        decimalPlaces: 1,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : const Center(child: Text("No data to display")),
-                      ],
-                    ),
-                  ),
+          ? const Center(child: Text(""))
+          : Center(
+            child: dataMap.isNotEmpty
+                ? PieChart(
+              dataMap: dataMap,
+              animationDuration:
+              const Duration(milliseconds: 500),
+              chartLegendSpacing: 10,
+              chartRadius:
+              MediaQuery.of(context).size.width / 1.5,
+              colorList: colorList,
+              initialAngleInDegree: 0,
+              chartType: ChartType.disc,
+              ringStrokeWidth: 1,
+              centerWidget: Container(
+                height: 30,
+                width: 30,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(50),
                 ),
+              ),
+              legendOptions: const LegendOptions(
+                showLegendsInRow: false,
+                legendPosition: LegendPosition.right,
+                showLegends: true,
+                legendShape: BoxShape.circle,
+                legendTextStyle: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              chartValuesOptions: const ChartValuesOptions(
+                showChartValueBackground: false,
+                chartValueStyle: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700),
+                showChartValues: true,
+                showChartValuesInPercentage: true,
+                showChartValuesOutside: false,
+                decimalPlaces: 1,
+              ),
+            )
+                : const Center(child: Text("No data to display")),
+          ),
     );
   }
 
   Widget pieChartTitle() {
     String formattedDate = DateFormat('MMMM yyyy').format(now);
-    return Container(
-      padding: const EdgeInsets.all(10),
-      color: AppColors.primaryColor,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'Summary |',
-            style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            formattedDate,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-        ],
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          formattedDate,
+          style: const TextStyle(
+              color: AppColors.secondaryColor, fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+      ],
     );
   }
 
@@ -470,133 +458,145 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     if (isLoading) {
       return const Center(
           child: LoadingWidget(
-            message: 'Fetching my appliances',
-            color: AppColors.primaryColor,
-          ));
+        message: 'Fetching my appliances',
+        color: AppColors.primaryColor,
+      ));
     } else if (appliances.isEmpty) {
       return const Text(
         'You haven\'t added any appliances yet. Start by adding appliances to track your energy usage and see estimated costs.',
         textAlign: TextAlign.center,
       );
     } else {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(
-            color: const Color(0xFFADE7DB),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x40000000),
-              offset: Offset(0, 4),
-              blurRadius: 10,
-              spreadRadius: 0,
+      return SingleChildScrollView(
+        controller: _scrollController,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color: const Color(0xFFADE7DB),
+              width: 1.5,
             ),
-          ],
-        ),
-        height: 450, // Constrain height to enable scrolling within this box
-        child: ScrollbarTheme(
-          data: ScrollbarThemeData(
-            thumbColor: MaterialStateProperty.all(AppColors.primaryColor),
-            trackColor: MaterialStateProperty.all(Colors.grey[300]),
-            trackBorderColor: MaterialStateProperty.all(Colors.transparent),
-            thickness: MaterialStateProperty.all(5),
-            radius: const Radius.circular(20),
-            thumbVisibility: MaterialStateProperty.all(true),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x40000000),
+                offset: Offset(0, 4),
+                blurRadius: 10,
+                spreadRadius: 0,
+              ),
+            ],
           ),
-          child: Scrollbar(
-            thumbVisibility: true,
-            child: ListView(
-              children: appliances.asMap().entries.map((entry) {
-                var appliance = entry.value;
-                return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                      color: const Color(0xFFADE7DB),
-                      width: 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x40000000),
-                        offset: Offset(0, 4),
-                        blurRadius: 10,
-                        spreadRadius: 0,
+          height: 450, // Constrain height to enable scrolling within this box
+          child: ScrollbarTheme(
+            data: ScrollbarThemeData(
+              thumbColor: MaterialStateProperty.all(AppColors.primaryColor),
+              trackColor: MaterialStateProperty.all(Colors.grey[300]),
+              trackBorderColor: MaterialStateProperty.all(Colors.transparent),
+              thickness: MaterialStateProperty.all(5),
+              radius: const Radius.circular(20),
+              thumbVisibility: MaterialStateProperty.all(true),
+            ),
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: ListView(
+                children: appliances.asMap().entries.map((entry) {
+                  var appliance = entry.value;
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(
+                        color: const Color(0xFFADE7DB),
+                        width: 1.5,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${appliance['applianceName'] ?? 'Unknown'}',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.04, // Responsive font size
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.secondaryColor,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x40000000),
+                          offset: Offset(0, 4),
+                          blurRadius: 10,
+                          spreadRadius: 0,
                         ),
-                      ),
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.01), // Responsive spacing
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Column(
-                            children: [
-                              Text(
-                                'PHP ${appliance['monthlyCost'].toStringAsFixed(2) ?? 'N/A'}',
-                                style: TextStyle(
-                                  fontSize: MediaQuery.of(context).size.width * 0.03, // Responsive font size
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                "Monthly Cost",
-                                style: TextStyle(
-                                  fontSize: MediaQuery.of(context).size.width * 0.02, // Responsive font size
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${appliance['applianceName'] ?? 'Unknown'}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width *
+                                0.04, // Responsive font size
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.secondaryColor,
                           ),
-                          Column(
-                            children: [
-                              Text(
-                                '${appliance['wattage'].toStringAsFixed(2) ?? 'N/A'}',
-                                style: TextStyle(
-                                  fontSize: MediaQuery.of(context).size.width * 0.03, // Responsive font size
-                                  fontWeight: FontWeight.bold,
+                        ),
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height *
+                                0.01), // Responsive spacing
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Column(
+                              children: [
+                                Text(
+                                  'PHP ${appliance['monthlyCost'].toStringAsFixed(2) ?? 'N/A'}',
+                                  style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.03, // Responsive font size
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                "Wattage",
-                                style: TextStyle(
-                                  fontSize: MediaQuery.of(context).size.width * 0.02, // Responsive font size
-                                  color: Colors.grey[600],
+                                Text(
+                                  "Monthly Cost",
+                                  style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.02, // Responsive font size
+                                    color: Colors.grey[600],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                );
-              }).toList(),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                Text(
+                                  '${appliance['wattage'].toStringAsFixed(2) ?? 'N/A'}',
+                                  style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.03, // Responsive font size
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  "Wattage",
+                                  style: TextStyle(
+                                    fontSize:
+                                        MediaQuery.of(context).size.width *
+                                            0.02, // Responsive font size
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ),
       );
     }
   }
-
 
   Widget deviceUsageSummary({
     required int applianceCount,
@@ -633,10 +633,10 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                       : 'N/A',
                 ),
                 const SizedBox(height: 16),
-                GestureDetector(   onTap: () {
-                  showApplianceInformationDialog();
-                },
-
+                GestureDetector(
+                  onTap: () {
+                    showApplianceInformationDialog();
+                  },
                   onPanDown: (details) {
                     // This is triggered when the user touches the screen and starts panning.
                     print(
@@ -656,6 +656,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       ],
     );
   }
+
   void showApplianceInformationDialog() {
     showCustomGeneralDialog(
       context: context,
@@ -678,7 +679,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                   size: 50,
                 ),
                 const SizedBox(height: 20),
-
                 Text(
                   monthlyData['totalMonthlyCost'] != null
                       ? 'PHP ${double.parse(monthlyData['totalMonthlyCost'].toString()).toStringAsFixed(2)}'
@@ -690,7 +690,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                     fontFamily: 'Montserrat',
                   ),
                 ),
-                 Text(
+                Text(
                   "Estimated Monthly Cost",
                   style: TextStyle(
                     fontSize: 16,
@@ -707,8 +707,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       ),
     );
   }
-
-
 
   Widget applianceContentNew() {
     return Column(
@@ -784,4 +782,35 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       ),
     );
   }
+  void showPieChartDialog(BuildContext context) {
+    if (appliances.isEmpty) {
+      print('No appliances to show.');
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            
+            // padding: const EdgeInsets.only(top: 20.0,bottom: 10),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Adjust size based on content
+              children: [
+                pieChartTitle(),
+                const SizedBox(height: 10),
+                chart(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }
