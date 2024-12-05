@@ -57,6 +57,7 @@ app.use('/', require('./routes/energy_providers.route'));
 app.use('/', require('./routes/compared_appliance.route'));
 app.use('/', require('./routes/monthly_consumption.route'));
 app.use('/', require('./routes/device_info.route'));
+app.use('/', require('./routes/community_guidelines.route'));
 
 
 // Cron job to save monthly consumption on the last day of each month

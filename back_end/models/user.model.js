@@ -31,6 +31,10 @@ const userSchema = new Schema({
   appliances: [{ type: Schema.Types.ObjectId, ref: 'Appliance' }],
   posts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],
   energyDiary: [{ type: Schema.Types.ObjectId, ref: 'EnergyDiary' }],
+  communityGuidelinesAccepted: {
+    type: Boolean,
+    default: false,
+  },
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 
