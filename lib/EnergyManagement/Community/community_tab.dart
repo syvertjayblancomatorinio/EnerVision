@@ -1040,7 +1040,7 @@ class _CommunityTabState extends State<CommunityTab> {
       print('Error deleting Post: $e');
     }
   }
-
+  // TODO: Modify how the post are fetched to be able to add suggestion
   Future<void> getUsersPost() async {
     setState(() {
       isLoading = true;

@@ -508,7 +508,7 @@ class _PostViewDialogState extends State<PostViewDialog> {
                         context: context,
                         suggestionController: controller.suggestionController,
                         posts: posts,
-                        postId: widget.post['id'],
+                        postId: widget.post['id'] ?? widget.post['_id'],
                       );
                       // getPostsFromApi();
                       // eventBus.fire(PostUpdatedEvent());
@@ -785,7 +785,9 @@ class SuggestionTile extends StatelessWidget {
           Row(
             children: [
               Text(
-                suggestion['suggestedBy'] ?? 'Unknown User',
+                suggestion['suggestedBy'] ??
+                    suggestion['username'] ??
+                    'Unknown User',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,

@@ -304,10 +304,8 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         children: [
           SingleChildScrollView(
             controller: _scrollController,
-
             child: Container(
               margin: const EdgeInsets.only(bottom: 40),
-
               child: Column(
                 children: [
                   // Separate scrollable container for allAppliances
@@ -315,7 +313,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: allAppliances(),
                   ),
-
                 ],
               ),
             ),
@@ -357,57 +354,54 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     );
   }
 
-
   Widget chart() {
     return SafeArea(
       child: isLoading
           ? const Center(child: CircularProgressIndicator())
           : appliances.isEmpty
-          ? const Center(child: Text(""))
-          : Center(
-            child: dataMap.isNotEmpty
-                ? PieChart(
-              dataMap: dataMap,
-              animationDuration:
-              const Duration(milliseconds: 500),
-              chartLegendSpacing: 10,
-              chartRadius:
-              MediaQuery.of(context).size.width / 1.5,
-              colorList: colorList,
-              initialAngleInDegree: 0,
-              chartType: ChartType.disc,
-              ringStrokeWidth: 1,
-              centerWidget: Container(
-                height: 30,
-                width: 30,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(50),
+              ? const Center(child: Text(""))
+              : Center(
+                  child: dataMap.isNotEmpty
+                      ? PieChart(
+                          dataMap: dataMap,
+                          animationDuration: const Duration(milliseconds: 500),
+                          chartLegendSpacing: 10,
+                          chartRadius: MediaQuery.of(context).size.width / 1.5,
+                          colorList: colorList,
+                          initialAngleInDegree: 0,
+                          chartType: ChartType.disc,
+                          ringStrokeWidth: 1,
+                          centerWidget: Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                          ),
+                          legendOptions: const LegendOptions(
+                            showLegendsInRow: false,
+                            legendPosition: LegendPosition.right,
+                            showLegends: true,
+                            legendShape: BoxShape.circle,
+                            legendTextStyle: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          chartValuesOptions: const ChartValuesOptions(
+                            showChartValueBackground: false,
+                            chartValueStyle: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700),
+                            showChartValues: true,
+                            showChartValuesInPercentage: true,
+                            showChartValuesOutside: false,
+                            decimalPlaces: 1,
+                          ),
+                        )
+                      : const Center(child: Text("No data to display")),
                 ),
-              ),
-              legendOptions: const LegendOptions(
-                showLegendsInRow: false,
-                legendPosition: LegendPosition.right,
-                showLegends: true,
-                legendShape: BoxShape.circle,
-                legendTextStyle: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              chartValuesOptions: const ChartValuesOptions(
-                showChartValueBackground: false,
-                chartValueStyle: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700),
-                showChartValues: true,
-                showChartValuesInPercentage: true,
-                showChartValuesOutside: false,
-                decimalPlaces: 1,
-              ),
-            )
-                : const Center(child: Text("No data to display")),
-          ),
     );
   }
 
@@ -420,7 +414,9 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         Text(
           formattedDate,
           style: const TextStyle(
-              color: AppColors.secondaryColor, fontWeight: FontWeight.bold, fontSize: 18),
+              color: AppColors.secondaryColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 18),
         ),
       ],
     );
@@ -626,16 +622,38 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                       : 'N/A',
                 ),
                 const SizedBox(height: 16),
-                energyCard(
-                  title: "Estimated Energy Used",
-                  value: monthlyData['totalMonthlyKwhConsumption'] != null
-                      ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kWh'
-                      : 'N/A',
+                GestureDetector(
+                  onTap: () {
+                    showApplianceInformationDialog( const Icon(
+                      Icons.energy_savings_leaf_outlined,
+                      color: AppColors.primaryColor,
+                      size: 50,
+                    ),
+                        monthlyData['totalMonthlyKwhConsumption'] != null
+                            ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kWh'
+                            : 'N/A',
+                        'Estimated Energy Used');
+                  },
+                  child: energyCard(
+                    title: "Estimated Energy Used",
+                    value: monthlyData['totalMonthlyKwhConsumption'] != null
+                        ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kWh'
+                        : 'N/A',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
                   onTap: () {
-                    showApplianceInformationDialog();
+                    showApplianceInformationDialog(
+                        const Icon(
+                          Icons.monetization_on_outlined,
+                          color: AppColors.primaryColor,
+                          size: 50,
+                        ),
+                        monthlyData['totalMonthlyCost'] != null
+                            ? 'PHP ${double.parse(monthlyData['totalMonthlyCost'].toString()).toStringAsFixed(2)}'
+                            : 'N/A',
+                        'Estimated Monthly Cost');
                   },
                   onPanDown: (details) {
                     // This is triggered when the user touches the screen and starts panning.
@@ -657,7 +675,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     );
   }
 
-  void showApplianceInformationDialog() {
+  void showApplianceInformationDialog(Icon icon,String data, String title) {
     showCustomGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -673,16 +691,10 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.monetization_on,
-                  color: AppColors.primaryColor,
-                  size: 50,
-                ),
+               icon,
                 const SizedBox(height: 20),
                 Text(
-                  monthlyData['totalMonthlyCost'] != null
-                      ? 'PHP ${double.parse(monthlyData['totalMonthlyCost'].toString()).toStringAsFixed(2)}'
-                      : 'N/A',
+                  data,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -691,7 +703,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
                   ),
                 ),
                 Text(
-                  "Estimated Monthly Cost",
+                  title,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -782,6 +794,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       ),
     );
   }
+
   void showPieChartDialog(BuildContext context) {
     if (appliances.isEmpty) {
       print('No appliances to show.');
@@ -796,7 +809,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Padding(
-            
             // padding: const EdgeInsets.only(top: 20.0,bottom: 10),
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -812,5 +824,4 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       },
     );
   }
-
 }

@@ -82,8 +82,8 @@ router.get('/getAllPosts', authenticateToken, asyncHandler(async (req, res) => {
         })),
     });
 }));
-
 // Route to fetch posts for a specific user
+//TODO: Populate the of the owner of the suggestion
 router.get('/getAllPosts/:userId/posts',authenticateToken, asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.userId)
         .select('username posts') // Select only the username and posts fields
