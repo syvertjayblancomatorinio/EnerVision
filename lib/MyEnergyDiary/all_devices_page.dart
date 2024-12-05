@@ -17,28 +17,27 @@ import 'package:supabase_project/CommonWidgets/dialogs/micaella.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+import 'package:supabase_project/MyEnergyDiary/rate_dialog.dart';
 import '../../ConstantTexts/Theme.dart';
 import '../../YourEnergyCalculator&Compare/compare_device.dart';
 import '../AuthService/kwh_rate.dart';
 import '../AuthService/preferences.dart';
+
 class AllDevicesPage extends StatefulWidget {
   final String userId;
   const AllDevicesPage({super.key, required this.userId});
   @override
   _AllDevicesPageState createState() => _AllDevicesPageState();
 }
+
 class _AllDevicesPageState extends State<AllDevicesPage> {
   final AppControllers controllers = AppControllers();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-// Remove the [] list of Energy Providers
   late final TextEditingController controller;
   Map<String, dynamic> dailyCost = {};
   List<dynamic> appliances = [];
   List<int> selectedDays = [];
   bool isLoading = false;
-  late String? userId;
-  late String? selectedDeviceId;
-  String? _selectedProvider;
   @override
   void dispose() {
     controllers.addUsagePatternController.dispose();
@@ -46,6 +45,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     controllers.dispose();
     super.dispose();
   }
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +53,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     fetchDailyCost();
     getKwhRate();
   }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -82,8 +83,12 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
                       context,
                     );
                   } else {
-                    showKwhRateDialog(context, controllers.kwhRateController,
-                        saveKwhRate, fetchAppliances, fetchDailyCost);
+                    showKwhRateDialog(
+                        context: context,
+                        kwhRateController: controllers.kwhRateController,
+                        saveKwhRate: saveKwhRate,
+                        fetchAppliances: fetchAppliances,
+                        fetchDailyCost: fetchDailyCost);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -104,13 +109,14 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       ),
     );
   }
+
   Widget myAppliancesContent() {
     if (isLoading) {
       return const Center(
           child: LoadingWidget(
-            message: 'Fetching all appliances',
-            color: AppColors.primaryColor,
-          ));
+        message: 'Fetching all appliances',
+        color: AppColors.primaryColor,
+      ));
     } else if (appliances.isEmpty) {
       return Center(
         child: Text(
@@ -151,8 +157,8 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
               children: [
                 Container(
                   margin: const EdgeInsets.all(20),
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 20.0, horizontal: 40),
                   decoration: greyBoxDecoration(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +199,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
                               Text(
                                 appliance['createdAt'] != null
                                     ? DateFormat('MM/dd').format(
-                                    DateTime.parse(appliance['createdAt']))
+                                        DateTime.parse(appliance['createdAt']))
                                     : 'null',
                                 style: const TextStyle(fontSize: 14),
                               ),
@@ -237,6 +243,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       ),
     );
   }
+
   Widget deviceImages(appliance) {
     return Positioned(
       top: -5,
@@ -252,6 +259,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       ),
     );
   }
+
   Widget dailyConsumption() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -270,6 +278,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       ],
     );
   }
+
   Future<double?> getKwhRate() async {
     try {
       double? kwhRate = await KWHRateService.getKwhRate();
@@ -285,14 +294,16 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       return 0.00; // Return null in case of error
     }
   }
+
   Future<void> _showApplianceErrorDialog(BuildContext context) async {
     ErrorDialogButton errorDialog = const ErrorDialogButton(
       title: 'Appliance not Added',
       message:
-      'Invalid Appliance\nOops! The appliance either already exists in your list or the name contains only spaces. Please add a different appliance with a valid name.',
+          'Invalid Appliance\nOops! The appliance either already exists in your list or the name contains only spaces. Please add a different appliance with a valid name.',
     );
     errorDialog.showErrorDialog(context);
   }
+
   Future<void> fetchAppliances() async {
     setState(() {
       isLoading = true;
@@ -323,6 +334,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       });
     }
   }
+
   void showApplianceInformationDialog(int index) {
     var appliance = appliances[index];
 
@@ -353,9 +365,9 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       'applianceName': applianceName,
       'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
       'usagePatternPerDay':
-      double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
+          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
       'applianceCategory':
-      controllers.addApplianceCategoryController.text.trim(),
+          controllers.addApplianceCategoryController.text.trim(),
       'selectedDays': selectedDays,
     };
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -384,190 +396,27 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       }
     }
   }
-// Remove the _showKwhRateDialog() part, and insert this one
-  Future<void> showKwhRateDialog(
-      BuildContext context,
-      TextEditingController kwhRateController,
-      Function saveKwhRate,
-      Function fetchAppliances,
-      Function fetchDailyCost,
-      ) async {
-    String? selectedProvider;
-    Map<String, String> providers = {};
-    Future<void> fetchProviders() async {
-      try {
-        final response =
-        await http.get(Uri.parse('${ApiConfig.baseUrl}/api/providers'));
-        if (response.statusCode == 200) {
-          final List<dynamic> providerList = json.decode(response.body);
-          print('Energy providers fetched from MongoDB:');
-          providerList.forEach((provider) {
-            print(
-                'Provider: ${provider['providerName']}, Rate: ${provider['ratePerKwh']}');
-          });
-          providers = {
-            for (var provider in providerList)
-              provider['providerName']: provider['ratePerKwh'].toString()
-          };
-        } else {
-          throw Exception('Failed to load providers');
-        }
-      } catch (e) {
-        print('Error fetching providers: $e');
-      }
-    }
-    return showDialog<void>(
+  Future<void> showKwhRateDialog({
+    required BuildContext context,
+    required TextEditingController kwhRateController,
+    required Function(String kwhRate) saveKwhRate,
+    required Function() fetchAppliances,
+    required Function() fetchDailyCost,
+  }) async {
+    return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  // Icon and Title
-                  const Icon(
-                    Icons.electrical_services,
-                    size: 50,
-                    color: Colors.black,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Kilowatt-Hour Rate',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  // Fetch providers and display them
-                  FutureBuilder<void>(
-                    future: fetchProviders(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CircularProgressIndicator();
-                      } else if (snapshot.hasError) {
-                        return const Text('Error loading providers');
-                      } else {
-                        return DropdownButtonFormField<String>(
-                          value: selectedProvider,
-                          isExpanded: true,
-                          hint: const Text(
-                              'Select your Electric Service Provider'),
-                          items: providers.keys.map((String provider) {
-                            return DropdownMenuItem<String>(
-                              value: provider,
-                              child: Text(
-                                provider,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 14.0),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedProvider = newValue;
-                              kwhRateController.text = providers[newValue!]!;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.1),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.black),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.black),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  // Input for Kilowatt Hour Rate (kWh)
-                  TextField(
-                    controller: kwhRateController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Kilowatt Hour Rate (kWh)',
-                      hintStyle: const TextStyle(color: Colors.black),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.1),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.black),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.black),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                  const SizedBox(height: 25.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.black,
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 50, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(
-                                color: Color(0xFFB1B1B1), width: 1),
-                          ),
-                        ),
-                        child: const Text('Cancel',
-                            style: TextStyle(fontSize: 14.0)),
-                      ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          String kwhRate = kwhRateController.text;
-                          try {
-                            await saveKwhRate(kwhRate);
-                            Navigator.of(context).pop();
-                            _showAddApplianceDialog(context);
-                            fetchAppliances();
-                            fetchDailyCost();
-                          } catch (e) {
-                            print('Failed to save kWh rate: $e');
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.black,
-                          backgroundColor: const Color(0xFF1BBC9B),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 50, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Save',
-                          style: TextStyle(fontSize: 14.0, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
+      builder: (context) {
+        return KwhRateDialog(
+          kwhRateController: kwhRateController,
+          saveKwhRate: saveKwhRate,
+          fetchAppliances: fetchAppliances,
+          fetchDailyCost: fetchDailyCost,
         );
       },
     );
   }
+
   Future<void> saveKwhRate(String kwhRate) async {
     try {
       await KWHRateService.saveKwhRate(kwhRate);
@@ -576,6 +425,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       print('Error saving kWh rate: $e');
     }
   }
+
   void fetchDailyCost() async {
     ApplianceService applianceService = ApplianceService();
     final result = await applianceService.getDaily();
@@ -584,13 +434,14 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
         dailyCost = result;
       });
       print(
-          'Fetched totalDailyConsumptionCost: ${dailyCost?['totalDailyConsumptionCost']}');
+          'Fetched totalDailyConsumptionCost: ${dailyCost['totalDailyConsumptionCost']}');
       print(
-          'Fetched totalDailyKwhConsumption: ${dailyCost?['totalDailyKwhConsumption']}');
+          'Fetched totalDailyKwhConsumption: ${dailyCost['totalDailyKwhConsumption']}');
     } else {
       print('Failed to fetch daily cost');
     }
   }
+
   void _showAddApplianceDialog(BuildContext context) {
     controllers.addApplianceNameController.clear();
     controllers.addWattageController.clear();
@@ -604,7 +455,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
           addWattageController: controllers.addWattageController,
           addUsagePatternController: controllers.addUsagePatternController,
           addApplianceCategoryController:
-          controllers.addApplianceCategoryController,
+              controllers.addApplianceCategoryController,
           formKey: formKey,
           addAppliance: (List<int> selectedDays) {
             setState(() {

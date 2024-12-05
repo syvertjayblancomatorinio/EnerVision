@@ -17,6 +17,7 @@ import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kw
 import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+import 'package:supabase_project/MyEnergyDiary/rate_dialog.dart';
 
 import '../AuthService/base_url.dart';
 import '../AuthService/kwh_rate.dart';
@@ -34,18 +35,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   final AppControllers controllers = AppControllers();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final formatter = NumberFormat('#,##0.00', 'en_PHP');
-  final Map<String, String> _electricProviders = {
-    'Cebu Electric Cooperative': '10.5',
-    'Visayan Electric Company (VECO) - Residential': '11.2',
-    'Visayan Electric Company (VECO) - Commercial': '15.2',
-    'Mactan Electric Company - Residential': '10.8',
-    'Mactan Electric Company - Commercial': '13.8',
-    'Churba': '12.0',
-    'Gengeng': '15.5',
-    'Juju on the Beat': '18',
-    'Eyy': '33',
-    'Waw': '21',
-  };
 
   List<Map<String, dynamic>> appliances = [];
   List<int> selectedDays = [];
@@ -212,11 +201,11 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                   );
                 } else {
                   showKwhRateDialog(
-                    context,
-                    controllers.kwhRateController,
-                    saveKwhRate,
-                    fetchTodayAppliances,
-                    fetchDailyCost,
+                   context:  context,
+                   kwhRateController:  controllers.kwhRateController,
+                    saveKwhRate: saveKwhRate,
+                    fetchAppliances: fetchTodayAppliances,
+                    fetchDailyCost: fetchDailyCost,
                   );
                 }
               },
@@ -294,189 +283,28 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
   }
 
-  Future<void> showKwhRateDialog(
-      BuildContext context,
-      TextEditingController kwhRateController,
-      Function saveKwhRate,
-      Function fetchAppliances,
-      Function fetchDailyCost,
-      ) async {
-    String? selectedProvider;
-    Map<String, String> providers = {};
-    Future<void> fetchProviders() async {
-      try {
-        final response =
-        await http.get(Uri.parse('${ApiConfig.baseUrl}/api/providers'));
-        if (response.statusCode == 200) {
-          final List<dynamic> providerList = json.decode(response.body);
-          print('Energy providers fetched from MongoDB:');
-          providerList.forEach((provider) {
-            print(
-                'Provider: ${provider['providerName']}, Rate: ${provider['ratePerKwh']}');
-          });
-          providers = {
-            for (var provider in providerList)
-              provider['providerName']: provider['ratePerKwh'].toString()
-          };
-        } else {
-          throw Exception('Failed to load providers');
-        }
-      } catch (e) {
-        print('Error fetching providers: $e');
-      }
-    }
-    return showDialog<void>(
+  Future<void> showKwhRateDialog({
+    required BuildContext context,
+    required TextEditingController kwhRateController,
+    required Function(String kwhRate) saveKwhRate,
+    required Function() fetchAppliances,
+    required Function() fetchDailyCost,
+  }) async {
+    return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  // Icon and Title
-                  const Icon(
-                    Icons.electrical_services,
-                    size: 50,
-                    color: Colors.black,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Kilowatt-Hour Rate',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  // Fetch providers and display them
-                  FutureBuilder<void>(
-                    future: fetchProviders(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CircularProgressIndicator();
-                      } else if (snapshot.hasError) {
-                        return const Text('Error loading providers');
-                      } else {
-                        return DropdownButtonFormField<String>(
-                          value: selectedProvider,
-                          isExpanded: true,
-                          hint: const Text(
-                              'Select your Electric Service Provider'),
-                          items: providers.keys.map((String provider) {
-                            return DropdownMenuItem<String>(
-                              value: provider,
-                              child: Text(
-                                provider,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 14.0),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedProvider = newValue;
-                              kwhRateController.text = providers[newValue!]!;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.1),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.black),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.black),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  // Input for Kilowatt Hour Rate (kWh)
-                  TextField(
-                    controller: kwhRateController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'Kilowatt Hour Rate (kWh)',
-                      hintStyle: const TextStyle(color: Colors.black),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.1),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.black),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.black),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                  const SizedBox(height: 25.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.black,
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 50, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(
-                                color: Color(0xFFB1B1B1), width: 1),
-                          ),
-                        ),
-                        child: const Text('Cancel',
-                            style: TextStyle(fontSize: 14.0)),
-                      ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          String kwhRate = kwhRateController.text;
-                          try {
-                            await saveKwhRate(kwhRate);
-                            Navigator.of(context).pop();
-                            _showAddApplianceDialog(context);
-                            fetchAppliances();
-                            fetchDailyCost();
-                          } catch (e) {
-                            print('Failed to save kWh rate: $e');
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.black,
-                          backgroundColor: const Color(0xFF1BBC9B),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 50, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Save',
-                          style: TextStyle(fontSize: 14.0, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
+      builder: (context) {
+        return KwhRateDialog(
+          kwhRateController: kwhRateController,
+          saveKwhRate: saveKwhRate,
+          fetchAppliances: fetchAppliances,
+          fetchDailyCost: fetchDailyCost,
         );
       },
     );
   }
+
+
 
   Future<void> addAppliance() async {
     final url = Uri.parse("${ApiConfig.baseUrl}/addApplianceNewLogic");
