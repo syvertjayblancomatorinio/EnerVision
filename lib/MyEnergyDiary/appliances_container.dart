@@ -108,6 +108,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     }
   }
 
+  //Todo: Display the appliances from latest to oldest
   Widget myAppliancesContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +211,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                     context,
                   );
                 } else {
-                  _showKwhRateDialog(
+                  showKwhRateDialog(
                     context,
                     controllers.kwhRateController,
                     saveKwhRate,
@@ -293,35 +294,48 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
   }
 
-  Future<Object?> _showKwhRateDialog(
-    BuildContext context,
-    TextEditingController kwhRateController,
-    Function saveKwhRate,
-    Function fetchAppliances,
-    Function fetchDailyCost,
-  ) async {
-    {
-      return showGeneralDialog(
-          context: context,
-          barrierDismissible: false,
-          barrierLabel: '',
-          barrierColor: Colors.black.withOpacity(0.5),
-          transitionDuration: const Duration(milliseconds: 200),
-          transitionBuilder: (context, animation1, animation2, child) {
-            return Transform.scale(
-              scale: animation1.value,
-              child: Opacity(
-                opacity: animation1.value,
-                child: child,
-              ),
-            );
-          },
-          pageBuilder: (context, animation1, animation2) {
+  Future<void> showKwhRateDialog(
+      BuildContext context,
+      TextEditingController kwhRateController,
+      Function saveKwhRate,
+      Function fetchAppliances,
+      Function fetchDailyCost,
+      ) async {
+    String? selectedProvider;
+    Map<String, String> providers = {};
+    Future<void> fetchProviders() async {
+      try {
+        final response =
+        await http.get(Uri.parse('${ApiConfig.baseUrl}/api/providers'));
+        if (response.statusCode == 200) {
+          final List<dynamic> providerList = json.decode(response.body);
+          print('Energy providers fetched from MongoDB:');
+          providerList.forEach((provider) {
+            print(
+                'Provider: ${provider['providerName']}, Rate: ${provider['ratePerKwh']}');
+          });
+          providers = {
+            for (var provider in providerList)
+              provider['providerName']: provider['ratePerKwh'].toString()
+          };
+        } else {
+          throw Exception('Failed to load providers');
+        }
+      } catch (e) {
+        print('Error fetching providers: $e');
+      }
+    }
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Enter kWh Rate'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
+                  // Icon and Title
                   const Icon(
                     Icons.electrical_services,
                     size: 50,
@@ -337,63 +351,72 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  Flexible(
-                    child: DropdownButtonFormField<String>(
-                      value: _selectedProvider,
-                      isExpanded: true,
-                      hint: const Text('Select your Electric Service Provider'),
-                      items: _electricProviders.keys.map((String provider) {
-                        return DropdownMenuItem<String>(
-                          value: provider,
-                          child: Text(
-                            provider,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14.0),
+                  // Fetch providers and display them
+                  FutureBuilder<void>(
+                    future: fetchProviders(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      } else if (snapshot.hasError) {
+                        return const Text('Error loading providers');
+                      } else {
+                        return DropdownButtonFormField<String>(
+                          value: selectedProvider,
+                          isExpanded: true,
+                          hint: const Text(
+                              'Select your Electric Service Provider'),
+                          items: providers.keys.map((String provider) {
+                            return DropdownMenuItem<String>(
+                              value: provider,
+                              child: Text(
+                                provider,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 14.0),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedProvider = newValue;
+                              kwhRateController.text = providers[newValue!]!;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.1),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedProvider = newValue;
-                          controllers.kwhRateController.text =
-                              _electricProviders[newValue!]!;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.1),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
+                      }
+                    },
                   ),
                   const SizedBox(height: 15),
-                  Flexible(
-                    child: TextField(
-                      controller: controllers.kwhRateController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: 'Kilowatt Hour Rate (kWh)',
-                        hintStyle: const TextStyle(color: Colors.black),
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.1),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                  // Input for Kilowatt Hour Rate (kWh)
+                  TextField(
+                    controller: kwhRateController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Kilowatt Hour Rate (kWh)',
+                      hintStyle: const TextStyle(color: Colors.black),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.1),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      style: const TextStyle(color: Colors.black),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    style: const TextStyle(color: Colors.black),
                   ),
                   const SizedBox(height: 25.0),
                   Row(
@@ -419,13 +442,11 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                       ),
                       ElevatedButton(
                         onPressed: () async {
-                          String kwhRate = controllers.kwhRateController.text;
-
+                          String kwhRate = kwhRateController.text;
                           try {
                             await saveKwhRate(kwhRate);
                             Navigator.of(context).pop();
                             _showAddApplianceDialog(context);
-
                             fetchAppliances();
                             fetchDailyCost();
                           } catch (e) {
@@ -451,8 +472,10 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                 ],
               ),
             );
-          });
-    }
+          },
+        );
+      },
+    );
   }
 
   Future<void> addAppliance() async {

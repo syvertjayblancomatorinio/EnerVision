@@ -133,6 +133,8 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       );
     }
   }
+
+  //Todo: Display the appliances from latest to oldest
   Widget appliancesContent() {
     return Expanded(
       child: ListView(
