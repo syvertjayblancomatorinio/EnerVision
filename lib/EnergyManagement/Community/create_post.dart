@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
+import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'dart:io';
@@ -52,7 +53,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
-    final url = Uri.parse("http://10.0.2.2:8080/addPost");
+    final url = Uri.parse("${ApiConfig.baseUrl}/addPost");
 
     String tagsAsString = postData['tags'].join(',');
     String title = toTitleCase(_titleController.text.trim());
@@ -81,6 +82,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
     var response = await request.send();
 
+
     if (response.statusCode == 400) {
       await _showApplianceErrorDialog(
           context, 'Error adding your post. Please try again.');
@@ -88,7 +90,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => const EnergyEfficiencyPage(selectedIndex: 1)),
+            builder: (context) => const EnergyEfficiencyPage(selectedIndex: 0)),
       );
       print('Post added successfully');
     } else {
