@@ -1,20 +1,8 @@
-import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:supabase_project/AuthService/base_url.dart';
-import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:supabase_project/CommonWidgets/dialogs/number_of_appliances_dialog.dart';
-import 'package:supabase_project/MyEnergyDiary/common-widgets.dart';
-import 'package:supabase_project/MyEnergyDiary/date_picker.dart';
-import 'package:supabase_project/MyEnergyDiary/date_picker_new_ui.dart';
+import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
 
-import '../../../CommonWidgets/appliance_container/total_cost&kwh.dart';
-import '../../ConstantTexts/colors.dart';
+import '../../all_imports/imports.dart';
 
 class LastMonthPage extends StatefulWidget {
   const LastMonthPage({super.key});
@@ -31,6 +19,14 @@ class _LastMonthPageState extends State<LastMonthPage> {
   final AppControllers controllers = AppControllers();
   Map<String, double> dataMap = {};
   bool isLoading = false;
+  bool _showPieChart = false;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -44,9 +40,10 @@ class _LastMonthPageState extends State<LastMonthPage> {
   }
 
   Future<void> getLastMonth(DateTime date) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
 
+    final userId = currentUser!.userId;
     if (userId == null) {
       print("User ID is null. Cannot fetch monthly consumption.");
       return;
@@ -73,7 +70,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
             'totalMonthlyKwhConsumption': null,
           };
           applianceCount = 0; // Reset applianceCount to 0 for 404 response.
-          appliances = [];   // Clear appliances list for consistency.
+          appliances = []; // Clear appliances list for consistency.
         });
         await _showApplianceErrorDialog(context);
         return;
@@ -87,7 +84,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
 
         // Calculate totalKwhConsumption
         double totalKwhConsumption =
-        (kwhRate > 0) ? totalMonthlyConsumption / kwhRate : 0.0;
+            (kwhRate > 0) ? totalMonthlyConsumption / kwhRate : 0.0;
         double totalCO2Emission = totalKwhConsumption * 0.7;
         await getUsersApplianceCount(); // Fetch appliances count here.
 
@@ -114,11 +111,11 @@ class _LastMonthPageState extends State<LastMonthPage> {
     }
   }
 
-
   Future<void> getUsersApplianceCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
 
+    final userId = currentUser!.userId;
     if (userId == null) {
       print("User ID is null. Cannot fetch appliance count.");
       return;
@@ -149,21 +146,21 @@ class _LastMonthPageState extends State<LastMonthPage> {
         dataMap = {};
         double othersCost = 0.0;
 
-        // Add top 8 appliances to the dataMaps
-        for (int i = 0; i < 4 && i < appliances.length; i++) {
+        // Add top 4 appliances to the dataMaps
+        for (int i = 0; i < 3 && i < appliances.length; i++) {
           var appliance = appliances[i];
           if (appliance["monthlyCost"] != null &&
               appliance["applianceName"] != null) {
             dataMap[appliance["applianceName"]] =
-            (appliance["monthlyCost"] is int
-                ? (appliance["monthlyCost"] as int).toDouble()
-                : appliance["monthlyCost"]) as double;
+                (appliance["monthlyCost"] is int
+                    ? (appliance["monthlyCost"] as int).toDouble()
+                    : appliance["monthlyCost"]) as double;
           }
         }
 
         // Sum the monthly costs of the remaining appliances and assign to "Others"
-        if (appliances.length > 8) {
-          for (int i = 8; i < appliances.length; i++) {
+        if (appliances.length > 3) {
+          for (int i = 3; i < appliances.length; i++) {
             var appliance = appliances[i];
             if (appliance["monthlyCost"] != null) {
               othersCost += (appliance["monthlyCost"] is int
@@ -174,43 +171,69 @@ class _LastMonthPageState extends State<LastMonthPage> {
           // Add "Others" category
           dataMap["Others"] = othersCost;
         }
-
       });
-    }else if (response.statusCode == 404) {
+    } else if (response.statusCode == 404) {
       setState(() {
         applianceCount = 0;
         appliances = [];
       });
       print("No monthly consumption data found for the specified period.");
-    }
-    else {
-
+    } else {
       throw Exception('Failed to load appliances');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        DatePickerWidget(
-          initialDate: selectedDate,
-          onDateSelected: onDateSelected, getApplianceCount: () {  },
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          controller: _scrollController,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                DatePickerWidget(
+                  initialDate: selectedDate,
+                  onDateSelected: onDateSelected,
+                  getApplianceCount: () {},
+                ),
+                const SizedBox(height: 20),
+                HomeUsage(
+                  kwh: monthlyData['totalMonthlyKwhConsumption'] != null
+                      ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
+                      : 'N/A',
+                ),
+                const SizedBox(height: 40),
+                bottomPart(),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: 20),
-        HomeUsage(
-          kwh: monthlyData['totalMonthlyKwhConsumption'] != null
-              ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
-              : 'N/A',
+        Positioned(
+          bottom: 20.0,
+          right: 20.0,
+          child: ElevatedButton(
+            onPressed: () {
+              showPieChartDialog(context);
+            },
+            style: ElevatedButton.styleFrom(
+              shape: const CircleBorder(),
+              padding: const EdgeInsets.all(20),
+            ),
+            child: const Icon(
+              Icons.pie_chart,
+              size: 30,
+              color: Colors.white,
+            ),
+          ),
         ),
-        const SizedBox(height: 40),
-        bottomPart(),
-        const SizedBox(height: 40),
-        chart(),
-        const SizedBox(height: 100),
       ],
     );
   }
+
   Widget pieChartTitle() {
     String formattedDate = DateFormat('MMMM yyyy').format(selectedDate);
     return Container(
@@ -220,11 +243,11 @@ class _LastMonthPageState extends State<LastMonthPage> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'Summary |',
-            style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-          ),
+          // const Text(
+          //   'Summary |',
+          //   style: TextStyle(
+          //       color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          // ),
           const SizedBox(width: 10),
           Text(
             formattedDate,
@@ -239,70 +262,53 @@ class _LastMonthPageState extends State<LastMonthPage> {
   Widget chart() {
     return SafeArea(
       child: isLoading
-          ? const Center(
-          child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : appliances.isEmpty
-          ? const Center(child: Text(""))
-          : SingleChildScrollView(
-        child: Center(
-          child: Column(
-            children: [
-              dataMap.isNotEmpty
-                  ? Column(
-                    children: [
-                      pieChartTitle(),
-                      const SizedBox(height: 80),
-                      PieChart(
-                        dataMap: dataMap,
-                        animationDuration:
-                        const Duration(milliseconds: 500),
-                        chartLegendSpacing: 30,
-                        chartRadius:
-                        MediaQuery.of(context).size.width /
-                            1.5,
-                        colorList: colorList,
-                        initialAngleInDegree: 0,
-                        chartType: ChartType.disc,
-                        ringStrokeWidth: 32,
-                        centerWidget: Container(
-                          height: 60,
-                          width: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius:
-                            BorderRadius.circular(50),
+              ? const Center(child: Text(""))
+              : Center(
+                  child: dataMap.isNotEmpty
+                      ? PieChart(
+                          dataMap: dataMap,
+                          animationDuration: const Duration(milliseconds: 500),
+                          chartLegendSpacing: 10,
+                          chartRadius: MediaQuery.of(context).size.width / 1.5,
+                          colorList: colorList,
+                          initialAngleInDegree: 0,
+                          chartType: ChartType.disc,
+                          ringStrokeWidth: 32,
+                          centerWidget: Container(
+                            height: 30,
+                            width: 30,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(50),
+                            ),
                           ),
-                        ),
-                        legendOptions: const LegendOptions(
-                          showLegendsInRow: false,
-                          legendPosition: LegendPosition.right,
-                          showLegends: true,
-                          legendShape: BoxShape.circle,
-                          legendTextStyle: TextStyle(
-                            fontWeight: FontWeight.bold,
+                          legendOptions: const LegendOptions(
+                            showLegendsInRow: false,
+                            legendPosition: LegendPosition.right,
+                            showLegends: true,
+                            legendShape: BoxShape.circle,
+                            legendTextStyle: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        chartValuesOptions:
-                        const ChartValuesOptions(
-                          showChartValueBackground: false,
-                          chartValueStyle:
-                          TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w700),
-                          showChartValues: true,
-                          showChartValuesInPercentage: true,
-                          showChartValuesOutside: false,
-                          decimalPlaces: 1,
-                        ),
-                      ),
-                    ],
-                  )
-                  : const Center(child: Text("No data to display")),
-            ],
-          ),
-        ),
-      ),
+                          chartValuesOptions: const ChartValuesOptions(
+                            showChartValueBackground: false,
+                            chartValueStyle: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700),
+                            showChartValues: true,
+                            showChartValuesInPercentage: true,
+                            showChartValuesOutside: false,
+                            decimalPlaces: 1,
+                          ),
+                        )
+                      : const Center(child: Text("No data to display")),
+                ),
     );
   }
-
 
   Widget bottomPart() {
     return Row(
@@ -349,7 +355,6 @@ class _LastMonthPageState extends State<LastMonthPage> {
     );
   }
 
-
   Future<double> getUserKwhRate(String userId) async {
     final url = Uri.parse("${ApiConfig.baseUrl}/user/$userId/kwhRate");
     try {
@@ -373,6 +378,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
     });
     getLastMonth(date);
   }
+
   void showApplianceInformationDialog(BuildContext context) {
     if (appliances.isEmpty) {
       print('No appliances to show.');
@@ -386,4 +392,31 @@ class _LastMonthPageState extends State<LastMonthPage> {
     );
   }
 
+  void showPieChartDialog(BuildContext context) {
+    if (appliances.isEmpty) {
+      print('No appliances to show.');
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Adjust size based on content
+            children: [
+              pieChartTitle(),
+              Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: chart(), // Replace with your chart widget
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

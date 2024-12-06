@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
@@ -18,6 +19,14 @@ class AppSettings extends StatefulWidget {
 }
 
 class _AppSettingsState extends State<AppSettings> {
+  @override
+  void dispose() {
+    if (Hive.isBoxOpen('userbox')) {
+      Hive.box('userbox').close(); // Close the specific box
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -215,7 +224,12 @@ class _AppSettingsState extends State<AppSettings> {
                       onPressed: () async {
                         Navigator.of(context).pop();
                         final prefs = await SharedPreferences.getInstance();
-                        await prefs.clear();
+                        await prefs.clear(); // Clear shared preferences
+
+                        // Clear all Hive boxes
+                        await Hive.deleteFromDisk();
+
+                        // Navigate to LoginPage
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(

@@ -50,15 +50,25 @@ android {
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
+    signingConfigs {
+        release {
+            storeFile file('enervision-release-key.jks') // Ensure the keystore file path is correct
+            storePassword 'J@mes2004' // Your keystore password
+            keyAlias 'my-key-alias' // The alias you used in the command
+            keyPassword 'J@mes2004' // Your key password (same as the keystore password, unless specified differently)
+        }
+    }
+
     buildTypes {
         release {
             // If you want to release an unsigned APK for testing:
             // Uncomment this line if you don't want signing:
             // signingConfig signingConfigs.debug
             // You can also specify minification, but leave it off for testing:
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             signingConfig signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 

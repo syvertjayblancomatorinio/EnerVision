@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
@@ -42,7 +43,6 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // Ensure _formKey.currentState is not null
       if (_formKey.currentState != null && _formKey.currentState!.validate()) {
         try {
           final response = await AuthService(
@@ -50,6 +50,20 @@ class _LoginPageState extends State<LoginPage> {
             emailController: _emailController,
             passwordController: _passwordController,
           ).signIn();
+
+          // // Close the userBox if already open before accessing it again
+          // if (Hive.isBoxOpen('userBox')) {
+          //   await Hive.close(); // Close the box before logging in with a new user
+          // }
+          //
+          // // Ensure the box is open before accessing
+          // if (!Hive.isBoxOpen('userBox')) {
+          //   await Hive.openBox<User>('userBox');
+          // }
+          //
+          // final box = Hive.box<User>('userBox');
+          // final savedUser = box.get('currentUser');
+          // print('Saved user data: ${savedUser.toString()}');
 
           if (response != null) {
             if (response.statusCode == 401) {
@@ -63,11 +77,8 @@ class _LoginPageState extends State<LoginPage> {
         }
       } else {
         await _emptyErrorDialog(context);
-
         print('Form validation failed.');
       }
-
-      print("Button tapped!");
     } finally {
       setState(() {
         _isButtonEnabled = true;

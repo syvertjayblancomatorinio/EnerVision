@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:supabase_project/AuthService/models/hive_model.dart';
+import 'package:supabase_project/AuthService/models/user_model.dart';
+part 'post_model.g.dart';
 
 @HiveType(typeId: 1)
 class Post {

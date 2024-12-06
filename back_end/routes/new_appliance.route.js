@@ -193,7 +193,7 @@ router.patch('/updateApplianceOccurrences/:applianceId',authenticateToken ,async
     const applianceLastUpdatedYear = new Date(appliance.updatedAt).getFullYear();
 
     if (applianceLastUpdatedMonth === currentMonth && applianceLastUpdatedYear === currentYear) {
-        return res.status(400).json({ error: 'Appliance can only be updated once per month' });
+        return res.status(409).json({ error: 'Appliance can only be updated once per month' });
     }
 
     // Find the user associated with the appliance (by appliance.userId)

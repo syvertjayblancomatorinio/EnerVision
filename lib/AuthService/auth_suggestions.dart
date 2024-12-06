@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/AuthService/preferences.dart';
+import 'package:supabase_project/AuthService/services/user_service.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 
 import 'base_url.dart';
@@ -22,8 +23,8 @@ class SuggestionService {
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('userId');
+      String? userId = await UserService.getUserId();
+
 
       if (userId == null) {
         showSnackBar(context, 'User not logged in');
@@ -75,8 +76,7 @@ class SuggestionService {
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('userId');
+      String? userId = await UserService.getUserId();
 
       if (userId == null) {
         showSnackBar(context, 'User not logged in');
@@ -176,4 +176,54 @@ class SuggestionService {
           'Failed to delete suggestion: ${responseBody['message'] ?? 'Unknown error'}');
     }
   }
+  static Future<void> editSuggestion(
+      BuildContext context,
+      TextEditingController suggestionController,
+      String suggestionId,
+      ) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}/editUserSuggestion/$suggestionId');
+      String? token = await getToken();
+      final suggestionText = suggestionController.text.trim();
+
+      if (token == null) {
+        throw Exception('Authentication token is missing. Please log in again.');
+      }
+
+      String? userId = await UserService.getUserId();
+
+      if (userId == null) {
+        showSnackBar(context, 'User not logged in');
+        return;
+      }
+
+      final body = jsonEncode({
+        'userId': userId,
+        'suggestionText': suggestionText,
+      });
+
+      // Send the PUT request
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // Pass token for authentication
+        },
+        body: body,
+      );
+
+      if (response.statusCode == 200) { // Adjust to match the router's success code
+        showSnackBar(context, 'Suggestion updated successfully');
+        suggestionController.clear(); // Clear the text field
+      } else {
+        final responseData = jsonDecode(response.body);
+        showSnackBar(context, 'Failed to update suggestion: ${responseData['message']}');
+      }
+    } catch (e) {
+      print('$e');
+      showSnackBar(context, 'An error occurred: $e');
+    }
+  }
+
+
 }

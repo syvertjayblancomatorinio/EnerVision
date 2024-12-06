@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/preferences.dart';
 import 'package:hive/hive.dart';
+import 'package:supabase_project/AuthService/services/user_service.dart';
 import 'base_url.dart';
 
 class PostsService {
@@ -89,14 +90,13 @@ class PostsService {
   }
 
   static Future<Map<String, dynamic>> fetchUsersPosts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    String? userId = await UserService.getUserId();
 
     if (userId == null) {
       throw Exception('User ID not found in shared preferences');
     }
 
-    print('User ID: $userId'); // Log the userId for debugging
+    print('User ID: $userId');
 
     final url = Uri.parse('${ApiConfig.baseUrl}/getAllPosts/$userId/posts');
     String? token = await getToken();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_project/AuthService/auth_service_posts.dart';
+import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'dart:io';
@@ -9,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
+import '../../AuthService/services/user_service.dart';
 import '../../CommonWidgets/dialogs/error_dialog.dart';
 import 'energy_effieciency_page.dart';
 
@@ -49,10 +51,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   Future<void> createPost(
       String currentUserId, Map<String, dynamic> postData) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    String? userId = await UserService.getUserId();
 
-    final url = Uri.parse("http://10.0.2.2:8080/addPost");
+    final url = Uri.parse("${ApiConfig.baseUrl}/addPost");
 
     String tagsAsString = postData['tags'].join(',');
     String title = toTitleCase(_titleController.text.trim());
@@ -80,6 +81,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     }
 
     var response = await request.send();
+
 
     if (response.statusCode == 400) {
       await _showApplianceErrorDialog(
@@ -362,8 +364,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       child: ElevatedButton(
         onPressed: () async {
           if (_isValidInput()) {
-            final prefs = await SharedPreferences.getInstance();
-            final userId = prefs.getString('userId');
+            String? userId = await UserService.getUserId();
 
             Map<String, dynamic> postData = {
               'title': _titleController.text,

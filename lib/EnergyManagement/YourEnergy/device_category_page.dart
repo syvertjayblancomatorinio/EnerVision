@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 // import 'deviceListPage.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/AuthService/base_url.dart';
 import 'dart:convert';
 
 import 'device_list_page.dart';
@@ -28,7 +29,7 @@ class _CategorySelectionPageState extends State<CategorySelectionPage> {
   Map<String, bool> loadingState = {};
   Future<List<dynamic>> fetchDevices(String category) async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8080/category/$category'),
+      Uri.parse('${ApiConfig.baseUrl}/category/$category'),
     );
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);

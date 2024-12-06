@@ -3,10 +3,12 @@ import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyPage/offline_calculator_v2.dart';
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 import 'package:supabase_project/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
+import 'package:supabase_project/PreCode/Provider/ApplianceWidget.dart';
+import 'package:supabase_project/PreCode/Provider/add_appliance_page.dart';
 import 'package:supabase_project/Settings/app-settings-widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../AuthService/services/user_service.dart';
 import '../EnergyManagement/Community/energy_effieciency_page.dart';
-import '../MyEnergyDiary/carousel.dart';
 
 class BottomNavigation extends StatefulWidget {
   final int selectedIndex;
@@ -18,23 +20,16 @@ class BottomNavigation extends StatefulWidget {
 
 class _BottomNavigationState extends State<BottomNavigation> {
   int _selectedIndex = -1;
-  String? userId;
 
   @override
   void initState() {
     super.initState();
-    _loadUserId(); // Load the userId when the widget initializes
   }
 
-  Future<void> _loadUserId() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userId = prefs.getString('userId');
-    });
-  }
+
 
   void _handleTap(int index) {
-    setState(() {
+    setState(() async {
       _selectedIndex = index;
 
       if (index == 0) {
@@ -55,6 +50,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
           ),
         );
       } else if (index == 2) {
+        String? userId = await UserService.getUserId();
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -65,7 +61,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const OfflineCalculatorV2(),
+            builder: (context) =>  ApplianceListPage(),
             // builder: (context) => EnergyPowerUsed(
             //   value: 'we',
             //   title: '23',

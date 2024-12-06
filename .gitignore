@@ -71,3 +71,4 @@ Thumbs.db
 /node_modules/
 /flutter_firebase_app/
 /dart-sdk/
+.vercel

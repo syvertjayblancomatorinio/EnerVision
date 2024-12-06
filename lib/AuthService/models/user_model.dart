@@ -1,11 +1,30 @@
 import 'package:hive/hive.dart';
 
-@HiveType(typeId: 0)
-class User {
-  @HiveField(0)
-  final String id;
-  @HiveField(1)
-  final String username;
+part 'user_model.g.dart';
 
-  User({required this.id, required this.username});
+@HiveType(typeId: 0)
+class User extends HiveObject {
+  @HiveField(0)
+  String userId;
+
+  @HiveField(1)
+  String username;
+
+  @HiveField(2)
+  String email;
+
+  @HiveField(3)
+  String profilePicture;
+
+  User({
+    required this.userId,
+    required this.username,
+    required this.email,
+    required this.profilePicture,
+  });
+  @override
+  String toString() {
+    return 'User{userId: $userId, username: $username, email: $email, profilePicture: $profilePicture}';
+  }
+
 }

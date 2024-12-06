@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/preferences.dart';
@@ -11,8 +12,10 @@ import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:flutter/foundation.dart';
 
 import '../EnergyManagement/Community/energy_effieciency_page.dart';
+import 'services/user_data.dart';
 import '../SignUpLogin&LandingPage/setup_profile.dart';
 import 'base_url.dart';
+import 'models/user_model.dart';
 
 class AuthService {
   final BuildContext context;
@@ -47,11 +50,6 @@ class AuthService {
   }
 
   Future<http.Response?> signUp() async {
-    // String apiUrl =
-    //     kReleaseMode ? "http://10.0.2.2:8080/" : "http://192.168.1.217:8080/";
-    // final url = Uri.parse("${apiUrl}signup");
-    // final url = Uri.parse("http://192.168.1.217/signup");
-
     final url = Uri.parse("${ApiConfig.baseUrl}/signup");
 
     try {
@@ -72,25 +70,50 @@ class AuthService {
       if (response.statusCode == 201) {
         var responseBody = jsonDecode(response.body);
         final token = responseBody['token'];
-
         String userId = responseBody['user']['_id'];
+        String profilePicture = responseBody['user']['profilePicture'] ?? ""; // Default to empty string if null
+
+        // Save token to SharedPreferences
         if (token != null) {
-          await saveToken(token);
+          await saveToken(token); // Store token in SharedPreferences
+          await storeUserToken(token); // Store token in SharedPreferences
         }
-        // Save the user ID to shared preferences
+
+        // Save the user ID to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userId', userId);
+
+        // Close the Hive box if it's already open
+        if (Hive.isBoxOpen('userBox')) {
+          await Hive.close(); // Close the box if open
+        }
+
+        // Open the Hive box if it's not already open
+        if (!Hive.isBoxOpen('userBox')) {
+          await Hive.openBox<User>('userBox');
+        }
+
+        // Save the user data to Hive
+        final box = Hive.box<User>('userBox');
+        final user = User(
+          userId: userId,
+          username: username,
+          email: emailController.text, // Use email from the controller
+          profilePicture: profilePicture,
+        );
+        await box.put('currentUser', user);
+
+        // Navigate to the Setup Profile page
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const SetupProfile()),
         );
       } else if (response.statusCode == 400) {
         final responseBody = jsonDecode(response.body);
-        final errorMessage =
-            responseBody['message'] ?? 'Email is not available';
+        final errorMessage = responseBody['message'] ?? 'Email is not available';
         print('Error: $errorMessage');
       } else {
-        print('Failed to Sign in: ${response.body}');
+        print('Failed to Sign up: ${response.body}');
       }
 
       return response; // Return the response to handle it in the calling function
@@ -99,6 +122,7 @@ class AuthService {
       return null; // Return null in case of an error
     }
   }
+
 
   Future<http.Response?> signIn() async {
     final url = Uri.parse("${ApiConfig.baseUrl}/signin");
@@ -117,22 +141,44 @@ class AuthService {
 
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
+
         if (responseBody != null &&
             responseBody['user'] != null &&
             responseBody['user']['_id'] != null) {
           String userId = responseBody['user']['_id'];
           String username = responseBody['user']['username'] ?? "Guest";
+          String email = responseBody['user']['email'] ?? "No email provided";
+          String profilePicture = responseBody['user']['profilePicture'] ?? "";
           final token = responseBody['token'];
           bool hasProfile = responseBody['user']['hasProfile'] ?? false;
 
+          // Save token to SharedPreferences
           if (token != null) {
-            await saveToken(token);
+            await saveToken(token); // Store token in SharedPreferences
+          }
+          if (token != null) {
+            await storeUserToken(token); // Store token in SharedPreferences
           }
 
-          // Save the user ID and username to shared preferences
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('userId', userId);
-          await prefs.setString('username', username);
+          // Close the Hive box if it's already open
+          if (Hive.isBoxOpen('userBox')) {
+            await Hive.close(); // Close the box if open
+          }
+
+          // Open the Hive box if it's not already open
+          if (!Hive.isBoxOpen('userBox')) {
+            await Hive.openBox<User>('userBox');
+          }
+
+          // Save the user data to Hive
+          final box = Hive.box<User>('userBox');
+          final user = User(
+            userId: userId,
+            username: username,
+            email: email,
+            profilePicture: profilePicture,
+          );
+          await box.put('currentUser', user);
 
           // Navigate based on the profile existence
           if (hasProfile) {
