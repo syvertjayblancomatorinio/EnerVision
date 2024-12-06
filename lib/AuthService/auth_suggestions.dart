@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/AuthService/preferences.dart';
+import 'package:supabase_project/AuthService/services/user_service.dart';
 import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
 
 import 'base_url.dart';
@@ -22,8 +23,8 @@ class SuggestionService {
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('userId');
+      String? userId = await UserService.getUserId();
+
 
       if (userId == null) {
         showSnackBar(context, 'User not logged in');
@@ -75,8 +76,7 @@ class SuggestionService {
     }
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('userId');
+      String? userId = await UserService.getUserId();
 
       if (userId == null) {
         showSnackBar(context, 'User not logged in');
@@ -190,8 +190,7 @@ class SuggestionService {
         throw Exception('Authentication token is missing. Please log in again.');
       }
 
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('userId');
+      String? userId = await UserService.getUserId();
 
       if (userId == null) {
         showSnackBar(context, 'User not logged in');

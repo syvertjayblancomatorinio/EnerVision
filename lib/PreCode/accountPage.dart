@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/PreCode/change_password.dart';
 import 'package:supabase_project/PreCode/deleteAccount.dart';
+
+import '../AuthService/services/user_service.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -13,7 +16,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final String apiUrl = 'http://10.0.2.2:8080';
   bool isUserLoaded = false;
   String? userId;
   String name = '';
@@ -30,12 +32,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    userId = prefs.getString('userId');
+    String? loadedUserId = await UserService.getUserId();
 
-    if (userId != null) {
+    if (loadedUserId != null) {
+      setState(() {
+        userId = loadedUserId; // Update the state with the userId
+      });
       print('User ID Loaded: $userId');
-      _fetchUserData();
+      _fetchUserData(); // Now you can safely fetch the user data
     } else {
       setState(() {
         isUserLoaded = false;
@@ -45,8 +49,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _fetchUserData() async {
+    if (userId == null) {
+      setState(() {
+        errorMessage = 'User ID is missing.';
+        isUserLoaded = false;
+      });
+      return;
+    }
+
     try {
-      final response = await http.get(Uri.parse('$apiUrl/userProfile/$userId'));
+      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/userProfile/$userId'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -73,8 +85,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       } else {
         setState(() {
-          errorMessage =
-              'Failed to load user data. Status Code: ${response.statusCode}';
+          errorMessage = 'Failed to load user data. Status Code: ${response.statusCode}';
           isUserLoaded = false;
         });
       }
@@ -108,7 +119,7 @@ class _ProfilePageState extends State<ProfilePage> {
               CircleAvatar(
                 radius: 50,
                 backgroundImage:
-                    NetworkImage('https://via.placeholder.com/150'),
+                NetworkImage('https://via.placeholder.com/150'),
               ),
               Positioned(
                 bottom: 0,
@@ -272,7 +283,7 @@ class ActionButton extends StatelessWidget {
           backgroundColor: Colors.white,
           side: BorderSide(color: color),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           minimumSize: const Size(double.infinity, 48),
         ),
         onPressed: onTap,
@@ -313,7 +324,7 @@ class DeleteButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: borderColor),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           minimumSize: const Size(double.infinity, 48),
         ),
         onPressed: onTap,

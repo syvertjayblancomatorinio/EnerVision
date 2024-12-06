@@ -1,9 +1,15 @@
 import 'dart:convert';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/AuthService/preferences.dart';
+import 'package:supabase_project/AuthService/services/user_service.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
+
+import 'models/user_model.dart';
+
+
 
 class ApplianceService {
   static Future<void> addAppliance(
@@ -34,54 +40,52 @@ class ApplianceService {
   }
 
   static Future<Map<String, dynamic>> fetchTodayAppliance() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
 
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
+    if (currentUser == null || currentUser.userId.isEmpty) {
+      throw Exception('User data not found in Hive');
     }
 
     final url = Uri.parse(
-        '${ApiConfig.baseUrl}/getAllTodayAppliances/$userId/appliances');
+        '${ApiConfig.baseUrl}/getAllTodayAppliances/${currentUser.userId}/appliances');
 
-    final response = await http.get(url);
+    try {
+      final response = await http.get(url);
 
-    if (response.statusCode == 200) {
-      // Decode the response body as a Map
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
 
-      // Ensure data types are correctly parsed
-      return {
-        'appliances':
-            List<Map<String, dynamic>>.from(responseData['appliances'] ?? []),
-        'totalDailyConsumptionCost': double.tryParse(
-                responseData['totalDailyConsumptionCost']?.toString() ?? '0') ??
-            0.0,
-        'totalDailyKwhConsumption': double.tryParse(
-                responseData['totalDailyKwhConsumption']?.toString() ?? '0') ??
-            0.0,
-        'totalDailyCO2Emissions': double.tryParse(
-                responseData['totalDailyCO2Emissions']?.toString() ?? '0') ??
-            0.0,
-      };
-    } else if (response.statusCode == 404) {
-      throw Exception('Appliances not found');
-    } else {
-      throw Exception('Failed to load appliances');
+        // Ensure that 'appliances' is a list, and provide defaults if any values are missing
+        return {
+          'appliances': List<Map<String, dynamic>>.from(responseData['appliances'] ?? []),
+          'totalDailyConsumptionCost': double.tryParse(responseData['totalDailyConsumptionCost']?.toString() ?? '0') ?? 0.0,
+          'totalDailyKwhConsumption': double.tryParse(responseData['totalDailyKwhConsumption']?.toString() ?? '0') ?? 0.0,
+          'totalDailyCO2Emissions': double.tryParse(responseData['totalDailyCO2Emissions']?.toString() ?? '0') ?? 0.0,
+        };
+      } else if (response.statusCode == 404) {
+        throw Exception('Appliances not found');
+      } else {
+        throw Exception('Failed to load appliances with status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error occurred while fetching appliances: $e');
+      rethrow; // Re-throw the error so it can be handled elsewhere
     }
   }
 
+
   // Static method to Read appliances
   static Future<List<Map<String, dynamic>>> fetchAppliance() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
 
-    if (userId == null) {
+    if (currentUser!.userId.isEmpty) {
       throw Exception('User ID not found in shared preferences');
     }
 
     final url = Uri.parse(
-        '${ApiConfig.baseUrl}/getAllUsersAppliances/$userId/appliances');
+        '${ApiConfig.baseUrl}/getAllUsersAppliances/${currentUser.userId}/appliances');
 
     final response = await http.get(url);
 
@@ -95,38 +99,6 @@ class ApplianceService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> fetchAppliance1() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
-    }
-
-    final url = Uri.parse(
-        '${ApiConfig.baseUrl}/getAllUsersAppliances/$userId/appliances');
-
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      // Parse the response body
-      List<dynamic> responseData = jsonDecode(response.body);
-
-      // Map the data to only include applianceName and monthlyCost
-      List<Map<String, dynamic>> appliances = responseData.map((appliance) {
-        return {
-          'applianceName': appliance['applianceName'],
-          'monthlyCost': appliance['monthlyCost'],
-        };
-      }).toList();
-
-      return appliances;
-    } else if (response.statusCode == 404) {
-      throw Exception('Appliances not found');
-    } else {
-      throw Exception('Failed to load appliances');
-    }
-  }
 
   static Future<void> updateAppliance(
       String applianceId, Map<String, dynamic> updatedData) async {
@@ -187,9 +159,7 @@ class ApplianceService {
   // Static method to add to monthly consumption
 
   Future<Map<String, String>?> getDaily() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final userId = prefs.getString('userId');
+    String? userId = await UserService.getUserId();
 
     if (userId == null) {
       return null;

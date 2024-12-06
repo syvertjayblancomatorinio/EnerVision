@@ -9,6 +9,8 @@ import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart'
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../AuthService/auth_suggestions.dart';
+import '../../AuthService/models/user_model.dart';
+import '../../AuthService/services/user_service.dart';
 import '../../ConstantTexts/Theme.dart';
 import '../../ConstantTexts/colors.dart';
 import '../../EnergyManagement/Community/ellipse_icon.dart';
@@ -77,7 +79,6 @@ class _PostViewDialogState extends State<PostViewDialog> {
   final ScrollController _scrollController = ScrollController();
   AppControllers controller = AppControllers();
   List<Map<String, dynamic>> posts = [];
-
   String username = '[Username]';
 
   String _monthName(int month) {
@@ -108,6 +109,7 @@ class _PostViewDialogState extends State<PostViewDialog> {
 
   Future<void> getPostsFromApi() async {
     try {
+
       // Fetch posts directly from the API
       final List<Map<String, dynamic>>? fetchedPosts =
           await PostsService.getPosts();
@@ -144,11 +146,13 @@ class _PostViewDialogState extends State<PostViewDialog> {
   }
 
   Future<void> _loadUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    final storedUsername = prefs.getString('username');
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
+    print("Current Username from Hive: ${currentUser!.username}");
+
 
     setState(() {
-      username = storedUsername ?? '[Username]';
+      username = currentUser.username;
     });
   }
 

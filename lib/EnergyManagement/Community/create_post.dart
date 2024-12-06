@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
+import '../../AuthService/services/user_service.dart';
 import '../../CommonWidgets/dialogs/error_dialog.dart';
 import 'energy_effieciency_page.dart';
 
@@ -50,8 +51,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   Future<void> createPost(
       String currentUserId, Map<String, dynamic> postData) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    String? userId = await UserService.getUserId();
 
     final url = Uri.parse("${ApiConfig.baseUrl}/addPost");
 
@@ -90,7 +90,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => const EnergyEfficiencyPage(selectedIndex: 0)),
+            builder: (context) => const EnergyEfficiencyPage(selectedIndex: 1)),
       );
       print('Post added successfully');
     } else {
@@ -364,8 +364,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       child: ElevatedButton(
         onPressed: () async {
           if (_isValidInput()) {
-            final prefs = await SharedPreferences.getInstance();
-            final userId = prefs.getString('userId');
+            String? userId = await UserService.getUserId();
 
             Map<String, dynamic> postData = {
               'title': _titleController.text,

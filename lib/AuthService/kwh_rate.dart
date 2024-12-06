@@ -1,14 +1,18 @@
 import 'dart:convert';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/AuthService/preferences.dart';
+import 'package:supabase_project/AuthService/services/user_service.dart';
+
+import 'models/user_model.dart';
 
 class KWHRateService {
-  static Future<void> saveKwhRate(String kwhRate) async {
-    final prefs = await SharedPreferences.getInstance();
 
-    final String? userId = prefs.getString('userId');
+  static Future<void> saveKwhRate(String kwhRate) async {
+
+    String? userId = await UserService.getUserId();
 
     if (userId == null) {
       throw Exception('User ID not found');
@@ -35,15 +39,14 @@ class KWHRateService {
   }
 
   static Future<double?> getKwhRate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
 
-    if (userId == null) {
-      throw Exception('User ID not found in shared preferences');
+    String? userId = await UserService.getUserId();
+
+    if (userId == null ) {
+      throw Exception('User data not found in Hive');
     }
 
     final url = Uri.parse('${ApiConfig.baseUrl}/getUserKwhRate/$userId');
-
     String? token = await getToken();
 
     if (token == null || token.isEmpty) {

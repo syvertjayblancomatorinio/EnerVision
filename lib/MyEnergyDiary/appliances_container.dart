@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_project/AuthService/auth_appliances.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,10 +18,12 @@ import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kw
 import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+import 'package:supabase_project/AuthService/services/user_data.dart';
 import 'package:supabase_project/MyEnergyDiary/rate_dialog.dart';
 
 import '../AuthService/base_url.dart';
 import '../AuthService/kwh_rate.dart';
+import '../AuthService/models/user_model.dart';
 import '../AuthService/preferences.dart';
 import '../CommonWidgets/controllers/app_controllers.dart';
 
@@ -72,157 +75,242 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       ],
     );
   }
+  Future<void> _fetchAppliances() async {
+    try {
+      final appliances = await fetchTodayAppliance();
+      // Now you can use the appliances fetched from either Hive or the API
+      print('Appliances: ${appliances['appliances']}');
+    } catch (e) {
+      print('Error fetching appliances: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> fetchTodayAppliance() async {
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
+
+    if (currentUser == null || currentUser.userId.isEmpty) {
+      throw Exception('User data not found in Hive');
+    }
+
+    // First, check if appliances are already in Hive
+    final applianceBox = await Hive.openBox('appliancesBox');
+    if (applianceBox.containsKey('todayAppliances')) {
+      // If appliances are in Hive, return them
+      final appliances = applianceBox.get('todayAppliances');
+      return appliances;
+    }
+
+    // If not found in Hive, fetch from API
+    final url = Uri.parse('${ApiConfig.baseUrl}/getAllTodayAppliances/${currentUser.userId}/appliances');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+        final appliances = {
+          'appliances': List<Map<String, dynamic>>.from(responseData['appliances'] ?? []),
+          'totalDailyConsumptionCost': double.tryParse(responseData['totalDailyConsumptionCost']?.toString() ?? '0') ?? 0.0,
+          'totalDailyKwhConsumption': double.tryParse(responseData['totalDailyKwhConsumption']?.toString() ?? '0') ?? 0.0,
+          'totalDailyCO2Emissions': double.tryParse(responseData['totalDailyCO2Emissions']?.toString() ?? '0') ?? 0.0,
+        };
+
+        // Store fetched appliances in Hive for future use
+        await applianceBox.put('todayAppliances', appliances);
+
+        return appliances;
+      } else if (response.statusCode == 404) {
+        throw Exception('Appliances not found');
+      } else {
+        throw Exception('Failed to load appliances with status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error occurred while fetching appliances: $e');
+      rethrow; // Re-throw the error so it can be handled elsewhere
+    }
+  }
 
   Future<void> fetchTodayAppliances() async {
     setState(() {
-      isLoading = true; // Set loading state to true before the fetch
+      isLoading = true;
     });
 
     try {
+      // Fetch the appliance data from the service
       final todayData = await ApplianceService.fetchTodayAppliance();
 
+      // Sort the appliances list by timestamp (latest first)
+      todayData['appliances'].sort((a, b) {
+        DateTime timestampA = DateTime.parse(a['createdAt']);
+        DateTime timestampB = DateTime.parse(b['createdAt']);
+        return timestampB.compareTo(timestampA); // Sort in descending order
+      });
+
       setState(() {
-        appliances = todayData['appliances'];
+        appliances = todayData['appliances']; // Appliances after sorting
         totalDailyConsumptionCost = todayData['totalDailyConsumptionCost'];
         totalDailyKwhConsumption = todayData['totalDailyKwhConsumption'];
         totalDailyCO2Emissions = todayData['totalDailyCO2Emissions'];
-        isLoading =
-            false; // Set loading state to false after the data is fetched
+        isLoading = false;
       });
     } catch (e) {
       setState(() {
-        isLoading =
-            false; // Set loading state to false even if there is an error
+        isLoading = false;
       });
+
+      print('Error fetching appliances: $e');
     }
   }
+
+
 
   //Todo: Display the appliances from latest to oldest
   Widget myAppliancesContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TotalCostDisplay(
-              cost: totalDailyConsumptionCost != null
-                  ? '₱ ${totalDailyConsumptionCost.toStringAsFixed(2)}'
-                  : 'Cost',
-            ),
-            const SizedBox(width: 20),
-            TotalCostDisplay(
-              cost: totalDailyKwhConsumption != null
-                  ? '${totalDailyKwhConsumption.toStringAsFixed(2)} KWH'
-                  : 'KWH',
-            ),
-          ],
-        ),
+        _buildCostDisplay(),
         const Padding(
-          padding: EdgeInsets.only(
-            left: 20.0,
-            top: 30,
+          padding: EdgeInsets.only(left: 20.0, top: 30),
+          child: Text(
+            'Appliance',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          child: Text('Appliance',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(height: 10),
-        if (isLoading)
-          const Center(
-              child: LoadingWidget(
-            message: 'Fetching Today\'s Appliances...',
-            color: AppColors.primaryColor,
-          ))
-        else if (appliances.isEmpty)
-          Container(
-            margin: const EdgeInsets.only(top: 200, bottom: 100),
-            child: const Center(
-              child: Text(
-                'No appliances added for \n Today\'s Appliances...',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            ),
-          )
-        else
-          ...appliances.asMap().entries.map((entry) {
-            int index = entry.key;
-            var appliance = entry.value;
-
-            return Center(
-              child: GestureDetector(
-                onTap: () {
-                  showApplianceInformationDialog(index);
-                },
-                child: Container(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 8.0, horizontal: 16.0),
-                  decoration: greyBoxDecoration(),
-                  child: ListTile(
-                    leading: ClipOval(
-                      child: Image.asset(
-                        appliance['imagePath'] ?? 'assets/appliance.jpg',
-                        height: 50,
-                        width: 50,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    title: Text(
-                      appliance['applianceName'] ?? 'Unknown Device',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text('Wattage: ${appliance['wattage'] ?? 'N/A'}'
-                        '     '
-                        'Hours Used: ${appliance['usagePatternPerDay'] ?? 'N/A'}\n'),
-                    trailing: CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () => _showActionSheet(context, index),
-                      child: Image.asset(
-                        'assets/edit.png',
-                        scale: 0.7,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
+        _buildApplianceList(),
         const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40),
-          child: Center(
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                final kwhRate = await getKwhRate();
-
-                if (kwhRate != null) {
-                  _showAddApplianceDialog(
-                    context,
-                  );
-                } else {
-                  showKwhRateDialog(
-                   context:  context,
-                   kwhRateController:  controllers.kwhRateController,
-                    saveKwhRate: saveKwhRate,
-                    fetchAppliances: fetchTodayAppliances,
-                    fetchDailyCost: fetchDailyCost,
-                  );
-                }
-              },
-              icon: const Icon(Icons.add, size: 0),
-              label: const Text('Add Appliance'),
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.0),
-                ),
-                minimumSize: const Size(double.infinity, 50),
-              ),
-            ),
-          ),
-        )
+        _buildAddApplianceButton(),
       ],
     );
   }
+
+  Widget _buildCostDisplay() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TotalCostDisplay(
+          cost: totalDailyConsumptionCost != null
+              ? '₱ ${totalDailyConsumptionCost.toStringAsFixed(2)}'
+              : 'Cost',
+        ),
+        const SizedBox(width: 20),
+        TotalCostDisplay(
+          cost: totalDailyKwhConsumption != null
+              ? '${totalDailyKwhConsumption.toStringAsFixed(2)} KWH'
+              : 'KWH',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildApplianceList() {
+    if (isLoading) {
+      return const Center(
+        child: LoadingWidget(
+          message: 'Fetching Today\'s Appliances...',
+          color: AppColors.primaryColor,
+        ),
+      );
+    } else if (appliances.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.only(top: 200, bottom: 100),
+        child: const Center(
+          child: Text(
+            'No appliances added for \n Today\'s Appliances...',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+      );
+    } else {
+      return Column(
+        children: appliances.asMap().entries.map((entry) {
+          int index = entry.key;
+          var appliance = entry.value;
+
+          return Center(
+            child: GestureDetector(
+              onTap: () {
+                showApplianceInformationDialog(index);
+              },
+              child: _buildApplianceCard(appliance, index),
+            ),
+          );
+        }).toList(),
+      );
+    }
+  }
+
+  Widget _buildApplianceCard(Map appliance, int index) {
+    return Container(
+      padding: const EdgeInsets.only(top: 16.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      decoration: greyBoxDecoration(),
+      child: ListTile(
+        leading: ClipOval(
+          child: Image.asset(
+            appliance['imagePath'] ?? 'assets/appliance.jpg',
+            height: 50,
+            width: 50,
+            fit: BoxFit.cover,
+          ),
+        ),
+        title: Text(
+          appliance['applianceName'] ?? 'Unknown Device',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          'Wattage: ${appliance['wattage'] ?? 'N/A'}'
+              '     '
+              'Hours Used: ${appliance['usagePatternPerDay'] ?? 'N/A'}\n',
+        ),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () => _showActionSheet(context, index),
+          child: Image.asset(
+            'assets/edit.png',
+            scale: 0.7,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddApplianceButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 40),
+      child: Center(
+        child: ElevatedButton.icon(
+          onPressed: () async {
+            final kwhRate = await getKwhRate();
+
+            if (kwhRate != null) {
+              _showAddApplianceDialog(context);
+            } else {
+              showKwhRateDialog(
+                context: context,
+                kwhRateController: controllers.kwhRateController,
+                saveKwhRate: saveKwhRate,
+                fetchAppliances: fetchTodayAppliances,
+                fetchDailyCost: fetchDailyCost,
+              );
+            }
+          },
+          icon: const Icon(Icons.add, size: 0),
+          label: const Text('Add Appliance'),
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
+            ),
+            minimumSize: const Size(double.infinity, 50),
+          ),
+        ),
+      ),
+    );
+  }
+
 
   Widget _popupTitle(String title) {
     return Text(
@@ -316,23 +404,23 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       'applianceName': applianceName,
       'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
       'usagePatternPerDay':
-          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
+      double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
       'applianceCategory':
-          controllers.addApplianceCategoryController.text.trim(),
+      controllers.addApplianceCategoryController.text.trim(),
       'selectedDays': selectedDays,
     };
-
-    // Retrieve userId from SharedPreferences
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? userId = prefs.getString('userId');
-
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
+    // Retrieve userId from Hive
+    final String? userId = await currentUser!.userId;
     if (userId == null) {
-      print('User ID not found in shared preferences');
+      print('User ID not found in Hive');
       return;
     }
 
-    // Get the token from SharedPreferences or other method
-    String? token = await getToken();
+    // Retrieve token from Hive
+    String? token = await getUserToken();
+    print(token);
     if (token != null) {
       var response = await http.post(
         url,
@@ -347,13 +435,15 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       );
 
       if (response.statusCode == 201) {
+        print('token $token');
+
         fetchTodayAppliances();
         fetchDailyCost();
       } else {
         await _showApplianceErrorDialog(context);
       }
     } else {
-      print('No token found');
+      print('No token found in Hive');
     }
   }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/preferences.dart';
@@ -11,8 +12,10 @@ import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 import 'package:flutter/foundation.dart';
 
 import '../EnergyManagement/Community/energy_effieciency_page.dart';
+import 'services/user_data.dart';
 import '../SignUpLogin&LandingPage/setup_profile.dart';
 import 'base_url.dart';
+import 'models/user_model.dart';
 
 class AuthService {
   final BuildContext context;
@@ -117,22 +120,34 @@ class AuthService {
 
       if (response.statusCode == 200) {
         var responseBody = jsonDecode(response.body);
+
         if (responseBody != null &&
             responseBody['user'] != null &&
             responseBody['user']['_id'] != null) {
           String userId = responseBody['user']['_id'];
           String username = responseBody['user']['username'] ?? "Guest";
+          String email = responseBody['user']['email'] ?? "No email provided";
+          String profilePicture = responseBody['user']['profilePicture'] ?? "";
           final token = responseBody['token'];
           bool hasProfile = responseBody['user']['hasProfile'] ?? false;
 
+          // Save token to SharedPreferences
           if (token != null) {
-            await saveToken(token);
+            await saveToken(token); // Store token in SharedPreferences
+          }
+          if (token != null) {
+            await storeUserToken(token); // Store token in SharedPreferences
           }
 
-          // Save the user ID and username to shared preferences
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('userId', userId);
-          await prefs.setString('username', username);
+          // Save the user data to Hive
+          final box = Hive.box<User>('userBox');
+          final user = User(
+            userId: userId,
+            username: username,
+            email: email,
+            profilePicture: profilePicture,
+          );
+          await box.put('currentUser', user);
 
           // Navigate based on the profile existence
           if (hasProfile) {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_project/AuthService/base_url.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
@@ -15,6 +16,7 @@ import 'package:supabase_project/MyEnergyDiary/date_picker_new_ui.dart';
 import 'package:pie_chart/pie_chart.dart';
 
 import '../../../CommonWidgets/appliance_container/total_cost&kwh.dart';
+import '../../AuthService/models/user_model.dart';
 import '../../ConstantTexts/colors.dart';
 
 class LastMonthPage extends StatefulWidget {
@@ -70,9 +72,10 @@ class _LastMonthPageState extends State<LastMonthPage> {
   }
 
   Future<void> getLastMonth(DateTime date) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
 
+    final userId = currentUser!.userId;
     if (userId == null) {
       print("User ID is null. Cannot fetch monthly consumption.");
       return;
@@ -141,9 +144,10 @@ class _LastMonthPageState extends State<LastMonthPage> {
   }
 
   Future<void> getUsersApplianceCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
 
+    final userId = currentUser!.userId;
     if (userId == null) {
       print("User ID is null. Cannot fetch appliance count.");
       return;

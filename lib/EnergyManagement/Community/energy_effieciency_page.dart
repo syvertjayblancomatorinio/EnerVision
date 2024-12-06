@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:supabase_project/Buttons/energy_efficiency_buttons.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import '../../../CommonWidgets/appbar-widget.dart';
 import '../../../CommonWidgets/bottom-navigation-bar.dart';
 import '../../../ConstantTexts/Theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../AuthService/models/user_model.dart';
 import '../YourEnergy/your_energy_tab.dart';
 import 'community_tab.dart';
 
@@ -22,16 +24,13 @@ class EnergyEfficiencyPage extends StatefulWidget {
 
 class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
   int _currentIndex = 0;
-  String userId = '';
-  String username = '';
-
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.selectedIndex >= 0 && widget.selectedIndex <= 2
         ? widget.selectedIndex
         : 0;
-    _printUserIdFromPrefs();
+    _printUserDataFromHive();
   }
 
   void _onSegmentTapped(int index) {
@@ -39,14 +38,19 @@ class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
       _currentIndex = index;
     });
   }
+  Future<void> _printUserDataFromHive() async {
+    final box = Hive.box<User>('userBox');
+    final currentUser = box.get('currentUser');
 
-  Future<void> _printUserIdFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    final username = prefs.getString('username');
-    print("Current User ID from SharedPreferences: $userId");
-    print("Current User ID from SharedPreferences: $username");
+    if (currentUser != null) {
+      print("Current User ID from Hive: ${currentUser.userId}");
+      print("Current Username from Hive: ${currentUser.username}");
+      // print("Current Email from Hive: ${currentUser.email}");
+    } else {
+      print("No user data found in Hive.");
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

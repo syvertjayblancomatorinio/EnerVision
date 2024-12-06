@@ -59,14 +59,12 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     getKwhRate();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final applianceProvider = Provider.of<ApplianceProvider>(context);
 
     return MaterialApp(
-      theme: AppTheme.getAppTheme(),
+      theme: ThemeData.dark(),
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         bottomNavigationBar: const BottomNavigation(selectedIndex: 2),
@@ -79,10 +77,8 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
           },
         ),
         body: Stack(
-          children:[
-          myAppliancesContent(applianceProvider),
-
-            // myAppliancesContent(),
+          children: [
+            myAppliancesContent(applianceProvider),
             Positioned(
               bottom: 20.0,
               right: 20.0,
@@ -90,16 +86,13 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
                 onPressed: () async {
                   final kwhRate = await getKwhRate();
                   if (kwhRate != null) {
-                    _showAddApplianceDialog(
-                      context,
-                      applianceProvider
-                    );
+                    _showAddApplianceDialog(context, applianceProvider);
                   } else {
                     showKwhRateDialog(
                       context: context,
                       kwhRateController: controllers.kwhRateController,
                       saveKwhRate: saveKwhRate,
-                      fetchAppliances: fetchAppliances,
+                      fetchAppliances: applianceProvider.loadAppliances,
                       fetchDailyCost: () {},
                     );
                   }
@@ -122,6 +115,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       ),
     );
   }
+
   Widget myAppliancesContent(ApplianceProvider applianceProvider) {
     if (applianceProvider.isLoading) {
       return const Center(
@@ -154,35 +148,6 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     }
   }
 
-  // Widget myAppliancesContent() {
-  //   if (isLoading) {
-  //     return const Center(
-  //         child: LoadingWidget(
-  //       message: 'Fetching all appliances',
-  //       color: AppColors.primaryColor,
-  //     ));
-  //   } else if (appliances.isEmpty) {
-  //     return Center(
-  //       child: Text(
-  //         'No appliance added.\nTap "+" to start tracking.',
-  //         textAlign: TextAlign.center,
-  //         style: TextStyle(
-  //           fontSize: 16,
-  //           color: Colors.grey[700],
-  //         ),
-  //       ),
-  //     );
-  //   } else {
-  //     return ListView.builder(
-  //       itemCount: appliances.length,
-  //       itemBuilder: (context, index) {
-  //         return applianceItem(appliances[index], index);
-  //       },
-  //     );
-  //   }
-  // }
-
-  //Todo: Display the appliances from latest to oldest
   Widget applianceItem(Map<String, dynamic> appliance, int index) {
     return GestureDetector(
       onTap: () {
@@ -234,7 +199,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
                         Text(
                           appliance['createdAt'] != null
                               ? DateFormat('MM/dd').format(
-                                  DateTime.parse(appliance['createdAt']))
+                              DateTime.parse(appliance['createdAt']))
                               : 'null',
                           style: const TextStyle(fontSize: 14),
                         ),
@@ -303,11 +268,11 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
   }
 
   Future<void> _showErrorDialog(
-    BuildContext context, {
-    required String title,
-    required String message,
-    String buttonText = 'OK', // Default button text
-  }) async {
+      BuildContext context, {
+        required String title,
+        required String message,
+        String buttonText = 'OK', // Default button text
+      }) async {
     ErrorDialogButton errorDialog = ErrorDialogButton(
       title: title,
       message: message,
@@ -355,7 +320,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content:
-                Text('Failed to fetch appliances: ${response.statusCode}')),
+            Text('Failed to fetch appliances: ${response.statusCode}')),
       );
       setState(() {
         isLoading = false;
@@ -384,35 +349,6 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     );
   }
 
-  Future<void> showKwhRateDialog({
-    required BuildContext context,
-    required TextEditingController kwhRateController,
-    required Function(String kwhRate) saveKwhRate,
-    required Function() fetchAppliances,
-    required Function() fetchDailyCost,
-  }) async {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return KwhRateDialog(
-          kwhRateController: kwhRateController,
-          saveKwhRate: saveKwhRate,
-          fetchAppliances: fetchAppliances,
-          fetchDailyCost: fetchDailyCost,
-        );
-      },
-    );
-  }
-  Future<void> saveKwhRate(String kwhRate) async {
-    try {
-      await KWHRateService.saveKwhRate(kwhRate);
-      print('kWh rate saved successfully');
-    } catch (e) {
-      print('Error saving kWh rate: $e');
-    }
-  }
-
   Future<void> addAppliance() async {
     final url = Uri.parse("${ApiConfig.baseUrl}/addApplianceNewLogic");
 
@@ -424,9 +360,9 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       'applianceName': applianceName,
       'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
       'usagePatternPerDay':
-          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
+      double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
       'applianceCategory':
-          controllers.addApplianceCategoryController.text.trim(),
+      controllers.addApplianceCategoryController.text.trim(),
       'selectedDays': selectedDays,
     };
 
@@ -461,7 +397,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
           context,
           title: 'Appliance not Added',
           message:
-              'Invalid Appliance\nOops! The appliance either already exists in your list or the name contains only spaces. Please add a different appliance with a valid name.',
+          'Invalid Appliance\nOops! The appliance either already exists in your list or the name contains only spaces. Please add a different appliance with a valid name.',
         );
       } else if (response.statusCode == 201) {
         // Success: Appliance added
@@ -488,14 +424,42 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     }
   }
 
+  Future<void> showKwhRateDialog({
+    required BuildContext context,
+    required TextEditingController kwhRateController,
+    required Function(String kwhRate) saveKwhRate,
+    required Function() fetchAppliances,
+    required Function() fetchDailyCost,
+  }) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return KwhRateDialog(
+          kwhRateController: kwhRateController,
+          saveKwhRate: saveKwhRate,
+          fetchAppliances: fetchAppliances,
+          fetchDailyCost: fetchDailyCost,
+        );
+      },
+    );
+  }
 
+  Future<void> saveKwhRate(String kwhRate) async {
+    try {
+      await KWHRateService.saveKwhRate(kwhRate);
+      print('kWh rate saved successfully');
+    } catch (e) {
+      print('Error saving kWh rate: $e');
+    }
+  }
 
-  void _showAddApplianceDialog(BuildContext context, ApplianceProvider provider) {
+  void _showAddApplianceDialog(
+      BuildContext context, ApplianceProvider applianceProvider) {
     controllers.addApplianceNameController.clear();
     controllers.addWattageController.clear();
     controllers.addUsagePatternController.clear();
     controllers.addApplianceCategoryController.clear();
-
     showDialog(
       context: context,
       builder: (context) {
@@ -503,20 +467,17 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
           addApplianceNameController: controllers.addApplianceNameController,
           addWattageController: controllers.addWattageController,
           addUsagePatternController: controllers.addUsagePatternController,
-          addApplianceCategoryController: controllers.addApplianceCategoryController,
+          addApplianceCategoryController:
+          controllers.addApplianceCategoryController,
           formKey: formKey,
           addAppliance: (List<int> selectedDays) {
             setState(() {
               this.selectedDays = selectedDays;
             });
             addAppliance();
-            provider.loadAppliances();
-
           },
-
         );
       },
     );
   }
-
 }
