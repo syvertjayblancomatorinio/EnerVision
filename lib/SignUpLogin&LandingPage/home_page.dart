@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_project/CommonWidgets/box_decorations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/MyEnergyDiary/all_devices_page.dart';
 import '../AuthService/base_url.dart';
 import '../EnergyManagement/YourEnergy/device_category_page.dart';
+import '../PreCode/Provider/ApplianceProvider.dart';
 import '../StaticPages/energy_efficiency_tab/Electric-Vehicles-Transportation.dart';
 import '../StaticPages/energy_efficiency_tab/energy-effieciency-widget.dart';
 import '../StaticPages/energy_efficiency_tab/energy-storage-systems.dart';
@@ -21,7 +23,13 @@ class YourEnergyTab extends StatefulWidget {
 
 class _YourEnergyTabState extends State<YourEnergyTab> {
   String? userId;
-
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final applianceProvider = Provider.of<ApplianceProvider>(context, listen: false);
+      applianceProvider.loadAppliances();
+    });
+  }
   Future<Map<String, dynamic>> fetchUserProfile() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');

@@ -50,11 +50,6 @@ class AuthService {
   }
 
   Future<http.Response?> signUp() async {
-    // String apiUrl =
-    //     kReleaseMode ? "http://10.0.2.2:8080/" : "http://192.168.1.217:8080/";
-    // final url = Uri.parse("${apiUrl}signup");
-    // final url = Uri.parse("http://192.168.1.217/signup");
-
     final url = Uri.parse("${ApiConfig.baseUrl}/signup");
 
     try {
@@ -75,25 +70,50 @@ class AuthService {
       if (response.statusCode == 201) {
         var responseBody = jsonDecode(response.body);
         final token = responseBody['token'];
-
         String userId = responseBody['user']['_id'];
+        String profilePicture = responseBody['user']['profilePicture'] ?? ""; // Default to empty string if null
+
+        // Save token to SharedPreferences
         if (token != null) {
-          await saveToken(token);
+          await saveToken(token); // Store token in SharedPreferences
+          await storeUserToken(token); // Store token in SharedPreferences
         }
-        // Save the user ID to shared preferences
+
+        // Save the user ID to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userId', userId);
+
+        // Close the Hive box if it's already open
+        if (Hive.isBoxOpen('userBox')) {
+          await Hive.close(); // Close the box if open
+        }
+
+        // Open the Hive box if it's not already open
+        if (!Hive.isBoxOpen('userBox')) {
+          await Hive.openBox<User>('userBox');
+        }
+
+        // Save the user data to Hive
+        final box = Hive.box<User>('userBox');
+        final user = User(
+          userId: userId,
+          username: username,
+          email: emailController.text, // Use email from the controller
+          profilePicture: profilePicture,
+        );
+        await box.put('currentUser', user);
+
+        // Navigate to the Setup Profile page
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const SetupProfile()),
         );
       } else if (response.statusCode == 400) {
         final responseBody = jsonDecode(response.body);
-        final errorMessage =
-            responseBody['message'] ?? 'Email is not available';
+        final errorMessage = responseBody['message'] ?? 'Email is not available';
         print('Error: $errorMessage');
       } else {
-        print('Failed to Sign in: ${response.body}');
+        print('Failed to Sign up: ${response.body}');
       }
 
       return response; // Return the response to handle it in the calling function
@@ -102,6 +122,7 @@ class AuthService {
       return null; // Return null in case of an error
     }
   }
+
 
   Future<http.Response?> signIn() async {
     final url = Uri.parse("${ApiConfig.baseUrl}/signin");
@@ -137,6 +158,16 @@ class AuthService {
           }
           if (token != null) {
             await storeUserToken(token); // Store token in SharedPreferences
+          }
+
+          // Close the Hive box if it's already open
+          if (Hive.isBoxOpen('userBox')) {
+            await Hive.close(); // Close the box if open
+          }
+
+          // Open the Hive box if it's not already open
+          if (!Hive.isBoxOpen('userBox')) {
+            await Hive.openBox<User>('userBox');
           }
 
           // Save the user data to Hive

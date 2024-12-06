@@ -1,33 +1,6 @@
-import 'dart:convert';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:supabase_project/AuthService/auth_appliances.dart';
-import 'package:supabase_project/AuthService/base_url.dart';
-import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
-import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kwh.dart';
-import 'package:supabase_project/CommonWidgets/box_decorations.dart';
-import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
-import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
-import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
-import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/micaella.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
-import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/MyEnergyDiary/rate_dialog.dart';
-import '../../ConstantTexts/Theme.dart';
-import '../../YourEnergyCalculator&Compare/compare_device.dart';
-import '../AuthService/kwh_rate.dart';
-import '../AuthService/models/user_model.dart';
-import '../AuthService/preferences.dart';
-import '../AuthService/services/user_service.dart';
-import '../PreCode/Provider/ApplianceProvider.dart';
+import '../all_imports/imports.dart';
 
 class AllDevicesPage extends StatefulWidget {
   final String userId;
@@ -43,28 +16,26 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
   Map<String, dynamic> dailyCost = {};
   List<dynamic> appliances = [];
   List<int> selectedDays = [];
-  bool isLoading = false;
+  bool isLoading = true;
+
   @override
   void dispose() {
-    controllers.addUsagePatternController.dispose();
-    controllers.addApplianceCategoryController.dispose();
-    controllers.dispose();
+      controllers.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    fetchAppliances();
-    getKwhRate();
+    Future.delayed(const Duration(seconds: 1), () {
+      setState(() {
+        isLoading = false;
+      });
+    });
   }
-
-
 
   @override
   Widget build(BuildContext context) {
-    final applianceProvider = Provider.of<ApplianceProvider>(context);
-
     return MaterialApp(
       theme: AppTheme.getAppTheme(),
       debugShowCheckedModeBanner: false,
@@ -79,110 +50,73 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
           },
         ),
         body: Stack(
-          children:[
-          myAppliancesContent(applianceProvider),
-
-            // myAppliancesContent(),
-            Positioned(
-              bottom: 20.0,
-              right: 20.0,
-              child: ElevatedButton(
-                onPressed: () async {
-                  final kwhRate = await getKwhRate();
-                  if (kwhRate != null) {
-                    _showAddApplianceDialog(
-                      context,
-                      applianceProvider
-                    );
-                  } else {
-                    showKwhRateDialog(
-                      context: context,
-                      kwhRateController: controllers.kwhRateController,
-                      saveKwhRate: saveKwhRate,
-                      fetchAppliances: fetchAppliances,
-                      fetchDailyCost: () {},
+          children: [
+            if (isLoading)
+              const Center(
+                child: LoadingWidget(
+                  message: 'Fetching all appliances...',
+                  color: AppColors.primaryColor,
+                ),
+              )
+            else
+            // Once loading is complete, display the appliances
+              Consumer<ApplianceProvider>(
+                builder: (context, applianceProvider, child) {
+                  if (applianceProvider.isLoading) {
+                    return const Center(
+                      child: LoadingWidget(
+                        message: 'Fetching all appliances...',
+                        color: AppColors.primaryColor,
+                      ),
                     );
                   }
+                  if (applianceProvider.appliances.isEmpty) {
+                    return const Center(child: Text('No appliance added.\nTap "+" to start tracking.'));
+                  }
+
+                  return myAppliancesContent(applianceProvider);
                 },
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.all(24),
-                ),
-                child: const Icon(
-                  Icons.add,
-                  size: 16,
-                  color: Colors.white,
-                ),
               ),
-            ),
           ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            final kwhRate = await getKwhRate();
+            if (kwhRate != null) {
+              _showAddApplianceDialog(context);
+            } else {
+              showKwhRateDialog(
+                context: context,
+                kwhRateController: controllers.kwhRateController,
+                saveKwhRate: saveKwhRate,
+                fetchAppliances: (){},
+                fetchDailyCost: () {},
+              );
+            }
+          },
+          backgroundColor: AppColors.primaryColor,
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 24,
+          ), // Set the background color if needed
         ),
       ),
     );
   }
+
   Widget myAppliancesContent(ApplianceProvider applianceProvider) {
-    if (applianceProvider.isLoading) {
-      return const Center(
-        child: LoadingWidget(
-          message: 'Fetching all appliances',
-          color: AppColors.primaryColor,
-        ),
-      );
-    } else if (applianceProvider.appliances.isEmpty) {
-      return Center(
-        child: Text(
-          'No appliance added.\nTap "+" to start tracking.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey[700],
-          ),
-        ),
-      );
-    } else {
-      return ListView.builder(
-        itemCount: applianceProvider.appliances.length,
-        itemBuilder: (context, index) {
-          return applianceItem(
-            applianceProvider.appliances[index],
-            index,
-          );
-        },
-      );
-    }
+    return ListView.builder(
+      itemCount: applianceProvider.appliances.length,
+      itemBuilder: (context, index) {
+        return applianceItem(
+          applianceProvider.appliances[index],
+          index,
+        );
+      },
+    );
   }
 
-  // Widget myAppliancesContent() {
-  //   if (isLoading) {
-  //     return const Center(
-  //         child: LoadingWidget(
-  //       message: 'Fetching all appliances',
-  //       color: AppColors.primaryColor,
-  //     ));
-  //   } else if (appliances.isEmpty) {
-  //     return Center(
-  //       child: Text(
-  //         'No appliance added.\nTap "+" to start tracking.',
-  //         textAlign: TextAlign.center,
-  //         style: TextStyle(
-  //           fontSize: 16,
-  //           color: Colors.grey[700],
-  //         ),
-  //       ),
-  //     );
-  //   } else {
-  //     return ListView.builder(
-  //       itemCount: appliances.length,
-  //       itemBuilder: (context, index) {
-  //         return applianceItem(appliances[index], index);
-  //       },
-  //     );
-  //   }
-  // }
-
-  //Todo: Display the appliances from latest to oldest
   Widget applianceItem(Map<String, dynamic> appliance, int index) {
     return GestureDetector(
       onTap: () {
@@ -267,22 +201,103 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     );
   }
 
-  Widget dailyConsumption() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        TotalCostDisplay(
-          cost: dailyCost['totalDailyConsumptionCost'] != null
-              ? '₱ ${double.parse(dailyCost['totalDailyConsumptionCost'].toString()).toStringAsFixed(2)}'
-              : 'N/A',
-        ),
-        const SizedBox(width: 20),
-        TotalCostDisplay(
-          cost: dailyCost['totalDailyKwhConsumption'] != null
-              ? '${double.parse(dailyCost['totalDailyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
-              : 'N/A',
-        ),
-      ],
+  Future<void> addAppliance() async {
+    final url = Uri.parse("${ApiConfig.baseUrl}/addApplianceNewLogic");
+
+    String applianceName = toTitleCase(
+      controllers.addApplianceNameController.text.trim(),
+    );
+
+    final Map<String, dynamic> applianceData = {
+      'applianceName': applianceName,
+      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
+      'usagePatternPerDay':
+      double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
+      'applianceCategory':
+      controllers.addApplianceCategoryController.text.trim(),
+      'selectedDays': selectedDays,
+    };
+
+    String? userId = await UserService.getUserId();
+    if (userId == null) {
+      print('User ID not found in shared preferences');
+      return;
+    }
+
+    String? token = await getUserToken();
+    if (token == null) {
+      print('Token not found');
+      return;
+    }
+
+    try {
+      var response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'applianceData': applianceData,
+        }),
+      );
+
+      if (response.statusCode == 409) {
+        // Conflict: Appliance already exists
+        _showErrorDialog(
+          context,
+          title: 'Appliance not Added',
+          message:
+          'Invalid Appliance\nOops! The appliance either already exists in your list or the name contains only spaces. Please add a different appliance with a valid name.',
+        );
+      } else if (response.statusCode == 201) {
+        // Success: Appliance added
+        showSnackBar(context, 'Appliance Addded');
+      } else {
+        // Other errors: Show error dialog with response body for debugging
+        _showErrorDialog(
+          context,
+          title: 'Network Error',
+          message: 'Oops! Something went wrong. Please try again later.',
+        );
+      }
+    } catch (e) {
+      // Handle exceptions (e.g., network errors)
+      print('Error adding appliance: $e');
+      _showErrorDialog(
+        context,
+        title: 'Unknown error',
+        message: 'Oops! Something went wrong. Please try again later.',
+      );
+    }
+  }
+
+  void _showAddApplianceDialog(BuildContext context) {
+    controllers.addApplianceNameController.clear();
+    controllers.addWattageController.clear();
+    controllers.addUsagePatternController.clear();
+    controllers.addApplianceCategoryController.clear();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AddApplianceDialog(
+          addApplianceNameController: controllers.addApplianceNameController,
+          addWattageController: controllers.addWattageController,
+          addUsagePatternController: controllers.addUsagePatternController,
+          addApplianceCategoryController:
+          controllers.addApplianceCategoryController,
+          formKey: formKey,
+          addAppliance: (List<int> newSelectedDays) {
+            setState(() {
+              selectedDays = newSelectedDays; // Update selectedDays
+            });
+            addAppliance();
+            // Delay loading appliances for 3 seconds
+          },
+        );
+      },
     );
   }
 
@@ -311,56 +326,9 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     ErrorDialogButton errorDialog = ErrorDialogButton(
       title: title,
       message: message,
-      // buttonText: buttonText, // Allow button text customization
     );
     errorDialog.showErrorDialog(context);
-  }
 
-  Future<void> fetchAppliances() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    String? userId = await UserService.getUserId();
-    if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('User ID is null. Cannot fetch appliances.')),
-      );
-      setState(() {
-        isLoading = false;
-      });
-      return;
-    }
-
-    final url = Uri.parse(
-        "${ApiConfig.baseUrl}/getAllUsersAppliances/$userId/appliances");
-    final response = await http.get(url, headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    });
-
-    if (response.statusCode == 200) {
-      setState(() {
-        // Parse the response body into a list of appliances
-        appliances = List<Map<String, dynamic>>.from(jsonDecode(response.body));
-        appliances.sort((a, b) {
-          DateTime timestampA = DateTime.parse(a['createdAt']);
-          DateTime timestampB = DateTime.parse(b['createdAt']);
-          return timestampB.compareTo(timestampA);
-        });
-
-        isLoading = false;
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text('Failed to fetch appliances: ${response.statusCode}')),
-      );
-      setState(() {
-        isLoading = false;
-      });
-    }
   }
 
   void showApplianceInformationDialog(int index) {
@@ -404,6 +372,7 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       },
     );
   }
+
   Future<void> saveKwhRate(String kwhRate) async {
     try {
       await KWHRateService.saveKwhRate(kwhRate);
@@ -411,112 +380,6 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
     } catch (e) {
       print('Error saving kWh rate: $e');
     }
-  }
-
-  Future<void> addAppliance() async {
-    final url = Uri.parse("${ApiConfig.baseUrl}/addApplianceNewLogic");
-
-    String applianceName = toTitleCase(
-      controllers.addApplianceNameController.text.trim(),
-    );
-
-    final Map<String, dynamic> applianceData = {
-      'applianceName': applianceName,
-      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
-      'usagePatternPerDay':
-          double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
-      'applianceCategory':
-          controllers.addApplianceCategoryController.text.trim(),
-      'selectedDays': selectedDays,
-    };
-
-    String? userId = await UserService.getUserId();
-    if (userId == null) {
-      print('User ID not found in shared preferences');
-      return;
-    }
-
-    String? token = await getToken();
-    if (token == null) {
-      print('Token not found');
-      return;
-    }
-
-    try {
-      var response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'userId': userId,
-          'applianceData': applianceData,
-        }),
-      );
-
-      if (response.statusCode == 409) {
-        // Conflict: Appliance already exists
-        _showErrorDialog(
-          context,
-          title: 'Appliance not Added',
-          message:
-              'Invalid Appliance\nOops! The appliance either already exists in your list or the name contains only spaces. Please add a different appliance with a valid name.',
-        );
-      } else if (response.statusCode == 201) {
-        // Success: Appliance added
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Appliance added successfully!')),
-        );
-        fetchAppliances();
-      } else {
-        // Other errors: Show error dialog with response body for debugging
-        _showErrorDialog(
-          context,
-          title: 'Network Error',
-          message: 'Oops! Something went wrong. Please try again later.',
-        );
-      }
-    } catch (e) {
-      // Handle exceptions (e.g., network errors)
-      print('Error adding appliance: $e');
-      _showErrorDialog(
-        context,
-        title: 'Network Error',
-        message: 'Oops! Something went wrong. Please try again later.',
-      );
-    }
-  }
-
-
-
-  void _showAddApplianceDialog(BuildContext context, ApplianceProvider provider) {
-    controllers.addApplianceNameController.clear();
-    controllers.addWattageController.clear();
-    controllers.addUsagePatternController.clear();
-    controllers.addApplianceCategoryController.clear();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AddApplianceDialog(
-          addApplianceNameController: controllers.addApplianceNameController,
-          addWattageController: controllers.addWattageController,
-          addUsagePatternController: controllers.addUsagePatternController,
-          addApplianceCategoryController: controllers.addApplianceCategoryController,
-          formKey: formKey,
-          addAppliance: (List<int> selectedDays) {
-            setState(() {
-              this.selectedDays = selectedDays;
-            });
-            addAppliance();
-            provider.loadAppliances();
-
-          },
-
-        );
-      },
-    );
   }
 
 }

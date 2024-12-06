@@ -20,6 +20,14 @@ class AppSettings extends StatefulWidget {
 
 class _AppSettingsState extends State<AppSettings> {
   @override
+  void dispose() {
+    if (Hive.isBoxOpen('userbox')) {
+      Hive.box('userbox').close(); // Close the specific box
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,

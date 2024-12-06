@@ -18,12 +18,12 @@ import 'package:supabase_project/CommonWidgets/dialogs/micaella.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/MyEnergyDiary/rate_dialog.dart';
-import '../../AuthService/kwh_rate.dart';
-import '../../AuthService/services/user_data.dart';
-import '../../AuthService/services/user_service.dart';
-import '../../ConstantTexts/Theme.dart';
-import '../../YourEnergyCalculator&Compare/compare_device.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/rate_dialog.dart';
+import '../AuthService/kwh_rate.dart';
+import '../AuthService/services/user_data.dart';
+import '../AuthService/services/user_service.dart';
+import '../ConstantTexts/Theme.dart';
+import '../YourEnergyCalculator&Compare/compare_device.dart';
 
 class AllDevicesPage extends StatefulWidget {
   final String userId;

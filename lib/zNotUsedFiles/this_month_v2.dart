@@ -8,10 +8,9 @@ import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dia
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:pie_chart/pie_chart.dart';
 
-import '../../AuthService/base_url.dart';
-import '../../CommonWidgets/dialogs/general_dialog.dart';
-import '../../CommonWidgets/dialogs/loading_animation.dart';
-import '../carousel.dart';
+import '../AuthService/base_url.dart';
+import '../CommonWidgets/dialogs/general_dialog.dart';
+import '../CommonWidgets/dialogs/loading_animation.dart';
 
 class ThisMonthPage extends StatefulWidget {
   const ThisMonthPage({super.key});

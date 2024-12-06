@@ -8,19 +8,28 @@ import 'package:supabase_project/AuthService/services/user_service.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 
 import 'models/user_model.dart';
+import 'services/user_data.dart';
 
 
 
 class ApplianceService {
   static Future<void> addAppliance(
       String userId, Map<String, dynamic> applianceData) async {
-    String? token = await getToken();
     final url = Uri.parse('${ApiConfig.baseUrl}/addApplianceNewLogic');
+    String? token = await getUserToken();
+
+    if (token == null) {
+      print('Token not found');
+      return;
+    }
+
     if (token != null) {
       final response = await http.post(
         url,
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+
         },
         body: jsonEncode({
           'userId': userId,
@@ -114,7 +123,8 @@ class ApplianceService {
 
     final url = Uri.parse(
         '${ApiConfig.baseUrl}/updateApplianceOccurrences/$applianceId');
-    String? token = await getToken();
+    String? token = await getUserToken();
+
     if (token != null) {
       final response = await http.patch(
         url,
@@ -138,7 +148,9 @@ class ApplianceService {
   // Static method to delete an appliance
   static Future<void> deleteAppliance(String applianceId) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/deleteAppliance/$applianceId');
-    String? token = await getToken();
+    // String? token = await getToken();.
+    String? token = await getUserToken();
+
     if (token != null) {
       final response = await http.delete(
         url,

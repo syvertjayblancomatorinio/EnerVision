@@ -1,20 +1,9 @@
-import 'dart:convert';
-import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_project/AuthService/auth_appliances.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
-import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:pie_chart/pie_chart.dart';
+import '../../all_imports/imports.dart';
 
-import '../../AuthService/base_url.dart';
-import '../../AuthService/models/user_model.dart';
-import '../../CommonWidgets/box_decorations.dart';
-import '../../CommonWidgets/dialogs/general_dialog.dart';
-import '../../CommonWidgets/dialogs/loading_animation.dart';
-import '../carousel.dart';
+
 
 class ThisMonthPage extends StatefulWidget {
   const ThisMonthPage({super.key});
@@ -128,6 +117,11 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
 
     try {
       final appliancesData = await ApplianceService.fetchAppliance();
+      appliancesData.sort((a, b) {
+        DateTime timestampA = DateTime.parse(a['createdAt']);
+        DateTime timestampB = DateTime.parse(b['createdAt']);
+        return timestampB.compareTo(timestampA); // Sort in descending order
+      });
 
       setState(() {
         appliances = List<Map<String, dynamic>>.from(appliancesData);
@@ -145,10 +139,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     final currentUser = box.get('currentUser');
 
     final userId = currentUser!.userId;
-
-    if (userId == null) {
-      throw Exception("User ID is null. Cannot fetch appliance count.");
-    }
 
     // Adjust the URL to match the new endpoint
     final response = await http.get(
@@ -174,9 +164,6 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     final currentUser = box.get('currentUser');
 
     final userId = currentUser!.userId;
-    if (userId == null) {
-      throw Exception("User ID is null. Cannot fetch total monthly cost.");
-    }
 
     // Build the URL with the userId parameter
     final url = Uri.parse(
@@ -215,21 +202,19 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
           child: Column(
             children: <Widget>[
               const SizedBox(height: 20),
-              Container(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Home Usage',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Home Usage',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                     ),
-                    Center(child: content()),
-                  ],
-                ),
+                  ),
+                  Center(child: content()),
+                ],
               ),
             ],
           ),
@@ -264,10 +249,10 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
         color: AppColors.primaryColor,
       ));
     } else if (appliances.isEmpty) {
-      return Container(
+      return const SizedBox(
         height: 450,
         width: 300,
-        child: const Center(
+        child:  Center(
           child: Text(
             'You haven\'t added any appliances yet. Start by adding appliances to track your energy usage and see estimated costs.',
             textAlign: TextAlign.center,

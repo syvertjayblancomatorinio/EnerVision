@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/login_page.dart';
 
+import '../AuthService/services/user_service.dart';
 import '../EnergyManagement/Community/energy_effieciency_page.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -30,8 +31,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _loadUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    String? userId = await UserService.getUserId();
 
     setState(() {
       isUserLoaded = userId != null;

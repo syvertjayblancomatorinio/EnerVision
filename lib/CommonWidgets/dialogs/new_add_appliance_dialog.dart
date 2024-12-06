@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
 import '../../ConstantTexts/final_texts.dart';
+import '../../PreCode/Provider/ApplianceProvider.dart';
 
 class AddApplianceDialog extends StatefulWidget {
   final TextEditingController addApplianceNameController;
@@ -58,7 +60,6 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
       }
     });
   }
-
   void _toggleDay(int day) {
     setState(() {
       if (selectedDays.contains(day)) {
@@ -68,6 +69,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
       }
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -199,6 +201,39 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
       ),
     );
   }
+  Widget actionButtons(BuildContext context) {
+
+
+    final applianceProvider = Provider.of<ApplianceProvider>(context);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Cancel'),
+        ),
+        const SizedBox(width: 10),
+        ElevatedButton(
+          onPressed: () {
+            if (widget.formKey.currentState!.validate()) {
+              widget.addAppliance(selectedDays);
+              Navigator.of(context).pop();
+
+            }
+            Future.delayed(Duration(seconds: 2), () {
+              applianceProvider.loadAppliances();
+            });
+
+
+          },
+          child: const Text('Add'),
+        ),
+      ],
+    );
+  }
 
   Widget popupTitle() {
     return const Text('Add Appliance To Track',
@@ -237,26 +272,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
             },
           ),
           const SizedBox(height: 10),
-          // DropdownWithIcon(
-          //   labelText: 'Appliance Category',
-          //   items: const [
-          //     'Personal Devices',
-          //     'Kitchen Appliances',
-          //     'Cleaning & Laundry Appliances',
-          //     'Personal Care Appliances',
-          //     'Home Media and Office Appliances',
-          //     'Climate and Lighting Control Appliances'
-          //   ],
-          //   controller: widget.addApplianceCategoryController,
-          //   icon: Icons.arrow_drop_down,
-          //   validator: (value) {
-          //     if (value == null || value.isEmpty) {
-          //       return 'Please select an appliance category';
-          //     }
-          //     return null;
-          //   },
-          // ),
-          // const SizedBox(height: 10),
+
           TextFormField(
             controller: widget.addWattageController,
             keyboardType: TextInputType.number,
@@ -317,46 +333,6 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
     );
   }
 
-  Widget actionButtons(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Text('Cancel'),
-        ),
-        const SizedBox(width: 10),
-        ElevatedButton(
-          onPressed: () {
-            if (widget.formKey.currentState!.validate()) {
-              widget.addAppliance(selectedDays);
-              Navigator.of(context).pop();
-            }
-          },
-          child: const Text('Add'),
-        ),
-      ],
-    );
-  }
-
-  // Widget topImage() {
-  //   return Positioned(
-  //     child: Container(
-  //       decoration: BoxDecoration(
-  //         borderRadius: BorderRadius.circular(100),
-  //         color: Colors.white,
-  //       ),
-  //       width: 140,
-  //       height: 140,
-  //       child: ClipRRect(
-  //         borderRadius: BorderRadius.circular(100),
-  //         child: Image.asset('assets/dialogImage.png', fit: BoxFit.cover),
-  //       ),
-  //     ),
-  //   );
-  // }
 }
 
 class DropdownWithIcon extends StatelessWidget {

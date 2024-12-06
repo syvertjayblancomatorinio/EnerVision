@@ -51,14 +51,19 @@ class _LoginPageState extends State<LoginPage> {
             passwordController: _passwordController,
           ).signIn();
 
-          // Ensure the box is open before accessing
-          if (!Hive.isBoxOpen('userBox')) {
-            await Hive.openBox<User>('userBox');
-          }
-
-          final box = Hive.box<User>('userBox');
-          final savedUser = box.get('currentUser');
-          print('Saved user data: ${savedUser.toString()}');
+          // // Close the userBox if already open before accessing it again
+          // if (Hive.isBoxOpen('userBox')) {
+          //   await Hive.close(); // Close the box before logging in with a new user
+          // }
+          //
+          // // Ensure the box is open before accessing
+          // if (!Hive.isBoxOpen('userBox')) {
+          //   await Hive.openBox<User>('userBox');
+          // }
+          //
+          // final box = Hive.box<User>('userBox');
+          // final savedUser = box.get('currentUser');
+          // print('Saved user data: ${savedUser.toString()}');
 
           if (response != null) {
             if (response.statusCode == 401) {

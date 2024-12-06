@@ -1,31 +1,10 @@
-import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_project/AuthService/auth_appliances.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
-import 'package:supabase_project/CommonWidgets/box_decorations.dart';
-import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
 
-import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kwh.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/edit_appliance_dialog.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
-import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/AuthService/services/user_data.dart';
-import 'package:supabase_project/MyEnergyDiary/rate_dialog.dart';
-
-import '../AuthService/base_url.dart';
-import '../AuthService/kwh_rate.dart';
-import '../AuthService/models/user_model.dart';
-import '../AuthService/preferences.dart';
-import '../CommonWidgets/controllers/app_controllers.dart';
+import '../all_imports/imports.dart';
 
 class AppliancesContainer extends StatefulWidget {
   const AppliancesContainer({super.key});
@@ -69,12 +48,18 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        myAppliancesContent(),
-      ],
+    return Consumer<ApplianceProvider>(
+      builder: (context, provider, child) {
+        return Column(
+          children: [
+            myAppliancesContent(provider),
+          ],
+        );
+      },
     );
   }
+
+
   Future<void> _fetchAppliances() async {
     try {
       final appliances = await fetchTodayAppliance();
@@ -167,7 +152,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
 
 
   //Todo: Display the appliances from latest to oldest
-  Widget myAppliancesContent() {
+  Widget myAppliancesContent(ApplianceProvider provider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -180,7 +165,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
           ),
         ),
         const SizedBox(height: 10),
-        _buildApplianceList(),
+        _buildApplianceList(provider),
         const SizedBox(height: 20),
         _buildAddApplianceButton(),
       ],
@@ -206,15 +191,15 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     );
   }
 
-  Widget _buildApplianceList() {
-    if (isLoading) {
+  Widget _buildApplianceList(ApplianceProvider provider) {
+    if (provider.isLoading) {
       return const Center(
         child: LoadingWidget(
           message: 'Fetching Today\'s Appliances...',
           color: AppColors.primaryColor,
         ),
       );
-    } else if (appliances.isEmpty) {
+    } else if (provider.appliances.isEmpty) {
       return Container(
         margin: const EdgeInsets.only(top: 200, bottom: 100),
         child: const Center(
@@ -226,14 +211,14 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       );
     } else {
       return Column(
-        children: appliances.asMap().entries.map((entry) {
+        children: provider.appliances.asMap().entries.map((entry) {
           int index = entry.key;
           var appliance = entry.value;
 
           return Center(
             child: GestureDetector(
               onTap: () {
-                showApplianceInformationDialog(index);
+                showApplianceInformationDialog( index);
               },
               child: _buildApplianceCard(appliance, index),
             ),
@@ -287,7 +272,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
             final kwhRate = await getKwhRate();
 
             if (kwhRate != null) {
-              _showAddApplianceDialog(context);
+              _showAddApplianceDialog(context,);
             } else {
               showKwhRateDialog(
                 context: context,
@@ -409,10 +394,10 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       controllers.addApplianceCategoryController.text.trim(),
       'selectedDays': selectedDays,
     };
-    final box = Hive.box<User>('userBox');
-    final currentUser = box.get('currentUser');
+    String? userId = await UserService.getUserId();
+
     // Retrieve userId from Hive
-    final String? userId = await currentUser!.userId;
+
     if (userId == null) {
       print('User ID not found in Hive');
       return;
@@ -508,6 +493,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   }
 
   void _showActionSheet(BuildContext context, int index) {
+
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => CupertinoActionSheet(
@@ -589,6 +575,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
 
   void _confirmDeleteAppliance(int index) {
     final appliance = appliances[index];
+    final applianceProvider = Provider.of<ApplianceProvider>(context,listen: false);
 
     showDialog(
       context: context,
@@ -631,6 +618,10 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
                           fetchTodayAppliances();
                           fetchDailyCost();
                           Navigator.of(context).pop();
+
+                        });
+                        Future.delayed(Duration(milliseconds: 1000 ), () {
+                          applianceProvider.loadAppliances();
                         });
                       },
                       style: ElevatedButton.styleFrom(

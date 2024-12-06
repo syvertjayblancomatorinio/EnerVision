@@ -13,6 +13,7 @@ import 'package:supabase_project/MainFolder/secondaryMain.dart';
 import 'dart:convert';
 
 import '../AuthService/preferences.dart';
+import '../AuthService/services/user_service.dart';
 
 class SetupProfile extends StatefulWidget {
   const SetupProfile({super.key});
@@ -69,8 +70,7 @@ class _SetupProfileState extends State<SetupProfile> {
 
   // Function to submit the form
   Future<void> _submitForm(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
+    String? userId = await UserService.getUserId();
 
     if (userId == null) {
       print('User ID is not available.');
@@ -106,7 +106,7 @@ class _SetupProfileState extends State<SetupProfile> {
           if (response.statusCode == 200 || response.statusCode == 201) {
             var profileData = jsonDecode(response.body);
             print('Profile updated successfully: ${profileData['message']}');
-            await prefs.setString('name', _nameController.text);
+            // await prefs.setString('name', _nameController.text);
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => SplashScreen()),

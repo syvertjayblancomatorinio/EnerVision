@@ -4,6 +4,7 @@ import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
 
 import '../../ConstantTexts/final_texts.dart';
+import '../../all_imports/imports.dart';
 
 class EditApplianceDialog extends StatefulWidget {
   final TextEditingController editApplianceNameController;
@@ -90,6 +91,8 @@ class _EditApplianceDialogState extends State<EditApplianceDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final applianceProvider = Provider.of<ApplianceProvider>(context,listen: false);
+
     final days = ["M", "T", "W", "Th", "F", "St", "S"];
 
     return Dialog(
@@ -294,6 +297,7 @@ class _EditApplianceDialogState extends State<EditApplianceDialog> {
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
+
                       onPressed: () {
                         if (widget.formKey.currentState!.validate()) {
                           final updatedAppliance = {
@@ -322,6 +326,9 @@ class _EditApplianceDialogState extends State<EditApplianceDialog> {
                             //     context, 'Failed to update appliance');
                           });
                         }
+                        Future.delayed(Duration(seconds: 2 ), () {
+                          applianceProvider.loadAppliances();
+                        });
                       },
                       child: const Text('Save'),
                     ),

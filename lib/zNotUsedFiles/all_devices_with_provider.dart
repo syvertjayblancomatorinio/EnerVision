@@ -1,33 +1,7 @@
-import 'dart:convert';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:supabase_project/AuthService/auth_appliances.dart';
-import 'package:supabase_project/AuthService/base_url.dart';
-import 'package:supabase_project/CommonWidgets/appliance_container/snack_bar.dart';
-import 'package:supabase_project/CommonWidgets/appliance_container/total_cost&kwh.dart';
-import 'package:supabase_project/CommonWidgets/box_decorations.dart';
-import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart';
-import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
-import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
-import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/appliance_information_dialog.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/micaella.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_project/CommonWidgets/dialogs/new_add_appliance_dialog.dart';
-import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/MyEnergyDiary/rate_dialog.dart';
-import '../../ConstantTexts/Theme.dart';
-import '../../YourEnergyCalculator&Compare/compare_device.dart';
-import '../AuthService/kwh_rate.dart';
-import '../AuthService/models/user_model.dart';
-import '../AuthService/preferences.dart';
-import '../AuthService/services/user_service.dart';
-import '../PreCode/Provider/ApplianceProvider.dart';
+
+import '../all_imports/imports.dart';
 
 class AllDevicesPage extends StatefulWidget {
   final String userId;
@@ -79,13 +53,14 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
         body: Stack(
           children: [
             myAppliancesContent(applianceProvider),
-            Positioned(
+            Positioned (
               bottom: 20.0,
               right: 20.0,
+
               child: ElevatedButton(
                 onPressed: () async {
                   final kwhRate = await getKwhRate();
-                  if (kwhRate != null) {
+                  if (kwhRate != null)  {
                     _showAddApplianceDialog(context, applianceProvider);
                   } else {
                     showKwhRateDialog(
@@ -271,7 +246,6 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
       BuildContext context, {
         required String title,
         required String message,
-        String buttonText = 'OK', // Default button text
       }) async {
     ErrorDialogButton errorDialog = ErrorDialogButton(
       title: title,

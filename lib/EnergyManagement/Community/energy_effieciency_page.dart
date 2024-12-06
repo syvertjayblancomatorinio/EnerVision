@@ -30,7 +30,7 @@ class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
     _currentIndex = widget.selectedIndex >= 0 && widget.selectedIndex <= 2
         ? widget.selectedIndex
         : 0;
-    _printUserDataFromHive();
+    // _printUserDataFromHive();
   }
 
   void _onSegmentTapped(int index) {
