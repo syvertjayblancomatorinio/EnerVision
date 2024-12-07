@@ -252,6 +252,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
             controller: widget.addApplianceNameController,
             decoration: InputDecoration(
               labelText: 'Appliance Name',
+              hintText: 'E.g. Rice Cooker',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -278,6 +279,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: 'Wattage',
+              hintText: 'E.g. 1000',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -301,11 +303,129 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
             },
           ),
           const SizedBox(height: 10),
+          // TextFormField(
+          //   controller: widget.addUsagePatternController,
+          //   keyboardType: TextInputType.number,
+          //   decoration: InputDecoration(
+          //     labelText: 'Usage Pattern (hours per day)',
+          //     hintText: 'E.g. 1000',
+          //
+          //     border: OutlineInputBorder(
+          //       borderRadius: BorderRadius.circular(20),
+          //     ),
+          //   ),
+          //   onChanged: (value) {
+          //     final doubleValue = double.tryParse(value);
+          //     if (doubleValue != null && doubleValue > 24) {
+          //       widget.addUsagePatternController.text = '24';
+          //       widget.addUsagePatternController.selection =
+          //           TextSelection.fromPosition(
+          //         const TextPosition(offset: '24'.length),
+          //       );
+          //     }
+          //   },
+          //   validator: (value) {
+          //     if (value == null || value.isEmpty) {
+          //       return 'Please enter the usage pattern';
+          //     }
+          //     return null;
+          //   },
+          // ),
+          // Row(
+          //   children: [
+          //     Column(
+          //       children: List.generate(3, (rowIndex) {
+          //         int startMinute = rowIndex * 10;
+          //         int endMinute = startMinute + 9;
+          //         return Row(
+          //           children: [
+          //             Text('$startMinute - $endMinute:'),
+          //             SizedBox(width: 10),
+          //             DropdownButton<int>(
+          //               value: selectedMinutes >= startMinute && selectedMinutes <= endMinute
+          //                   ? selectedMinutes
+          //                   : startMinute, // Set default to the start of the range
+          //               onChanged: (int? newValue) {
+          //                 setState(() {
+          //                   selectedMinutes = newValue ?? 0;
+          //                 });
+          //                 updateUsagePattern(); // Update hours with new minutes value
+          //               },
+          //               items: List.generate(10, (index) {
+          //                 int minute = startMinute + index;
+          //                 return DropdownMenuItem<int>(
+          //                   value: minute,
+          //                   child: Text(minute.toString()),
+          //                 );
+          //               }),
+          //             ),
+          //           ],
+          //         );
+          //       }),
+          //     ),
+          //
+          //     Column(
+          //       children: List.generate(3, (rowIndex) {
+          //         int startMinute = rowIndex * 10;
+          //         int endMinute = startMinute + 9;
+          //         return Row(
+          //           children: [
+          //             Text('$startMinute - $endMinute:'),
+          //             SizedBox(width: 10),
+          //             DropdownButton<int>(
+          //               value: selectedMinutes >= startMinute && selectedMinutes <= endMinute
+          //                   ? selectedMinutes
+          //                   : startMinute, // Set default to the start of the range
+          //               onChanged: (int? newValue) {
+          //                 setState(() {
+          //                   selectedMinutes = newValue ?? 0;
+          //                 });
+          //                 updateUsagePattern(); // Update hours with new minutes value
+          //               },
+          //               items: List.generate(10, (index) {
+          //                 int minute = startMinute + index;
+          //                 return DropdownMenuItem<int>(
+          //                   value: minute,
+          //                   child: Text(minute.toString()),
+          //                 );
+          //               }),
+          //             ),
+          //           ],
+          //         );
+          //       }),
+          //     ),
+          //   ],
+          // ),
+
+          Row(
+            children: [
+              Text('Minutes:'),
+              SizedBox(width: 10),
+              DropdownButton<int>(
+                value: selectedMinutes,
+                onChanged: (int? newValue) {
+                  setState(() {
+                    selectedMinutes = newValue ?? 0;
+                  });
+                  updateUsagePattern(); // Update hours with new minutes value
+                },
+                items: List.generate(60, (index) {
+                  return DropdownMenuItem<int>(
+                    value: index,
+                    child: Text(index.toString()),
+                  );
+                }),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
           TextFormField(
             controller: widget.addUsagePatternController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: 'Usage Pattern (hours per day)',
+              hintText: 'E.g. 1',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -314,9 +434,8 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
               final doubleValue = double.tryParse(value);
               if (doubleValue != null && doubleValue > 24) {
                 widget.addUsagePatternController.text = '24';
-                widget.addUsagePatternController.selection =
-                    TextSelection.fromPosition(
-                  const TextPosition(offset: '24'.length),
+                widget.addUsagePatternController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: '24'.length),
                 );
               }
             },
@@ -327,12 +446,30 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
               return null;
             },
           ),
-          const SizedBox(height: 10),
+
+          // Dropdown for minutes selection
         ],
       ),
     );
   }
 
+  int selectedMinutes = 0;
+  void updateUsagePattern() {
+    double totalHours = selectedMinutes / 60.0; // Convert minutes to hours
+    double currentHours = double.tryParse(widget.addUsagePatternController.text) ?? 0.0;
+    double newHours = currentHours + totalHours;
+
+    // Ensure the value doesn't exceed 24 hours
+    if (newHours > 24) {
+      newHours = 24;
+    }
+
+    // Update the controller's text with the new value (rounded to 2 decimal places)
+    widget.addUsagePatternController.text = newHours.toStringAsFixed(2);
+    widget.addUsagePatternController.selection = TextSelection.fromPosition(
+      TextPosition(offset: widget.addUsagePatternController.text.length),
+    );
+  }
 }
 
 class DropdownWithIcon extends StatelessWidget {
