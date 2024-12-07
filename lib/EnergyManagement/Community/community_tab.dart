@@ -70,10 +70,6 @@ class _CommunityTabState extends State<CommunityTab> {
   void initState() {
     getPosts();
     _loadUsername();
-    //
-    // eventBus.on<PostUpdatedEvent>().listen((event) {
-    // getPostsFromApi();
-    // });
     super.initState();
   }
 
