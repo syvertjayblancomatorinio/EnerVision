@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -31,7 +32,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'EnerVision',
-      home:  SignUpPage(),
+      home: WillPopScope(
+        onWillPop: () async {
+          return false;
+        },
+        child:  SignUpPage(),
+      ),
     );
   }
 }
+
+
+

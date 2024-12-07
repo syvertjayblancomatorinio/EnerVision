@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:supabase_project/CommonWidgets/appbar-widget.dart';
 import 'package:supabase_project/CommonWidgets/bottom-navigation-bar.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
+import 'package:supabase_project/Goals/goals.dart';
 import 'package:supabase_project/PreCode/accountPage.dart';
 import 'package:supabase_project/PreCode/community_guidelines.dart';
 import 'package:supabase_project/PreCode/micaella.dart';
@@ -69,8 +70,9 @@ class _AppSettingsState extends State<AppSettings> {
                   context,
                   'Daily Energy Goals',
                   Icons.security,
-                  () {
-                    // Navigate to Privacy page
+                      () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => GoalsPage()));
                   },
                 ),
                 settingsOptions(

@@ -6,7 +6,6 @@ import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyManagement/Community/community_tab.dart';
 import 'package:supabase_project/EnergyManagement/YourEnergy/your_energy_tab.dart';
 import 'package:supabase_project/EnergyManagement/Community/blurred_community_page.dart';
-import 'package:supabase_project/sdf/energy_efficiency_buttons.dart';
 import '../../../CommonWidgets/appbar-widget.dart';
 import '../../../CommonWidgets/bottom-navigation-bar.dart';
 import '../../../ConstantTexts/Theme.dart';
