@@ -8,7 +8,6 @@ class ApiConfig {
 }
 
 
-
 // class ApiConfig {
 //   static String get baseUrl {
 //     // const bool isProduction = bool.fromEnvironment('dart.vm.product');

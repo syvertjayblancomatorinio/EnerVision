@@ -33,10 +33,6 @@ class TopBar extends StatelessWidget {
             ),
             const SizedBox(width: 10.0),
             GestureDetector(
-              onTap: onEditTap, // Calls the onEditTap callback
-              child: const Icon(Icons.edit),
-            ),
-            GestureDetector(
               onTap: onRefreshTap, // Calls the onRefreshTap callback
               child: const Icon(
                 Icons.refresh,

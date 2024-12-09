@@ -8,8 +8,6 @@ const User = require('../models/user.model');
 router.post('/goals', async (req, res) => {
   const { description, startTime, endTime, startDate, endDate, category, userId } = req.body;
 
-  console.log('Received data:', req.body);
-
   if (!description || !startTime || !endTime || !startDate || !endDate || !category || !userId) {
     console.log('Missing required fields');
     return res.status(400).json({ error: 'All fields are required' });

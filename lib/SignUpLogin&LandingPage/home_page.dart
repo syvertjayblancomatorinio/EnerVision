@@ -155,7 +155,7 @@ Widget energyCategories(BuildContext context) {
                 'Electric Vehicles',
                 context,
                 const ElectricVehicles(selectedIndex: 1),
-                'assets/electric.avif',
+                'assets/electric.jpg',
               ),
             ],
           ),

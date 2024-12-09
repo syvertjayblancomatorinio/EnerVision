@@ -36,74 +36,6 @@ class _ProfilePageState extends State<ProfilePage> {
     _loadUserId();
   }
 
-  Future<void> _loadUserId() async {
-    String? loadedUserId = await UserService.getUserId();
-
-    if (loadedUserId != null) {
-      setState(() {
-        userId = loadedUserId;
-      });
-      print('User ID Loaded: $userId');
-      _fetchUserData(); // Now you can safely fetch the user data
-    } else {
-      setState(() {
-        isUserLoaded = false;
-        errorMessage = 'User ID not found. Please log in again.';
-      });
-    }
-  }
-
-  Future<void> _fetchUserData() async {
-    if (userId == null) {
-      setState(() {
-        errorMessage = 'User ID is missing.';
-        isUserLoaded = false;
-      });
-      return;
-    }
-
-    try {
-      final response = await http
-          .get(Uri.parse('${ApiConfig.baseUrl}/userProfileLatest/$userId'));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final addressData = data['address'];
-        final formattedAddress = addressData != null
-            ? '${addressData['countryLine']}, ${addressData['cityLine']}, ${addressData['streetLine']}'
-            : 'N/A';
-
-        String formattedBirthDate = 'N/A';
-        if (data['birthDate'] != null) {
-          DateTime birthDateTime = DateTime.parse(data['birthDate']);
-          birthDateTime = birthDateTime.toLocal();
-          formattedBirthDate = DateFormat('MMM dd, yyyy').format(birthDateTime);
-        }
-
-        setState(() {
-          name = data['name'] ?? 'N/A';
-          email = data['email'] ?? 'N/A';
-          mobileNumber = data['mobileNumber'] ?? 'N/A';
-          birthDate = formattedBirthDate;
-          address = formattedAddress;
-          avatarUrl = data['avatar'] ?? ''; // Assign avatar URL
-          isUserLoaded = true;
-          errorMessage = '';
-        });
-      } else {
-        setState(() {
-          errorMessage =
-              'Failed to load user data. Status Code: ${response.statusCode}';
-          isUserLoaded = false;
-        });
-      }
-    } catch (error) {
-      setState(() {
-        errorMessage = 'Error fetching user data: $error';
-        isUserLoaded = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,27 +58,27 @@ class _ProfilePageState extends State<ProfilePage> {
               ? Stack(
                   alignment: Alignment.center,
                   children: [
-                    FadeInImage.assetNetwork(
-                      placeholder:
-                          'assets/profile.jpg', // Add a placeholder image in your assets folder
-                      image: avatarUrl.isNotEmpty
-                          ? (avatarUrl.startsWith('http')
-                              ? avatarUrl
-                              : '${ApiConfig.baseUrl}/$avatarUrl')
-                          : 'https://via.placeholder.com/150',
-                      imageErrorBuilder: (context, error, stackTrace) {
-                        return const CircleAvatar(
-                          radius: 50,
-                          backgroundImage:
-                              NetworkImage('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAflBMVEX///9fyfhax/gxufYHW50EWZwDWJxPxfjz+/4IXJ5hhrSi3ftVxvjd5e4AVJrX8P3n9v5HvveG0/nN7P0AT5jf8/140PkATJcARpTS7v245fvE6Py2xtro9v4tqucMs/UARJNOrOAIO4uW2fotu/au3/oGOYnC4PNSfK7v8/fVukePAAADUklEQVR4nO3c21LbMBSFYSuxJVJSUVqDTaEmoS1t3/8F6wNxEluytzvTyd6b9Q+XXPibJaIhHJIEIYQQQgghhBBCCCGEEEIIIYQQQggp6eZ6Qd+vLv24y3twW2rOuZtLP+7yHpwJtQqmCBgWagIGhaqAIaFE4E0UGBAqA46F2oAjoTrgUKgPaOQD46+iAaFGoFEPNOqBRj3QqAca9UCjHmgAZBsRaNQDjXqgUQ806oEGQI4BCCDzvgAIIO8ABJB5AALIPADfE9C4u0s/7vKWAdUvqB6II8ovLAgg8wAEkHkAAsg8AAFkHoAAMg9AAJkHIIDMAxDAuqtFCQTeO3q395yBnyLA7egv8aK5zwAC+L+AK4nAO+3AJPlK/7V0mUA6USyQShQMpBFFAylE4cB5onjgHFEBcJqoAjhFVAKME9UAY8SV+xb+dHnAMDG64K2L/BMoxsAQMQ5cr7dUIh/gmBg9ojWQTOQEHBKnFiQTeQHPiXNAEpEb8JQ4fUSJRH7AI3F+wZYoD3gg0oAzRJ7Ajkg5ol1OHrAhUhecJPIFNkQ6MErkDEySyA9OgsAIkTcwUgQYJOoCBojagCOiPuCAKBK4mgaeEUUC72cmPCXKBG7nhQeiUKAhCDuiUOBqRRE2RLFAmnDtRAJN+w0STbiWCEweHV1Y+Y+Xftx/qSWShFWW5WKJFGGVpRu5RIKwsulmI5c4L+yAcok/qECxxJ/PM0CfHYRSideTxMrb7EBMU6uP2ADfiGmTOmKVe9sSsw6YpsoOag30B2KqkVgV3rdEq5RYlXneEX1r7ImFEmIDjBBlrji8F6uyyHui9z2vfUWVueI5sdoVnbA1nvnqr0mhxMfj+4Zm/1IUb0Rv03QArIkyD2pPrIFl0Zb7/iY88Ylf0exfy7KoP4a8I1A2sVmw5uXZZug7AUo+qO2CuR3zznySV9y/BnkjoFjir5c0xBv75BKfdjSg4HvxqSQNKHrFctYn/V48J0YHVEKc2E8FMbSaknvxqczmzqcCImXABmh1EUNAscQdYcAOKJY4v6LtU0q0VjyxP6gTB9R2b6hKJZY25hsABRMjvhEwy7xQ4s6Ty3cyiR8W9PvPpR8XIYQQQgghhBBCCCGEEEIIIYQQQui99xd9MndVczNj5wAAAABJRU5ErkJggg=='),
-                        );
-                      },
-                      fadeInDuration: Duration(milliseconds: 200),
-                      fit: BoxFit.cover,
-                      width: 100,
-                      height: 100,
-                    ),
-                    Positioned(
+      FadeInImage.assetNetwork(
+      placeholder: 'assets/profile.jpg', // Add a placeholder image in your assets folder
+        image: avatarUrl.isNotEmpty
+            ? (avatarUrl.startsWith('http')
+            ? avatarUrl
+            : '${ApiConfig.baseUrl}/$avatarUrl')
+            : 'https://via.placeholder.com/150',
+        imageErrorBuilder: (context, error, stackTrace) {
+          return const CircleAvatar(
+            radius: 50,
+            backgroundImage: NetworkImage(
+                'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAflBMVEX///9fyfhax/gxufYHW50EWZwDWJxPxfjz+/4IXJ5hhrSi3ftVxvjd5e4AVJrX8P3n9v5HvveG0/nN7P0AT5jf8/140PkATJcARpTS7v245fvE6Py2xtro9v4tqucMs/UARJNOrOAIO4uW2fotu/au3/oGOYnC4PNSfK7v8/fVukePAAADUklEQVR4nO3c21LbMBSFYSuxJVJSUVqDTaEmoS1t3/8F6wNxEluytzvTyd6b9Q+XXPibJaIhHJIEIYQQQgghhBBCCCGEEEIIIYQQQggp6eZ6Qd+vLv24y3twW2rOuZtLP+7yHpwJtQqmCBgWagIGhaqAIaFE4E0UGBAqA46F2oAjoTrgUKgPaOQD46+iAaFGoFEPNOqBRj3QqAca9UCjHmgAZBsRaNQDjXqgUQ806oEGQI4BCCDzvgAIIO8ABJB5AALIPADfE9C4u0s/7vKWAdUvqB6II8ovLAgg8wAEkHkAAsg8AAFkHoAAMg9AAJkHIIDMAxDAuqtFCQTeO3q395yBnyLA7egv8aK5zwAC+L+AK4nAO+3AJPlK/7V0mUA6USyQShQMpBFFAylE4cB5onjgHFEBcJqoAjhFVAKME9UAY8SV+xb+dHnAMDG64K2L/BMoxsAQMQ5cr7dUIh/gmBg9ojWQTOQEHBKnFiQTeQHPiXNAEpEb8JQ4fUSJRH7AI3F+wZYoD3gg0oAzRJ7Ajkg5ol1OHrAhUhecJPIFNkQ6MErkDEySyA9OgsAIkTcwUgQYJOoCBojagCOiPuCAKBK4mgaeEUUC72cmPCXKBG7nhQeiUKAhCDuiUOBqRRE2RLFAmnDtRAJN+w0STbiWCEweHV1Y+Y+Xftx/qSWShFWW5WKJFGGVpRu5RIKwsulmI5c4L+yAcok/qECxxJ/PM0CfHYRSideTxMrb7EBMU6uP2ADfiGmTOmKVe9sSsw6YpsoOag30B2KqkVgV3rdEq5RYlXneEX1r7ImFEmIDjBBlrji8F6uyyHui9z2vfUWVueI5sdoVnbA1nvnqr0mhxMfj+4Zm/1IUb0Rv03QArIkyD2pPrIFl0Zb7/iY88Ylf0exfy7KoP4a8I1A2sVmw5uXZZug7AUo+qO2CuR3zznySV9y/BnkjoFjir5c0xBv75BKfdjSg4HvxqSQNKHrFctYn/V48J0YHVEKc2E8FMbSaknvxqczmzqcCImXABmh1EUNAscQdYcAOKJY4v6LtU0q0VjyxP6gTB9R2b6hKJZY25hsABRMjvhEwy7xQ4s6Ty3cyiR8W9PvPpR8XIYQQQgghhBBCCCGEEEIIIYQQQui99xd9MndVczNj5wAAAABJRU5ErkJggg=='),
+          );
+        },
+        fadeInDuration: const Duration(milliseconds: 200),
+        fit: BoxFit.cover,
+        width: 100,
+        height: 100,
+      ),
+
+                    const Positioned(
                       bottom: 0,
                       right: 4,
                       child: Icon(
@@ -157,14 +89,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ],
                 )
-              : Center(child: CircularProgressIndicator()),
-          SizedBox(height: 20),
+              : const Center(child: CircularProgressIndicator()),
+          const SizedBox(height: 20),
           if (errorMessage.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 errorMessage,
-                style: TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red),
               ),
             ),
           const SizedBox(height: 10),
@@ -250,6 +182,77 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+  Future<void> _loadUserId() async {
+    String? loadedUserId = await UserService.getUserId();
+
+    if (loadedUserId != null) {
+      setState(() {
+        userId = loadedUserId;
+      });
+      print('User ID Loaded: $userId');
+      _fetchUserData(); // Now you can safely fetch the user data
+    } else {
+      setState(() {
+        isUserLoaded = false;
+        errorMessage = 'User ID not found. Please log in again.';
+      });
+    }
+  }
+
+  Future<void> _fetchUserData() async {
+    // Simulate a user ID
+    String userId = '12345';
+
+    if (userId == null) {
+      setState(() {
+        errorMessage = 'User ID is missing.';
+        isUserLoaded = false;
+      });
+      return;
+    }
+
+    try {
+      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/userProfileLatest/$userId'));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final addressData = data['address'];
+        final formattedAddress = addressData != null
+            ? '${addressData['countryLine']}, ${addressData['cityLine']}, ${addressData['streetLine']}'
+            : 'N/A';
+
+        String formattedBirthDate = 'N/A';
+        if (data['birthDate'] != null) {
+          DateTime birthDateTime = DateTime.parse(data['birthDate']);
+          birthDateTime = birthDateTime.toLocal();
+          formattedBirthDate = DateFormat('MMM dd, yyyy').format(birthDateTime);
+        }
+
+        setState(() {
+          name = data['name'] ?? 'N/A';
+          email = data['email'] ?? 'N/A';
+          mobileNumber = data['mobileNumber'] ?? 'N/A';
+          birthDate = formattedBirthDate;
+          address = formattedAddress;
+          avatarUrl = data['avatar'] ?? ''; // Assign avatar URL
+          isUserLoaded = true;
+          errorMessage = '';
+        });
+      } else {
+        setState(() {
+          errorMessage = 'Failed to load user data. Status Code: ${response.statusCode}';
+          isUserLoaded = false;
+        });
+      }
+    } catch (error) {
+      setState(() {
+        errorMessage = 'Error fetching user data: $error';
+        isUserLoaded = false;
+      });
+    }
+  }
+
+
 }
 
 class ProfileField extends StatelessWidget {

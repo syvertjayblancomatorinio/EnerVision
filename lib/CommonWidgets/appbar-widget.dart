@@ -37,10 +37,12 @@ AppBar customAppBar1({
               padding: const EdgeInsets.all(20.0),
               child: CircleAvatar(
                 backgroundImage:
-                    (profileImage != null && profileImage.isNotEmpty)
-                        ? NetworkImage(profileImage!)
-                        : const AssetImage('assets/profile2.jpg')
-                            as ImageProvider, // Default image
+                (profileImage != null && profileImage.isNotEmpty)
+                    ? NetworkImage(profileImage!)
+                    : null, // No background image if profileImage is null or empty
+                child: (profileImage == null || profileImage.isEmpty)
+                    ? const Icon(Icons.person, size: 40, color: Colors.grey) // Default icon
+                    : null,
               ),
             ),
           ]

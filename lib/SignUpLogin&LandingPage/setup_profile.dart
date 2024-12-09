@@ -10,6 +10,7 @@ import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 import 'package:supabase_project/CommonWidgets/loading_page.dart';
 import 'package:supabase_project/ConstantTexts/final_texts.dart';
 import 'package:supabase_project/MainFolder/secondaryMain.dart';
+import 'package:supabase_project/all_imports/imports.dart';
 import 'dart:convert';
 
 import '../AuthService/preferences.dart';
@@ -85,7 +86,7 @@ class _SetupProfileState extends State<SetupProfile> {
       return;
     }
 
-    String? token = await getToken();
+    String? token = await getUserToken();
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Token is not available')),
@@ -115,22 +116,17 @@ class _SetupProfileState extends State<SetupProfile> {
       var response = await request.send();
       if (response.statusCode == 200 || response.statusCode == 201) {
         var responseBody = await response.stream.bytesToString();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Profile updated successfully!')),
-        );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => SplashScreen()),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update profile: ${response.reasonPhrase}')),
-        );
+        showSnackBar(context, 'Failed to update profile: ${response.reasonPhrase}');
+
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error occurred: $e')),
-      );
+      showSnackBar(context, 'Failed to update profile: ${e}');
+
     }
   }
 
@@ -140,7 +136,9 @@ class _SetupProfileState extends State<SetupProfile> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.light(),
+
       home: Scaffold(
+        appBar: AppBar(),
         body: _content(context),
       ),
     );
@@ -228,10 +226,10 @@ Widget profileImage() {
   Widget _content(BuildContext context) {
     return Column(
       children: [
-        _backgroundImage(),
-
-             profileImage(),
-        const SizedBox(height: 20),
+        // _backgroundImage(),
+        //
+        //      profileImage(),
+        // const SizedBox(height: 20),
 
         // Title
         const Text(

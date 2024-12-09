@@ -61,13 +61,6 @@ class _SignUpPageState extends State<SignUpPage> {
         body: SafeArea(
           child: Stack(
             children: [
-              if (_isLoading)
-                const Center(
-                  child: LoadingWidget(
-                    message: 'Logging in...',
-                    color: AppColors.primaryColor,
-                  ),
-                ),
               SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
@@ -222,6 +215,20 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
               ),
+              if (_isLoading)
+                Center(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.25, //
+                      ),
+                      const LoadingWidget(
+                        message: 'Creating your account, please wait...',
+                        color: AppColors.primaryColor,
+                      ),
+                    ],
+                  ),
+                ),
               const PositionedButton(
                 top: 20,
                 right: 15,

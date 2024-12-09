@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:supabase_project/AuthService/auth_service.dart';
 import 'package:supabase_project/CommonWidgets/dialogs/error_dialog.dart';
+import 'package:supabase_project/CommonWidgets/dialogs/loading_animation.dart';
 import 'package:supabase_project/ConstantTexts/Theme.dart';
+import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:supabase_project/EnergyPage/offline_calculator.dart';
 import 'package:supabase_project/SignUpLogin&LandingPage/sign_up_page.dart';
 import 'package:supabase_project/ConstantTexts/user.dart';
@@ -25,6 +27,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _showClearPasswordIcon = false;
   bool _showClearEmailIcon = false;
+  bool _isLoading = false;
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -40,6 +43,7 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() {
       _isButtonEnabled = false;
+      _isLoading = true; // Show loading spinner
     });
 
     try {
@@ -50,20 +54,6 @@ class _LoginPageState extends State<LoginPage> {
             emailController: _emailController,
             passwordController: _passwordController,
           ).signIn();
-
-          // // Close the userBox if already open before accessing it again
-          // if (Hive.isBoxOpen('userBox')) {
-          //   await Hive.close(); // Close the box before logging in with a new user
-          // }
-          //
-          // // Ensure the box is open before accessing
-          // if (!Hive.isBoxOpen('userBox')) {
-          //   await Hive.openBox<User>('userBox');
-          // }
-          //
-          // final box = Hive.box<User>('userBox');
-          // final savedUser = box.get('currentUser');
-          // print('Saved user data: ${savedUser.toString()}');
 
           if (response != null) {
             if (response.statusCode == 401) {
@@ -82,10 +72,24 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       setState(() {
         _isButtonEnabled = true;
+        _isLoading = false; // Hide loading spinner
       });
     }
   }
 
+  // // Close the userBox if already open before accessing it again
+  // if (Hive.isBoxOpen('userBox')) {
+  //   await Hive.close(); // Close the box before logging in with a new user
+  // }
+  //
+  // // Ensure the box is open before accessing
+  // if (!Hive.isBoxOpen('userBox')) {
+  //   await Hive.openBox<User>('userBox');
+  // }
+  //
+  // final box = Hive.box<User>('userBox');
+  // final savedUser = box.get('currentUser');
+  // print('Saved user data: ${savedUser.toString()}');
   User user = User('', '', '');
   Future<Object?> _showErrorDialog(BuildContext context) async {
     await showCustomDialog(
@@ -110,7 +114,6 @@ class _LoginPageState extends State<LoginPage> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.getAppTheme(),
-
       home: Scaffold(
         // appBar: AppBar(title: const Text('Login')),
         body: Stack(
@@ -190,6 +193,7 @@ class _LoginPageState extends State<LoginPage> {
                         //       'Password must be at least 8 characters long \n Must have at least one special character\n Must have at least one Uppercase character')
                         // ]),
                       ),
+
                       // Row(
                       //   children: [
                       //     // GestureDetector(
@@ -252,6 +256,20 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
+            if (_isLoading)
+              Center(
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.25, //
+                    ),
+                    const LoadingWidget(
+                      message: 'Logging in...',
+                      color: AppColors.primaryColor,
+                    ),
+                  ],
+                ),
+              ),
             PositionedButton(
               top: 50,
               right: 20,

@@ -290,6 +290,10 @@ class _CommunityTabState extends State<CommunityTab> {
                     _confirmDeleteAppliance(suggestion['id']);
                     print('Deleting suggestion ${suggestion['id']}');
                   } else if (value == 'Report') {
+                    _confirmReport(
+                      'Report Suggestion!',
+                      'This feature is currently under development. Please stay tuned, we’ll have it ready for you soon!',
+                    );
                     print('Reporting suggestion ${suggestion['id']}');
                   }
                 },
@@ -367,6 +371,81 @@ class _CommunityTabState extends State<CommunityTab> {
           const SizedBox(height: 5.0),
         ],
       ),
+    );
+  }
+
+  void _confirmReport(String title, String description) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 16,
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.report,
+                  color: Colors.redAccent,
+                  size: 50,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  description,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    fontFamily: 'Montserrat',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                      ),
+                      child: const Text(
+                        'Ok',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontFamily: 'Montserrat',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1210,7 +1289,10 @@ class _CommunityTabState extends State<CommunityTab> {
               if (isUserPost) {
                 _confirmDeletePost(index);
               } else {
-                _confirmReportPost(index);
+                _confirmReport(
+                  'Report Post!',
+                  'This feature is currently under development. Please stay tuned, we’ll have it ready for you soon!',
+                );
               }
             },
             child: isUserPost
