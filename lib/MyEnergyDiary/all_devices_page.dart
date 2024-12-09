@@ -71,7 +71,9 @@ class _AllDevicesPageState extends State<AllDevicesPage> {
                     );
                   }
                   if (applianceProvider.appliances.isEmpty) {
-                    return const Center(child: Text('No appliance added.\nTap "+" to start tracking.'));
+                    return  Center(child: Text('No appliance added.\nTap "+" to start tracking.',style: TextStyle(
+                      color: Colors.grey[500],fontSize: 18
+                    ),));
                   }
 
                   return myAppliancesContent(applianceProvider);

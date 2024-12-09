@@ -18,6 +18,7 @@ class ApiConfig {
     //   } else {
     //     return 'http://192.168.1.217:8080';
     //   }
+      return 'http://192.168.1.217:8080';
       return 'https://ener-vision-deployerv3.vercel.app';
     // }
   }

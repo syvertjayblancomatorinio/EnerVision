@@ -53,10 +53,10 @@ router.get('/goals', async (req, res) => {
 
     if (month && year) {
       const startOfMonth = new Date(year, month - 1, 1);
-      const endOfMonth = new Date(year, month, 0); 
-      
-      startOfMonth.setHours(0, 0, 0, 0);  
-      endOfMonth.setHours(23, 59, 59, 999);  
+      const endOfMonth = new Date(year, month, 0);
+
+      startOfMonth.setHours(0, 0, 0, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
 
       query = {
         userId,
@@ -74,7 +74,7 @@ router.get('/goals', async (req, res) => {
     }
 
     const goals = await Goal.find(query).select(
-      'description startTime endTime startDate endDate category status userId'
+      'description startTime endTime startDate endDate category status userId createdAt'
     );
 
     if (goals.length === 0) {
@@ -83,7 +83,7 @@ router.get('/goals', async (req, res) => {
 
     console.log('Fetched goals:', goals);
 
-    res.status(200).json(goals); 
+    res.status(200).json(goals);
   } catch (error) {
     console.error('Error fetching goals:', error.message);
     res.status(500).json({ error: 'Failed to fetch goals', details: error.message });

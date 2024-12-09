@@ -18,12 +18,13 @@ class _GoalsPageState extends State<GoalsPage>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
   List goals = [];
-String? userId;
+  String? userId;
   bool isLoading = true;
   DateTime? selectedDate = DateTime.now();
   Timer? _refreshTimer;
   final ConfettiController _confettiController =
       ConfettiController(duration: const Duration(seconds: 1));
+  bool isChecked = false;
 
   @override
   void initState() {
@@ -78,7 +79,8 @@ String? userId;
       final DateTime targetDate = filterDate ?? DateTime.now();
       final String formattedDate = DateFormat('yyyy-MM-dd').format(targetDate);
 
-      final String url = '${ApiConfig.baseUrl}/goals?userId=$userId&date=$formattedDate';
+      final String url =
+          '${ApiConfig.baseUrl}/goals?userId=$userId&date=$formattedDate';
 
       final response = await http.get(Uri.parse(url));
 
@@ -86,14 +88,21 @@ String? userId;
         final fetchedGoals = json.decode(response.body);
         setState(() {
           if (fetchedGoals is List && fetchedGoals.isNotEmpty) {
-            goals = fetchedGoals;
+            // Parse the startDate as DateTime, then sort by it
+            goals = fetchedGoals
+                .map((goal) => {
+                      ...goal,
+                      'startDate': DateTime.parse(goal['startDate']),
+                    })
+                .toList()
+              ..sort((a, b) => (b['startDate'] as DateTime).compareTo(
+                  a['startDate'] as DateTime)); // Sorting by DateTime
           } else {
             goals = [];
           }
           isLoading = false;
         });
         print("Fetched goals: $goals");
-
       } else {
         setState(() {
           isLoading = false;
@@ -105,21 +114,28 @@ String? userId;
       });
     }
   }
-  List filterGoals(String filter) {
+
+  List filterGoalsAll(String filter) {
     switch (filter) {
       case 'Completed':
         return goals.where((goal) => goal['status'] == 'Accomplished').toList();
       case 'Missed':
         return goals.where((goal) => goal['status'] == 'Missed').toList();
+      case 'Started':
+        return goals.where((goal) => goal['status'] == 'Missed').toList();
+      case 'Ended':
+        return goals.where((goal) => goal['status'] == 'Missed').toList();    case 'Pending':
+        return goals.where((goal) => goal['status'] == 'Missed').toList();
       case 'All':
       default:
-        return goals; // No filter applied, return all goals
+        return goals;
     }
   }
 
-  List filterGoals1(String filter) {
+  List filterGoals(String filter) {
     final now = DateTime.now();
-    final DateTime startOfDay = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
+    final DateTime startOfDay =
+        DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
     final DateTime endOfDay = startOfDay.add(const Duration(days: 1));
 
     switch (filter) {
@@ -153,9 +169,6 @@ String? userId;
         }).toList();
     }
   }
-
-
-
 
   // List filterGoals(String filter) {
   //   final now = DateTime.now();
@@ -207,7 +220,8 @@ String? userId;
             primaryColor: const Color(0xFF1BBC9B),
             hintColor: const Color(0xFF1BBC9B),
             colorScheme: const ColorScheme.light(primary: Color(0xFF1BBC9B)),
-            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+            buttonTheme:
+                const ButtonThemeData(textTheme: ButtonTextTheme.primary),
           ),
           child: child ?? const SizedBox(),
         );
@@ -333,7 +347,8 @@ String? userId;
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
                   ),
                 ),
                 const SizedBox(width: 3.0),
@@ -357,7 +372,8 @@ String? userId;
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
                   ),
                 ),
               ],
@@ -524,42 +540,75 @@ String? userId;
     return Scaffold(
       appBar: customAppBar1(
         title: 'Daily Energy Goals',
-        onBackPressed: () {
-          Navigator.pop(context);
-        },
+       showBackArrow: false,
       ),
+      bottomNavigationBar: const BottomNavigation(selectedIndex: 3),
       body: Stack(
         children: [
           Column(
             children: [
               TabBar(
                 controller: _tabController,
-                tabs: [
-                  const Tab(text: 'All'),
-                  const Tab(text: 'Completed'),
-                  const Tab(text: 'Missed'),
+                tabs: const [
+                  Tab(text: 'All'),
+                  // Tab(text: 'Pending'),
+                  // Tab(text: 'Started'),
+                  Tab(text: 'Completed'),
+                  Tab(text: 'Missed'),
                 ],
               ),
               const SizedBox(height: 8.0),
               Padding(
-                padding: const EdgeInsets.only(right: 15.0),
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    ElevatedButton(
-                      onPressed: () => _selectDate(context),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            DateFormat('MMM dd, yyyy').format(selectedDate!),
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(width: 8.0),
-                          const Icon(Icons.filter_alt_outlined),
-                        ],
-                      ),
+                    const Text(
+                      'Show All Goals',
+                      style: AppTheme.subTitleTextStyle,
                     ),
+                    Checkbox(
+                      tristate: false,
+                      value: isChecked,
+                      activeColor: isChecked ? AppColors.primaryColor : null,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          isChecked = value ?? false;
+                        });
+                      },
+                    ),
+                    const Spacer(),
+                    isChecked
+                        ? const SizedBox.shrink()
+                        : ElevatedButton(
+                            onPressed: () => _selectDate(context),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  DateFormat('MMM dd, yyyy')
+                                      .format(selectedDate!),
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                const SizedBox(width: 8.0),
+                                const Icon(Icons.filter_alt_outlined),
+                              ],
+                            ),
+                          ),
+
+                    // ElevatedButton(
+                    //   onPressed: () => _selectDate(context),
+                    //   child: Row(
+                    //     mainAxisSize: MainAxisSize.min,
+                    //     children: [
+                    //       Text(
+                    //         DateFormat('MMM dd, yyyy').format(selectedDate!),
+                    //         style: const TextStyle(fontSize: 16),
+                    //       ),
+                    //       const SizedBox(width: 8.0),
+                    //       const Icon(Icons.filter_alt_outlined),
+                    //     ],
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -569,7 +618,12 @@ String? userId;
                     : TabBarView(
                         controller: _tabController,
                         children: ['All', 'Completed', 'Missed'].map((filter) {
-                          final filteredGoals = filterGoals(filter);
+                          // Determine which filtering function to use based on isChecked
+                          final filteredGoals = isChecked
+                              ? filterGoalsAll(filter)
+                              : filterGoals(filter);
+
+                          // Return the appropriate widget based on filtered goals
                           return filteredGoals.isEmpty
                               ? Center(
                                   child: Column(
@@ -646,7 +700,8 @@ String? userId;
                                       elevation: 3,
                                       color: cardColor,
                                       child: ListTile(
-                                        contentPadding: const EdgeInsets.all(16),
+                                        contentPadding:
+                                            const EdgeInsets.all(16),
                                         leading: Icon(
                                           getStatusIcon(status),
                                           color: iconColor,
@@ -671,6 +726,27 @@ String? userId;
                                                   fontStyle: FontStyle.italic,
                                                   color: Colors.grey[600]),
                                             ),
+                                            isChecked
+                                                ? (goal['startDate'] != null
+                                                    ? Text(
+                                                        'Start Date: ${DateFormat('MMM dd, yyyy').format(
+                                                          goal['startDate']
+                                                                  is DateTime
+                                                              ? goal[
+                                                                  'startDate'] // If already DateTime, use it directly
+                                                              : DateTime.parse(goal[
+                                                                  'startDate']), // Otherwise, parse the string
+                                                        )}',
+                                                        style: TextStyle(
+                                                          color:
+                                                              Colors.grey[600],
+                                                        ),
+                                                      )
+                                                    : const SizedBox
+                                                        .shrink()) // If startDate is null, return an empty widget
+                                                : const SizedBox
+                                                    .shrink(), // If isChecked is false, return an empty widget
+
                                             Text(
                                               'Start: ${goal['startTime']} - End: ${goal['endTime']}',
                                               style: TextStyle(
@@ -696,7 +772,8 @@ String? userId;
                                                 },
                                               )
                                             : PopupMenuButton<String>(
-                                                icon: const Icon(Icons.more_vert),
+                                                icon:
+                                                    const Icon(Icons.more_vert),
                                                 onSelected: (value) async {
                                                   if (value == 'Delete') {
                                                     _showDeleteConfirmationDialog(
@@ -776,7 +853,8 @@ String? userId;
                 Navigator.of(context).pop();
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
               child: Text(
                 'Cancel',
@@ -802,7 +880,8 @@ String? userId;
                 }
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
               child: Text(
                 'Confirm',
@@ -879,7 +958,8 @@ String? userId;
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1BBC9B),
-                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

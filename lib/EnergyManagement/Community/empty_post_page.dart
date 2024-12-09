@@ -22,17 +22,18 @@ class Body extends StatelessWidget {
               const Text(
                 'Nothing Here Yet',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'Montserrat',
                 ),
               ),
               const SizedBox(height: 10),
-              const Padding(
+               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 50.0),
                 child: Text(
-                  'Add a post or insight to see content from others.',
+                  'Add a post or insight to share with the Community.',
                   textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[700]),
                 ),
               ),
               const SizedBox(height: 20),
@@ -40,7 +41,7 @@ class Body extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CreatePostPage()),
+                    MaterialPageRoute(builder: (context) => const CreatePostPage()),
                   );
                 },
                 style: ElevatedButton.styleFrom(

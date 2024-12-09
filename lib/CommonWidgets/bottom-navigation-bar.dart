@@ -3,6 +3,7 @@ import 'package:supabase_project/EnergyPage/offline_calculator_v2.dart';
 import 'package:supabase_project/Goals/goals.dart';
 import 'package:supabase_project/MyEnergyDiary/segmentPages/my_energy_diary_page.dart';
 import 'package:supabase_project/PreCode/Provider/ApplianceWidget.dart';
+import 'package:supabase_project/PreCode/accountpagewithprofile.dart';
 import 'package:supabase_project/Settings/app-settings-widget.dart';
 import 'package:supabase_project/practice_back_tap.dart';
 
@@ -62,7 +63,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
     } else if (index == 3) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const OfflineCalculatorV2()),
+        MaterialPageRoute(builder: (context) =>  GoalsPage()),
       );
 
     } else if (index == 4) {
@@ -101,8 +102,8 @@ class _BottomNavigationState extends State<BottomNavigation> {
           label: 'Add',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.notifications),
-          label: 'Notifications',
+          icon: Icon(Icons.crisis_alert_outlined),
+          label: 'Goals',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.settings),

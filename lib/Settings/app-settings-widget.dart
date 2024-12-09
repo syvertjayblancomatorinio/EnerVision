@@ -36,10 +36,12 @@ class _AppSettingsState extends State<AppSettings> {
       home: Scaffold(
         appBar: customAppBar1(
           showBackArrow: true,
+
           onBackPressed: () {
             Navigator.pop(context);
           },
-          showTitle: false,
+          showTitle: true,title: 'Settings Page'
+
         ),
         bottomNavigationBar: const BottomNavigation(selectedIndex: 4),
         body: Container(
@@ -58,43 +60,63 @@ class _AppSettingsState extends State<AppSettings> {
                 },
                 showDivider: false,
               ),
-              const SizedBox(height: 50),
+              const SizedBox(height: 80),
               ...[
                 settingsOptions(
                   context,
                   'Notification Settings',
                   Icons.notifications,
-                  () {},
+                  () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Feature Coming Soon'),
+                        content: Text('This feature is not yet implemented.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 settingsOptions(
                   context,
                   'Daily Energy Goals',
                   Icons.security,
-                      () {
+                  () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) => GoalsPage()));
                   },
                 ),
                 settingsOptions(
                   context,
-                  'Energy Insights',
-                  Icons.energy_savings_leaf_outlined,
-                  () {
-                    // Navigate to Energy Insights page
-                  },
-                ),
-                settingsOptions(
-                  context,
                   'App Language',
                   Icons.brush,
-                  () {
-                    // Navigate to App Appearance page
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => LoginPage()));
+                      () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('Feature Coming Soon'),
+                        content: Text('This feature is not yet implemented.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 ),
               ].expand((widget) => [widget, const SizedBox(height: 0)]),
-              const SizedBox(height: 50),
+              const SizedBox(height: 80),
               settingsOptions(
                 context,
                 'Support and FAQs',
@@ -103,18 +125,6 @@ class _AppSettingsState extends State<AppSettings> {
                   // Navigate to Support page
                   Navigator.push(context,
                       MaterialPageRoute(builder: (context) => FAQsPage()));
-                },
-              ),
-              settingsOptions(
-                context,
-                'Community Guidelines',
-                Icons.support_agent,
-                () {
-                  // Navigate to Support page
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => CommunityGuidelines()));
                 },
               ),
               settingsOptions(
@@ -226,7 +236,7 @@ class _AppSettingsState extends State<AppSettings> {
                       onPressed: () async {
                         Navigator.of(context).pop();
                         final prefs = await SharedPreferences.getInstance();
-                        await prefs.clear(); // Clear shared preferences
+                        await prefs.clear();
 
                         // Clear all Hive boxes
                         await Hive.deleteFromDisk();

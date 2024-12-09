@@ -61,6 +61,7 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
       }
     });
   }
+
   void _toggleDay(int day) {
     setState(() {
       if (selectedDays.contains(day)) {
@@ -70,7 +71,6 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
       }
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -202,9 +202,8 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
       ),
     );
   }
+
   Widget actionButtons(BuildContext context) {
-
-
     final applianceProvider = Provider.of<ApplianceProvider>(context);
 
     return Row(
@@ -222,13 +221,10 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
             if (widget.formKey.currentState!.validate()) {
               widget.addAppliance(selectedDays);
               Navigator.of(context).pop();
-
             }
             Future.delayed(const Duration(seconds: 2), () {
               applianceProvider.loadAppliances();
             });
-
-
           },
           child: const Text('Add'),
         ),
@@ -305,13 +301,39 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
           ),
           const SizedBox(height: 10),
 
+          Row(
+            children: [
+              const Text('Select Input Type:'),
+              const SizedBox(width: 10),
+              DropdownButton<String>(
+                value: isMinutes ? 'Minutes' : 'Hours',
+                onChanged: (String? newValue) {
+                  setState(() {
+                    isMinutes = newValue ==
+                        'Minutes'; // Toggle between minutes and hours
+                  });
+                  handleBool(); // Handle the update to usage pattern after selection
+                },
+                items: const [
+                  DropdownMenuItem<String>(
+                    value: 'Minutes',
+                    child: Text('Minutes'),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: 'Hours',
+                    child: Text('Hours'),
+                  ),
+                ],
+              ),
+            ],
+          ),
 
-          const SizedBox(height: 10),
           TextFormField(
             controller: widget.addUsagePatternController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              labelText: 'Usage Pattern (hours per day)',
+              labelText:
+              'Usage Pattern (${isMinutes ? "minutes" : "hours"} per day)',
               hintText: 'E.g. 1',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -321,9 +343,10 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
               final doubleValue = double.tryParse(value);
               if (doubleValue != null && doubleValue > 24) {
                 widget.addUsagePatternController.text = '24';
-                widget.addUsagePatternController.selection = TextSelection.fromPosition(
-                  const TextPosition(offset: '24'.length),
-                );
+                widget.addUsagePatternController.selection =
+                    TextSelection.fromPosition(
+                      const TextPosition(offset: '24'.length),
+                    );
               }
             },
             validator: (value) {
@@ -333,27 +356,106 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
               return null;
             },
           ),
-          Row(
-            children: [
-              const Text('Minutes:'),
-              const SizedBox(width: 10),
-              DropdownButton<int>(
-                value: selectedMinutes,
-                onChanged: (int? newValue) {
-                  setState(() {
-                    selectedMinutes = newValue ?? 0;
-                  });
-                  updateUsagePattern(); // Update hours with new minutes value
-                },
-                items: List.generate(60, (index) {
-                  return DropdownMenuItem<int>(
-                    value: index,
-                    child: Text(index.toString()),
-                  );
-                }),
-              ),
-            ],
-          ),
+
+          // Row(
+          //   children: [
+          //     const Text('Minutes:'),
+          //     const SizedBox(width: 10),
+          //     DropdownButton<int>(
+          //       value: selectedMinutes,
+          //       onChanged: (int? newValue) {
+          //         setState(() {
+          //           selectedMinutes = newValue ?? 0;
+          //         });
+          //         handleBool(); // Handle the update to usage pattern after selection
+          //       },
+          //       items: List.generate(60, (index) {
+          //         return DropdownMenuItem<int>(
+          //           value: index,
+          //           child: Text(index.toString()),
+          //         );
+          //       }),
+          //     ),
+          //   ],
+          // ),
+          //
+          // TextFormField(
+          //   controller: widget.addUsagePatternController,
+          //   keyboardType: TextInputType.number,
+          //   decoration: InputDecoration(
+          //     labelText: 'Usage Pattern (${isMinutes
+          //         ? "minutes"
+          //         : "hours"} per day)',
+          //     hintText: 'E.g. 1',
+          //     border: OutlineInputBorder(
+          //       borderRadius: BorderRadius.circular(20),
+          //     ),
+          //   ),
+          //   onChanged: (value) {
+          //     final doubleValue = double.tryParse(value);
+          //     if (doubleValue != null && doubleValue > 24) {
+          //       widget.addUsagePatternController.text = '24';
+          //       widget.addUsagePatternController.selection =
+          //           TextSelection.fromPosition(
+          //             const TextPosition(offset: '24'.length),
+          //           );
+          //     }
+          //   },
+          //   validator: (value) {
+          //     if (value == null || value.isEmpty) {
+          //       return 'Please enter the usage pattern';
+          //     }
+          //     return null;
+          //   },
+          // ), const SizedBox(height: 10),
+          // TextFormField(
+          //   controller: widget.addUsagePatternController,
+          //   keyboardType: TextInputType.number,
+          //   decoration: InputDecoration(
+          //     labelText: 'Usage Pattern (hours per day)',
+          //     hintText: 'E.g. 1',
+          //     border: OutlineInputBorder(
+          //       borderRadius: BorderRadius.circular(20),
+          //     ),
+          //   ),
+          //   onChanged: (value) {
+          //     final doubleValue = double.tryParse(value);
+          //     if (doubleValue != null && doubleValue > 24) {
+          //       widget.addUsagePatternController.text = '24';
+          //       widget.addUsagePatternController.selection =
+          //           TextSelection.fromPosition(
+          //             const TextPosition(offset: '24'.length),
+          //           );
+          //     }
+          //   },
+          //   validator: (value) {
+          //     if (value == null || value.isEmpty) {
+          //       return 'Please enter the usage pattern';
+          //     }
+          //     return null;
+          //   },
+          // ),
+          // Row(
+          //   children: [
+          //     const Text('Minutes:'),
+          //     const SizedBox(width: 10),
+          //     DropdownButton<int>(
+          //       value: selectedMinutes,
+          //       onChanged: (int? newValue) {
+          //         setState(() {
+          //           selectedMinutes = newValue ?? 0;
+          //         });
+          //         handleBool();
+          //       },
+          //       items: List.generate(60, (index) {
+          //         return DropdownMenuItem<int>(
+          //           value: index,
+          //           child: Text(index.toString()),
+          //         );
+          //       }),
+          //     ),
+          //   ],
+          // ),
 
           // Dropdown for minutes selection
         ],
@@ -361,26 +463,59 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
     );
   }
 
-  int selectedMinutes = 30;
+  int selectedMinutes = 30; // Default value for minutes
+  bool isMinutes = false; // Track whether the input is in minutes or hours
 
-  // Method to update the TextController value with hours and minutes
-  void updateUsagePattern() {
-    double totalHours = selectedMinutes / 60.0; // Convert minutes to hours
-    double currentHours = double.tryParse(widget.addUsagePatternController.text) ?? 0.0;
-    double newHours = currentHours + totalHours;
+// Handle the conversion logic based on the input type
+  Future<void> handleBool() async {
+    setState(() {
+      if (isMinutes) {
+        // Convert input minutes to hours when isMinutes is true
+        updateUsagePatternMinutes();
+      } else {
+        // Use the input as hours directly when isMinutes is false
+        updateUsagePatternHours();
+      }
+    });
+  }
+
+// Update the usage pattern when input is in minutes
+  void updateUsagePatternMinutes() {
+    // Get the current text input value
+    String inputValue = widget.addUsagePatternController.text;
+
+    // If the input is a valid number, convert it to minutes
+    double totalMinutes = double.tryParse(inputValue) ?? 0.0;
+
+    // Convert minutes to hours (since we are in the "minutes" mode)
+    double totalHours = totalMinutes / 60.0;
+
+    // Update the controller's text with the new value (rounded to 2 decimal places)
+    widget.addUsagePatternController.text = totalHours.toStringAsFixed(2);
+    widget.addUsagePatternController.selection = TextSelection.fromPosition(
+      TextPosition(offset: widget.addUsagePatternController.text.length),
+    );
+  }
+
+// Update the usage pattern when input is in hours
+  void updateUsagePatternHours() {
+    // If the input is in hours, we can use it as is
+    double currentHours =
+        double.tryParse(widget.addUsagePatternController.text) ?? 0.0;
 
     // Ensure the value doesn't exceed 24 hours
-    if (newHours > 24) {
-      newHours = 24;
+    if (currentHours > 24) {
+      currentHours = 24;
     }
 
     // Update the controller's text with the new value (rounded to 2 decimal places)
-    widget.addUsagePatternController.text = newHours.toStringAsFixed(2);
+    widget.addUsagePatternController.text = currentHours.toStringAsFixed(2);
     widget.addUsagePatternController.selection = TextSelection.fromPosition(
       TextPosition(offset: widget.addUsagePatternController.text.length),
     );
   }
 }
+
 // TextFormField(
 //   controller: widget.addUsagePatternController,
 //   keyboardType: TextInputType.number,

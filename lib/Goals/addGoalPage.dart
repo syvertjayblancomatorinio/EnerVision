@@ -39,17 +39,26 @@ class _AddGoalPageState extends State<AddGoalPage> {
   @override
   void initState() {
     super.initState();
-    _loadUserId();
+    _loadUserIdAndFetchGoals();
     final currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     _startDateController.text = currentDate;
     _endDateController.text = currentDate;
   }
 
-  Future<void> _loadUserId() async {
+
+  Future<void> _loadUserIdAndFetchGoals() async {
     String? userId = await UserService.getUserId();
 
-    setState(() {
-    });
+    if (userId != null) {
+      setState(() {
+        this.userId = userId; // Assign the userId for the API call
+      });
+      // await fetchGoals();
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   bool _isValidDateTime(DateTime startDateTime, DateTime endDateTime) {

@@ -1,18 +1,14 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:supabase_project/Buttons/energy_efficiency_buttons.dart';
 import 'package:supabase_project/ConstantTexts/colors.dart';
-import 'package:supabase_project/EnergyManagement/Community/community_tab.dart';
-import 'package:supabase_project/EnergyManagement/YourEnergy/your_energy_tab.dart';
-import 'package:supabase_project/EnergyManagement/Community/blurred_community_page.dart';
-import '../../../CommonWidgets/appbar-widget.dart';
-import '../../../CommonWidgets/bottom-navigation-bar.dart';
-import '../../../ConstantTexts/Theme.dart';
+import '../../CommonWidgets/appbar-widget.dart';
+import '../../CommonWidgets/bottom-navigation-bar.dart';
+import '../../ConstantTexts/Theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-
-import '../../AuthService/models/user_model.dart';
+import '../AuthService/models/user_model.dart';
+import '../EnergyManagement/YourEnergy/your_energy_tab.dart';
+import '../EnergyManagement/Community/community_tab.dart';
 
 class EnergyEfficiencyPage extends StatefulWidget {
   const EnergyEfficiencyPage({
@@ -28,16 +24,13 @@ class EnergyEfficiencyPage extends StatefulWidget {
 
 class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
   int _currentIndex = 0;
-  String userId = '';
-  String username = '';
-
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.selectedIndex >= 0 && widget.selectedIndex <= 2
         ? widget.selectedIndex
         : 0;
-    _printUserIdFromPrefs();
+    _printUserDataFromHive();
   }
 
   void _onSegmentTapped(int index) {
@@ -45,8 +38,7 @@ class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
       _currentIndex = index;
     });
   }
-
-  Future<void> _printUserIdFromPrefs() async {
+  Future<void> _printUserDataFromHive() async {
     final box = Hive.box<User>('userBox');
     final currentUser = box.get('currentUser');
 
@@ -58,6 +50,8 @@ class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
       print("No user data found in Hive.");
     }
   }
+
+
   @override
   Widget build(BuildContext context) {
     Widget currentPage;
@@ -69,12 +63,6 @@ class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
       case 1:
         currentPage = const CommunityTab();
         break;
-
-    // ADDED AN INDEX FOR BLURRED PAGE GUIDELINES
-      case 2:
-        currentPage = const CommunityTabBlurred();
-    //
-
       default:
         currentPage = YourEnergyPageTab();
     }
