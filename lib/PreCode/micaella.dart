@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_project/PreCode/chats_page.dart';
+import 'package:supabase_project/all_imports/imports.dart';
 
 class FAQsPage extends StatefulWidget {
   @override
@@ -23,7 +24,7 @@ class _FAQsPageState extends State<FAQsPage> {
 
   Future<void> _fetchFAQs() async {
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8080/faqs'));
+      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/faqs'));
 
       if (response.statusCode == 200) {
         final List<dynamic> faqs = json.decode(response.body);
@@ -118,7 +119,10 @@ class _FAQsPageState extends State<FAQsPage> {
       appBar: _buildAppBar(),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator()) // Show loading spinner
+              child: LoadingWidget(
+                message: 'Loading FAQs...',
+                color: AppColors.primaryColor,
+              )) // Show loading spinner
           : _hasError
               ? const Center(
                   child: Text(
@@ -191,7 +195,6 @@ class _FAQsPageState extends State<FAQsPage> {
                                 fontFamily: 'Montserrat',
                                 fontWeight: FontWeight.bold),
                           ),
-                          const SizedBox(height: 15.0),
                           ElevatedButton(
                             onPressed: () {
                               Navigator.of(context).push(
@@ -215,23 +218,25 @@ class _FAQsPageState extends State<FAQsPage> {
                                   color: Colors.white),
                             ),
                           ),
+                          const SizedBox(height: 25.0),
+
                         ],
                       ),
                     ),
                   ],
                 ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.teal,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.bolt), label: 'Your Energy'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Community'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.settings), label: 'App Settings'),
-        ],
-      ),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   type: BottomNavigationBarType.fixed,
+      //   selectedItemColor: Colors.teal,
+      //   unselectedItemColor: Colors.grey,
+      //   items: const [
+      //     BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+      //     BottomNavigationBarItem(icon: Icon(Icons.bolt), label: 'Your Energy'),
+      //     BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Community'),
+      //     BottomNavigationBarItem(
+      //         icon: Icon(Icons.settings), label: 'App Settings'),
+      //   ],
+      // ),
     );
   }
 

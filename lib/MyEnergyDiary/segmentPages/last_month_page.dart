@@ -40,6 +40,9 @@ class _LastMonthPageState extends State<LastMonthPage> {
   }
 
   Future<void> getLastMonth(DateTime date) async {
+    setState(() {
+      isLoading = true;
+    });
     final box = Hive.box<User>('userBox');
     final currentUser = box.get('currentUser');
 
@@ -89,6 +92,7 @@ class _LastMonthPageState extends State<LastMonthPage> {
         await getUsersApplianceCount(); // Fetch appliances count here.
 
         setState(() {
+          isLoading = false;
           monthlyData = {
             'totalMonthlyConsumption': totalMonthlyConsumption,
             'totalMonthlyKwhConsumption': totalKwhConsumption,
@@ -187,31 +191,42 @@ class _LastMonthPageState extends State<LastMonthPage> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        SingleChildScrollView(
-          controller: _scrollController,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                DatePickerWidget(
-                  initialDate: selectedDate,
-                  onDateSelected: onDateSelected,
-                  getApplianceCount: () {},
-                ),
-                const SizedBox(height: 20),
-                HomeUsage(
-                  kwh: monthlyData['totalMonthlyKwhConsumption'] != null
-                      ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
-                      : 'N/A',
-                ),
-                const SizedBox(height: 40),
-                bottomPart(),
-                const SizedBox(height: 40),
-              ],
+        // Show loading widget if `isLoading` is true
+        if (isLoading)
+          const Center(
+            child: LoadingWidget(
+              message: 'Loading last month\'s data...',
+              color: AppColors.primaryColor,
+            ),
+          )
+        else
+          SingleChildScrollView(
+            controller: _scrollController,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 40),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  DatePickerWidget(
+                    initialDate: selectedDate,
+                    onDateSelected: onDateSelected,
+                    getApplianceCount: () {},
+                  ),
+                  const SizedBox(height: 20),
+                  HomeUsage(
+                    kwh: monthlyData['totalMonthlyKwhConsumption'] != null
+                        ? '${double.parse(monthlyData['totalMonthlyKwhConsumption'].toString()).toStringAsFixed(2)} kwh'
+                        : 'N/A',
+                  ),
+                  const SizedBox(height: 40),
+                  bottomPart(),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
-        ),
+
+        // Floating pie chart button
         Positioned(
           bottom: 20.0,
           right: 20.0,

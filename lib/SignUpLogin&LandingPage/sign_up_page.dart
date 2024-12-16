@@ -29,6 +29,7 @@ class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
   final AppControllers controllers = AppControllers();
   bool _isPasswordVisible = false;
+  bool _isButtonEnabled = true;
 
   bool _showClearIcon = false;
   bool _isLoading = false;
@@ -138,7 +139,7 @@ class _SignUpPageState extends State<SignUpPage> {
                               controller: controllers.passwordController,
                               hintText: 'Password',
                               // keyboardType: TextInputType.text,
-                              prefixIcon: const Icon(Icons.lock_outline),
+                              prefixIcon: const Icon(Icons.lock_outlined),
                               // obscureText: true,
                               onChanged: (value) {
                                 setState(() {
@@ -147,6 +148,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                 user.password = value;
                               },
                               placeholder: "Passw0rd!",
+
                               // validator: Validators.compose([
                               //   Validators.required('Password is required'),
                               //   Validators.patternString(
@@ -220,7 +222,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: Column(
                     children: [
                       SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.25, //
+                        height: MediaQuery.of(context).size.height * 0.23, //
                       ),
                       const LoadingWidget(
                         message: 'Creating your account, please wait...',
@@ -241,4 +243,76 @@ class _SignUpPageState extends State<SignUpPage> {
       ),
     );
   }
+  Future<void> _onButtonPressed() async {
+    if (!_isButtonEnabled) return;
+
+    setState(() {
+      _isButtonEnabled = false;
+      _isLoading = true; // Show loading spinner
+    });
+
+    try {
+      // Trigger field validation
+      bool isFormValid = _formKey.currentState?.validate() ?? false;
+
+      if (isFormValid) {
+        try {
+          final response = await AuthService(
+            context: context,
+            emailController: controllers.emailController,
+            passwordController: controllers.passwordController,
+            usernameController: controllers.usernameController,
+          ).signUp(); // Use signUp method for registration flow
+
+          if (response != null) {
+            if (response.statusCode == 400) {
+              await _showErrorDialog(context);
+            } else if (response.statusCode == 201) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SetupProfile(),
+                ),
+              );
+            } else {
+              SnackBarHelper.showSnackBar(context, 'Internal Server Error');
+            }
+          }
+        } catch (e) {
+          SnackBarHelper.showSnackBar(context, 'An error occurred');
+          print('Error during sign up: ${e.toString()}');
+        }
+      } else {
+        // Display error snack bar if form validation fails
+        SnackBarHelper.showSnackBar(context, 'Please fill in all fields.');
+      }
+    } finally {
+      setState(() {
+        _isButtonEnabled = true;
+        _isLoading = false; // Hide loading spinner
+      });
+    }
+  }
+
+  Future<Object?> _emptyErrorDialog(BuildContext context) async {
+    await showCustomDialog(
+      context: context,
+      title: 'Login Failed',
+      message: "Input was empty",
+      buttonText: 'OK',
+    );
+  }
+
+  // void _handleSignup() {
+  //   if (!_isValid) {
+  //     // Show a dialog or a snackbar indicating the issue
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Please meet all password requirements')),
+  //     );
+  //     return;
+  //   }
+  //
+  //   // Proceed with signup logic
+  // }
+
 }

@@ -7,6 +7,7 @@ import 'package:supabase_project/CommonWidgets/controllers/app_controllers.dart'
 import 'package:supabase_project/ConstantTexts/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_project/all_imports/imports.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 late WebSocketChannel _channel;
@@ -19,7 +20,7 @@ class HelpChatPage extends StatefulWidget {
 class _HelpChatPageState extends State<HelpChatPage> {
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> _messages = [];
-  final String apiUrl = 'http://10.0.2.2:8080';
+  // final String apiUrl = 'http://10.0.2.2:8080';
   bool isUserLoaded = false;
   String? userId;
   AppControllers controller = AppControllers();
@@ -72,7 +73,7 @@ class _HelpChatPageState extends State<HelpChatPage> {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
     try {
-      final response = await http.get(Uri.parse('$apiUrl/chats'));
+      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/chats'));
       if (response.statusCode == 200) {
         final List<dynamic> groupedChats = jsonDecode(response.body);
         List<Map<String, dynamic>> allMessages = [];
@@ -129,7 +130,7 @@ class _HelpChatPageState extends State<HelpChatPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('$apiUrl/chats'),
+        Uri.parse('${ApiConfig.baseUrl}/chats'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user': userId, 'message': message}),
       );
@@ -207,26 +208,25 @@ class _HelpChatPageState extends State<HelpChatPage> {
                           bool isAdminMessage =
                               _messages[index]['userId'] == 'admin';
                           return Align(
-                            alignment: isAdminMessage
-                                ? Alignment.centerLeft
-                                : Alignment.centerRight,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 10.0, horizontal: 14.0),
-                              margin: const EdgeInsets.only(bottom: 10.0),
-                              decoration: BoxDecoration(
-                                color: isAdminMessage
-                                    ? Colors.grey[300]
-                                    : Colors.teal[100],
-                                borderRadius: BorderRadius.circular(10.0),
-                              ),
-                              child: Text(
-                                _messages[index]['message'],
-                                style: const TextStyle(
-                                    fontSize: 14.0, fontFamily: 'Montserrat'),
+                            alignment:
+                            isAdminMessage ? Alignment.centerLeft : Alignment.centerRight,
+                            child: FractionallySizedBox(
+                              widthFactor: 0.5, // Occupy 50% of the width
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 14.0),
+                                margin: const EdgeInsets.only(bottom: 10.0),
+                                decoration: BoxDecoration(
+                                  color: isAdminMessage ? Colors.grey[300] : Colors.teal[100],
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                child: Text(
+                                  _messages[index]['message'],
+                                  style: const TextStyle(fontSize: 14.0, fontFamily: 'Montserrat'),
+                                ),
                               ),
                             ),
                           );
+
                         },
                       )
                 : Center(child: CircularProgressIndicator()),

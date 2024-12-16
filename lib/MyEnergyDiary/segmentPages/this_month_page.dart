@@ -102,7 +102,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
       });
     } catch (e) {
       // Handle errors here
-      print("Error fetching appliances: $e");
+      // print("Error fetching this month's appliances: $e");
       setState(() {
         isLoading = false;
       });
@@ -414,7 +414,7 @@ class _ThisMonthPageState extends State<ThisMonthPage> {
     if (isLoading) {
       return const Center(
           child: LoadingWidget(
-        message: 'Fetching my appliances',
+        message: 'Loading this month\'s appliances...',
         color: AppColors.primaryColor,
       ));
     } else if (appliances.isEmpty) {

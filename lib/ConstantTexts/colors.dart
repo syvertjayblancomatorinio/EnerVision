@@ -4,7 +4,7 @@ class AppColors {
   AppColors._();
   static const Color primaryColor = Color(0xFF1BBC9B);
   static const Color secondaryColor = Color(0xFF02A676);
-  static const Color backgroundColor = Color(0xFFFF1493); // DeepPink
+  static const Color backgroundColor = Color(0xFFFF1493);
 }
 final List<Color> colorList = [
   Color(0xFF0EA317), // Green
@@ -12,6 +12,7 @@ final List<Color> colorList = [
   Color(0xFFD6292F), // Red
   Color(0xFF7678F5), // Blue
   Color(0xFFD60ED6), // Purple
+  Color(0xFFA52A2A), // Brown
 ];
 
 final List<Color> colorList2 = [

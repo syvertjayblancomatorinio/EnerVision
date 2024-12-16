@@ -3,7 +3,6 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_project/AuthService/base_url.dart';
-import 'package:supabase_project/AuthService/preferences.dart';
 import 'package:supabase_project/AuthService/services/user_service.dart';
 import 'package:supabase_project/CommonWidgets/controllers/text_utils.dart';
 
@@ -19,34 +18,31 @@ class ApplianceService {
     String? token = await getUserToken();
 
     if (token == null) {
-      print('Token not found');
+      // print('Token not found');
       return;
     }
 
-    if (token != null) {
-      final response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token',
 
-        },
-        body: jsonEncode({
-          'userId': userId,
-          'applianceData': applianceData,
-        }),
-      );
-      if (response.statusCode == 201) {
-        final responseBody = jsonDecode(response.body);
-        print('Appliance added: ${responseBody['appliance']}');
-      } else if (response.statusCode == 400) {
-        final responseBody = jsonDecode(response.body);
-        throw Exception('Failed to add appliance: ${responseBody['error']}');
-      } else {
-        throw Exception('Unexpected error: ${response.body}');
-      }
+      },
+      body: jsonEncode({
+        'userId': userId,
+        'applianceData': applianceData,
+      }),
+    );
+    if (response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+    } else if (response.statusCode == 400) {
+      final responseBody = jsonDecode(response.body);
+      throw Exception('Failed to add appliance: ${responseBody['error']}');
+    } else {
+      throw Exception('Unexpected error: ${response.body}');
     }
-  }
+    }
 
   static Future<Map<String, dynamic>> fetchTodayAppliance() async {
     final box = Hive.box<User>('userBox');
@@ -78,7 +74,6 @@ class ApplianceService {
         throw Exception('Failed to load appliances with status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error occurred while fetching appliances: $e');
       rethrow; // Re-throw the error so it can be handled elsewhere
     }
   }
@@ -214,7 +209,6 @@ class ApplianceService {
 
   static Future<void> deletePost(String postId) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/deletePost/$postId');
-    print('Sending DELETE request to: $url');
 
     final response = await http.delete(
       url,
@@ -224,10 +218,8 @@ class ApplianceService {
     );
 
     if (response.statusCode == 200) {
-      print('Post with ID $postId deleted successfully.');
     } else {
       final responseBody = jsonDecode(response.body);
-      print('Failed to delete appliance. Server response: ${response.body}');
       throw Exception('Failed to delete appliance: ${responseBody['message']}');
     }
   }
@@ -250,7 +242,6 @@ class ApplianceService {
 
     if (response.statusCode == 201) {
       final responseBody = jsonDecode(response.body);
-      print('Suggestion added: ${responseBody['newSuggestion']}');
     } else if (response.statusCode == 400) {
       final responseBody = jsonDecode(response.body);
       throw Exception('Failed to add suggestion: ${responseBody['message']}');

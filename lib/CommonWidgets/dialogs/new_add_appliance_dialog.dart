@@ -42,25 +42,33 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
   }
 
   void _initializeSelectedDays() {
-    final currentDay = DateTime.now().weekday % 7;
+    final now = DateTime.now();
+    final localNow = now.toLocal();
+    // print('UTC Time: $now');
+    // print('Local Time: $localNow');
+    // print('Time Zone Offset: ${localNow.timeZoneOffset}');
+
+    final currentDay = localNow.weekday % 7;
     setState(() {
       selectedDays = [currentDay + 1];
     });
   }
 
+
   void _toggleSelectAll() {
     setState(() {
       if (isAllSelected) {
-        // Deselect all days
+        // Clear selection
         selectedDays.clear();
         isAllSelected = false;
       } else {
-        // Select all days
-        selectedDays = [1, 2, 3, 4, 5, 6, 7];
+        // Select all valid days (1 to 7)
+        selectedDays = [0,1, 2, 3, 4, 5, 6, 7];
         isAllSelected = true;
       }
     });
   }
+
   void _toggleDay(int day) {
     setState(() {
       if (selectedDays.contains(day)) {
@@ -68,8 +76,49 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
       } else {
         selectedDays.add(day);
       }
+
+      // Update `isAllSelected` based on the current state of `selectedDays`
+      isAllSelected = selectedDays.length == 7;
     });
   }
+
+
+  //
+  // void _initializeSelectedDays() {
+  //   final now = DateTime.now();
+  //   final localNow = now.toLocal();
+  //   print('UTC Time: $now');
+  //   print('Local Time: $localNow');
+  //   print('Time Zone Offset: ${localNow.timeZoneOffset}');
+  //
+  //   final currentDay = localNow.weekday % 7;
+  //   setState(() {
+  //     selectedDays = [currentDay + 1];
+  //   });
+  // }
+  //
+  //
+  // void _toggleSelectAll() {
+  //   setState(() {
+  //     if (isAllSelected) {
+  //       selectedDays.clear();
+  //       isAllSelected = false;
+  //     } else {
+  //       // Select all days
+  //       selectedDays = [0, 1, 2, 3, 4, 5, 6,7];
+  //       isAllSelected = true;
+  //     }
+  //   });
+  // }
+  // void _toggleDay(int day) {
+  //   setState(() {
+  //     if (selectedDays.contains(day)) {
+  //       selectedDays.remove(day);
+  //     } else {
+  //       selectedDays.add(day);
+  //     }
+  //   });
+  // }
 
 
   @override
@@ -125,72 +174,97 @@ class _AddApplianceDialogState extends State<AddApplianceDialog> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // First row with 4 days
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(4, (index) {
-                            final dayNum = index + 1;
-                            final isSelected = selectedDays.contains(dayNum);
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(7, (index) {
+                        final dayNum = index;
+                        final isSelected = selectedDays.contains(dayNum);
 
-                            return Padding(
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 10),
-                              child: GestureDetector(
-                                onTap: () => _toggleDay(dayNum),
-                                child: CircleAvatar(
-                                  radius: 25,
-                                  backgroundColor: isSelected
-                                      ? AppColors.secondaryColor
-                                      : Colors.grey[300],
-                                  child: Text(
-                                    days[index],
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.black,
-                                    ),
-                                  ),
+                        return Padding(
+                          padding:
+                          const EdgeInsets.symmetric(horizontal: 5),
+                          child: GestureDetector(
+                            onTap: () => _toggleDay(dayNum),
+                            child: CircleAvatar(
+                              radius: 15,
+                              backgroundColor: isSelected
+                                  ? AppColors.secondaryColor
+                                  : Colors.grey[300],
+                              child: Text(
+                                days[index],
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black,
                                 ),
                               ),
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 20),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(3, (index) {
-                            final dayNum = index + 5;
-                            final isSelected = selectedDays.contains(dayNum);
-
-                            return Padding(
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 10),
-                              child: GestureDetector(
-                                onTap: () => _toggleDay(dayNum),
-                                child: CircleAvatar(
-                                  radius: 25,
-                                  backgroundColor: isSelected
-                                      ? AppColors.secondaryColor
-                                      : Colors.grey[300],
-                                  child: Text(
-                                    days[dayNum - 1],
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.black,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      ],
+                            ),
+                          ),
+                        );
+                      }),
                     ),
+                    // Column(
+                    //   mainAxisSize: MainAxisSize.min,
+                    //   children: [
+                    //     // First row with 4 days
+                    //     Row(
+                    //       mainAxisAlignment: MainAxisAlignment.center,
+                    //       children: List.generate(4, (index) {
+                    //         final dayNum = index + 1; // Day number from 1 to 4
+                    //         final isSelected = selectedDays.contains(dayNum);
+                    //
+                    //         return Padding(
+                    //           padding: const EdgeInsets.symmetric(horizontal: 10),
+                    //           child: GestureDetector(
+                    //             onTap: () => _toggleDay(dayNum),
+                    //             child: CircleAvatar(
+                    //               radius: 25,
+                    //               backgroundColor: isSelected
+                    //                   ? AppColors.secondaryColor
+                    //                   : Colors.grey[300],
+                    //               child: Text(
+                    //                 days[dayNum - 1], // Match `days` index
+                    //                 style: TextStyle(
+                    //                   color: isSelected ? Colors.white : Colors.black,
+                    //                 ),
+                    //               ),
+                    //             ),
+                    //           ),
+                    //         );
+                    //       }),
+                    //     ),
+                    //     const SizedBox(height: 20),
+                    //
+                    //     // Second row with 3 days
+                    //     Row(
+                    //       mainAxisAlignment: MainAxisAlignment.center,
+                    //       children: List.generate(3, (index) {
+                    //         final dayNum = index + 5; // Day number from 5 to 7
+                    //         final isSelected = selectedDays.contains(dayNum);
+                    //
+                    //         return Padding(
+                    //           padding: const EdgeInsets.symmetric(horizontal: 10),
+                    //           child: GestureDetector(
+                    //             onTap: () => _toggleDay(dayNum),
+                    //             child: CircleAvatar(
+                    //               radius: 25,
+                    //               backgroundColor: isSelected
+                    //                   ? AppColors.secondaryColor
+                    //                   : Colors.grey[300],
+                    //               child: Text(
+                    //                 days[dayNum - 1], // Match `days` index
+                    //                 style: TextStyle(
+                    //                   color: isSelected ? Colors.white : Colors.black,
+                    //                 ),
+                    //               ),
+                    //             ),
+                    //           ),
+                    //         );
+                    //       }),
+                    //     ),
+                    //   ],
+                    // ),sdf65
+
                     const SizedBox(height: 20),
                     actionButtons(context)
                   ],

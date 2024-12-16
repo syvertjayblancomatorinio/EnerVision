@@ -36,11 +36,8 @@ class MyApp extends StatelessWidget {
         onWillPop: () async {
           return false;
         },
-        child:  SignUpPage(),
+        child: SignUpPage(),
       ),
     );
   }
 }
-
-
-

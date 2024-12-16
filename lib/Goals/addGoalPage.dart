@@ -247,39 +247,39 @@ class _AddGoalPageState extends State<AddGoalPage> {
               }).toList(),
             ),
           ),
-          actions: [
-            TextButton(
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 16,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'Confirm',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueGrey,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              ),
-            ),
-          ],
+          // actions: [
+          //   TextButton(
+          //     child: Text(
+          //       'Cancel',
+          //       style: TextStyle(
+          //         color: Colors.grey[700],
+          //         fontSize: 16,
+          //       ),
+          //     ),
+          //     onPressed: () {
+          //       Navigator.of(context).pop();
+          //     },
+          //   ),
+          //   ElevatedButton(
+          //     onPressed: () {
+          //       Navigator.of(context).pop();
+          //     },
+          //     child: Text(
+          //       'Confirm',
+          //       style: TextStyle(
+          //         color: Colors.white,
+          //         fontSize: 16,
+          //       ),
+          //     ),
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: Colors.blueGrey,
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(8),
+          //       ),
+          //       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          //     ),
+          //   ),
+          // ],
         );
       },
     );

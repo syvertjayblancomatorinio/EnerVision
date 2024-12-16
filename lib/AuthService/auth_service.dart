@@ -31,6 +31,7 @@ class AuthService {
     this.usernameController,
     this.kwhRateController,
   });
+
   Future<String?> fetchUserProfilePhoto(String userId) async {
     final response = await http.get(
       Uri.parse('http://yourapi.com/getUserProfile?userId=$userId'),
@@ -71,55 +72,46 @@ class AuthService {
         var responseBody = jsonDecode(response.body);
         final token = responseBody['token'];
         String userId = responseBody['user']['_id'];
-        String profilePicture = responseBody['user']['profilePicture'] ?? ""; // Default to empty string if null
+        String profilePicture = responseBody['user']['profilePicture'] ?? "";
 
         // Save token to SharedPreferences
         if (token != null) {
-          await saveToken(token); // Store token in SharedPreferences
-          await storeUserToken(token); // Store token in SharedPreferences
+          await saveToken(token);
+          await storeUserToken(token);
         }
 
         // Save the user ID to SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userId', userId);
 
-        // Close the Hive box if it's already open
+        // Handle Hive storage
         if (Hive.isBoxOpen('userBox')) {
-          await Hive.close(); // Close the box if open
+          await Hive.close();
         }
 
-        // Open the Hive box if it's not already open
         if (!Hive.isBoxOpen('userBox')) {
           await Hive.openBox<User>('userBox');
         }
 
-        // Save the user data to Hive
         final box = Hive.box<User>('userBox');
         final user = User(
           userId: userId,
           username: username,
-          email: emailController.text, // Use email from the controller
+          email: emailController.text,
           profilePicture: profilePicture,
         );
         await box.put('currentUser', user);
-
-        // Navigate to the Setup Profile page
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const SetupProfile()),
-        );
       } else if (response.statusCode == 400) {
-        final responseBody = jsonDecode(response.body);
-        final errorMessage = responseBody['message'] ?? 'Email is not available';
-        print('Error: $errorMessage');
+        // Return error message for 400
+        print('Error: ${response.body}');
       } else {
-        print('Failed to Sign up: ${response.body}');
+        print('Failed to sign up: ${response.body}');
       }
 
-      return response; // Return the response to handle it in the calling function
+      return response;
     } catch (e) {
       print('Error occurred while signing up: $e');
-      return null; // Return null in case of an error
+      return null;
     }
   }
 

@@ -18,6 +18,7 @@ AppBar customAppBar1({
   return AppBar(
     toolbarHeight: 89,
     backgroundColor: Colors.white,
+    automaticallyImplyLeading: false,
     leading: showBackArrow
         ? Padding(
             padding: const EdgeInsets.only(left: 20),

@@ -84,6 +84,7 @@ class _EnergyEfficiencyPageState extends State<EnergyEfficiencyPage> {
       theme: AppTheme.getAppTheme(),
       home: Scaffold(
         appBar: customAppBar1(
+
           showBackArrow: false,
           showTitle: false,
         ),

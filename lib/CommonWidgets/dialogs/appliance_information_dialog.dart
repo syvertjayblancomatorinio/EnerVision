@@ -60,7 +60,7 @@ class _ApplianceInformationDialogState extends State<ApplianceInformationDialog>
     // Ensure selectedDays are sorted from Sunday to Saturday before converting to names
     String selectedDaysNames = selectedDays != null
         ? (selectedDays..sort())
-            .map((day) => dayNames[day] ?? 'Unknown')
+            .map((day) => dayNames[day] ?? '')
             .join(', ')
         : 'N/A';
 

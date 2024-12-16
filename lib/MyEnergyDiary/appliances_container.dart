@@ -64,9 +64,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     try {
       final appliances = await fetchTodayAppliance();
       // Now you can use the appliances fetched from either Hive or the API
-      print('Appliances: ${appliances['appliances']}');
     } catch (e) {
-      print('Error fetching appliances: $e');
     }
   }
 
@@ -112,7 +110,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         throw Exception('Failed to load appliances with status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error occurred while fetching appliances: $e');
       rethrow; // Re-throw the error so it can be handled elsewhere
     }
   }
@@ -145,7 +142,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         isLoading = false;
       });
 
-      print('Error fetching appliances: $e');
     }
   }
 
@@ -325,14 +321,11 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     try {
       double? kwhRate = await KWHRateService.getKwhRate();
       if (kwhRate != null) {
-        print('Current kWh Rate: $kwhRate');
         return kwhRate;
       } else {
-        print('kWh Rate not found');
         return null;
       }
     } catch (e) {
-      print('Error fetching kWh rate: $e');
       return 0.00; // Return null in case of error
     }
   }
@@ -340,9 +333,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   Future<void> deleteAppliance(String applianceId) async {
     try {
       await ApplianceService.deleteAppliance(applianceId);
-      print('Appliance deleted successfully');
     } catch (e) {
-      print('Error deleting appliance: $e');
     }
   }
 
@@ -379,7 +370,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
 
 
 
-  Future<void> addAppliance() async {
+  Future<void> addAppliance1() async {
     final url = Uri.parse("${ApiConfig.baseUrl}/addApplianceNewLogic");
     String applianceName = toTitleCase(
       controllers.addApplianceNameController.text.trim(),
@@ -399,13 +390,11 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
     // Retrieve userId from Hive
 
     if (userId == null) {
-      print('User ID not found in Hive');
       return;
     }
 
     // Retrieve token from Hive
     String? token = await getUserToken();
-    print(token);
     if (token != null) {
       var response = await http.post(
         url,
@@ -420,7 +409,6 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
       );
 
       if (response.statusCode == 201) {
-        print('token $token');
 
         fetchTodayAppliances();
         fetchDailyCost();
@@ -428,7 +416,50 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         await _showApplianceErrorDialog(context);
       }
     } else {
-      print('No token found in Hive');
+    }
+  }
+  Future<void> addAppliance() async {
+    final url = Uri.parse("${ApiConfig.baseUrl}/addApplianceNewLogic");
+    String applianceName = toTitleCase(
+      controllers.addApplianceNameController.text.trim(),
+    );
+
+    final Map<String, dynamic> applianceData = {
+      'applianceName': applianceName,
+      'wattage': int.tryParse(controllers.addWattageController.text) ?? 0,
+      'usagePatternPerDay': double.tryParse(controllers.addUsagePatternController.text) ?? 0.0,
+      'applianceCategory': controllers.addApplianceCategoryController.text.trim(),
+      'selectedDays': selectedDays,
+      'createdAt': DateTime.now().toIso8601String(), // Send local time explicitly
+    };
+
+    String? userId = await UserService.getUserId();
+
+    if (userId == null) {
+      return;
+    }
+
+    String? token = await getUserToken();
+    if (token != null) {
+      var response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'applianceData': applianceData,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        fetchTodayAppliances();
+        fetchDailyCost();
+      } else {
+        await _showApplianceErrorDialog(context);
+      }
+    } else {
     }
   }
 
@@ -534,12 +565,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
         dailyCost = result;
       });
 
-      print(
-          'Fetched totalDailyConsumptionCost: ${dailyCost?['totalDailyConsumptionCost']}');
-      print(
-          'Fetched oldtotalDailyKwhConsumption: ${dailyCost?['totalDailyKwhConsumption']}');
     } else {
-      print('Failed to fetch daily cost');
     }
   }
 
@@ -654,9 +680,7 @@ class _AppliancesContainerState extends State<AppliancesContainer> {
   void saveKwhRate(String kwhRate) async {
     try {
       await KWHRateService.saveKwhRate(kwhRate);
-      print('kWh Rate saved successfully');
     } catch (e) {
-      print('Failed to save kWh Rate: $e');
     }
   }
 }
